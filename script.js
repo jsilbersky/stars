@@ -25,6 +25,13 @@ let currentShape = "star5";
 let remainingShapes = [];
 let targetRadius = 80;
 
+let showWrong = false;
+let showExplosion = false;
+let effectTimer = 0;
+
+let shards = [];
+let flashAlpha = 0;
+
 const allStarShapes = ["star5", "star6", "star8", "spiked", "supernova", "spiralstar", "nebula", "star4", "star7"];
 
 const levels = [
@@ -36,7 +43,7 @@ const levels = [
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight * 0.8;
+  canvas.height = window.innerHeight; // celá výška obrazovky
   centerX = canvas.width / 2;
   centerY = canvas.height / 2;
   generateStars();
@@ -118,11 +125,84 @@ function nextShape() {
   targetRadius = Math.random() * 50 + 50;
 }
 
+function createShards(x, y, count = 20) {
+  shards = [];
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * 2 * Math.PI;
+    const speed = Math.random() * 2 + 1;
+    const size = Math.random() * 8 + 4;
+    shards.push({
+      x: x,
+      y: y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed + 1,
+      size,
+      rotation: Math.random() * Math.PI,
+      rotationSpeed: (Math.random() - 0.5) * 0.1,
+      alpha: 1
+    });
+  }
+}
+
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawStars();
 
-  // Target shape
+  // Úlomky po výbuchu
+  shards.forEach(shard => {
+    ctx.save();
+    ctx.translate(shard.x, shard.y);
+    ctx.rotate(shard.rotation);
+    ctx.globalAlpha = shard.alpha;
+    ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
+    ctx.fillRect(-shard.size / 2, -shard.size / 2, shard.size, shard.size);
+    ctx.restore();
+
+    shard.x += shard.vx;
+    shard.y += shard.vy;
+    shard.rotation += shard.rotationSpeed;
+    shard.alpha -= 0.02;
+  });
+  shards = shards.filter(s => s.alpha > 0);
+
+  // Efekt při chybě
+  if (showWrong) {
+    ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = "bold 120px Arial";
+    ctx.fillStyle = "red";
+    ctx.textAlign = "center";
+    ctx.fillText("✖", centerX, canvas.height * 0.25);
+
+    effectTimer--;
+    if (effectTimer <= 0) {
+      showWrong = false;
+    }
+  }
+
+  // Efekt při správné odpovědi (explodující body)
+  if (showExplosion) {
+    for (let i = 0; i < 30; i++) {
+      const angle = Math.random() * 2 * Math.PI;
+      const dist = Math.random() * 60;
+      const x = centerX + Math.cos(angle) * dist;
+      const y = centerY + Math.sin(angle) * dist;
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, 2 * Math.PI);
+      ctx.fillStyle = `hsl(${hue}, 100%, ${Math.random() * 30 + 50}%)`;
+      ctx.fill();
+    }
+
+    effectTimer--;
+    if (effectTimer <= 0) {
+      showExplosion = false;
+      nextShape();
+    }
+  }
+
+
+  // Target shape (cílová)
   ctx.save();
   ctx.shadowBlur = 15;
   ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
@@ -131,8 +211,7 @@ function draw() {
   drawShape(currentShape, centerX, centerY, targetRadius, rotation, null, lineWidth, true);
   ctx.restore();
 
-
-  // Player shape (growing)
+  // Player shape (rostoucí)
   if (isHolding && radius < targetRadius + 20) {
     radius += 1;
   }
@@ -156,14 +235,7 @@ function draw() {
 
 const holdButton = document.getElementById("holdButton");
 
-holdButton.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-  isHolding = true;
-  radius = 0;
-});
-
-holdButton.addEventListener("touchend", (e) => {
-  e.preventDefault();
+function handleRelease() {
   isHolding = false;
 
   const diff = Math.abs(radius - targetRadius);
@@ -179,10 +251,36 @@ holdButton.addEventListener("touchend", (e) => {
   const isAngleOk = !needsRotationCheck || angleDiff < angleThreshold;
 
   if (isSizeOk && isAngleOk) {
-    nextShape();
+    showExplosion = true;
+    effectTimer = 30;
+    createShards(centerX, centerY);
+    flashAlpha = 0.6;
   } else {
-    alert("Vedle – zkus znovu.");
+    showWrong = true;
+    effectTimer = 30;
   }
+}
+
+// Dotyk
+holdButton.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  isHolding = true;
+  radius = 0;
+});
+holdButton.addEventListener("touchend", (e) => {
+  e.preventDefault();
+  handleRelease();
+});
+
+// Myš
+holdButton.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+  isHolding = true;
+  radius = 0;
+});
+holdButton.addEventListener("mouseup", (e) => {
+  e.preventDefault();
+  handleRelease();
 });
 
 startLevel();
