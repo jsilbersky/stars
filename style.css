@@ -1,0 +1,31 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: black;
+  height: 100%;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+canvas {
+  display: block;
+  width: 100vw;
+  height: 80vh;
+  background-color: transparent;
+}
+
+#holdButton {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background-color: #111;
+  color: #0ff;
+  font-size: 20px;
+  border: 2px solid #0ff;
+  box-shadow: 0 0 15px #0ff;
+  touch-action: none;
+}
