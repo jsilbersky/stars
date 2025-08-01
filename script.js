@@ -14,26 +14,24 @@ function generateStars(count = 100) {
 
 let isHolding = false;
 let radius = 0;
-const maxRadius = 80;
 let hue = 0;
 let rotation = 0;
 let rotationSpeed = 0.01;
-let showPreview = true;
 let lineWidth = 4;
-let growthSpeed = 1;
 let needsRotationCheck = false;
 
 let level = 1;
 let currentShape = "star5";
 let remainingShapes = [];
+let targetRadius = 80;
 
 const allStarShapes = ["star5", "star6", "star8", "spiked", "supernova", "spiralstar", "nebula", "star4", "star7"];
 
 const levels = [
-  { lineWidth: 8, rotationSpeed: 0, growthSpeed: 1, rotationCheck: false },
-  { lineWidth: 4, rotationSpeed: 0, growthSpeed: 1, rotationCheck: false },
-  { lineWidth: 8, rotationSpeed: 0.01, growthSpeed: 1, rotationCheck: true },
-  { lineWidth: 4, rotationSpeed: 0.01, growthSpeed: 1, rotationCheck: true },
+  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false },
+  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false },
+  { lineWidth: 8, rotationSpeed: 0.01, rotationCheck: true },
+  { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true },
 ];
 
 function resizeCanvas() {
@@ -66,7 +64,6 @@ function drawStarShape(shape, r) {
     star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
     spiked: 9, supernova: 10, spiralstar: 11, nebula: 12
   }[shape] || 5;
-  const angleSnap = (2 * Math.PI) / spikes;
 
   const step = Math.PI / spikes;
   for (let i = 0; i < 2 * spikes; i++) {
@@ -102,7 +99,6 @@ function startLevel() {
   const settings = levels[Math.min(level - 1, levels.length - 1)];
   lineWidth = settings.lineWidth;
   rotationSpeed = settings.rotationSpeed;
-  growthSpeed = settings.growthSpeed;
   needsRotationCheck = settings.rotationCheck;
 
   remainingShapes = shuffle([...allStarShapes]);
@@ -117,9 +113,9 @@ function nextShape() {
   }
 
   currentShape = remainingShapes.pop();
-  radius = 0;
-  showPreview = true;
   rotation = 0;
+  radius = 0;
+  targetRadius = Math.random() * 50 + 50;
 }
 
 function draw() {
@@ -132,20 +128,25 @@ function draw() {
   ctx.shadowColor = `hsl(${hue}, 100%, 60%)`;
   ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
   ctx.lineWidth = lineWidth;
-  drawShape(currentShape, centerX, centerY, maxRadius, rotation, null, lineWidth, true);
+  drawShape(currentShape, centerX, centerY, targetRadius, rotation, null, lineWidth, true);
   ctx.restore();
 
-  // Preview
-  if (showPreview) {
-    drawShape(currentShape, centerX, centerY, 20, rotation, "white", 2, false);
-  }
 
-  // Player shape
-  if (isHolding && radius < maxRadius + 20) {
-    radius += growthSpeed;
+  // Player shape (growing)
+  if (isHolding && radius < targetRadius + 20) {
+    radius += 1;
   }
   if (isHolding) {
-    drawShape(currentShape, centerX, centerY, radius, 0, `hsl(${hue + 60}, 100%, 50%)`, 5, true);
+    drawShape(
+      currentShape,
+      centerX,
+      centerY,
+      radius,
+      0,
+      `hsl(${hue + 60}, 100%, 50%)`,
+      5,
+      true
+    );
   }
 
   rotation += rotationSpeed;
@@ -159,32 +160,30 @@ holdButton.addEventListener("touchstart", (e) => {
   e.preventDefault();
   isHolding = true;
   radius = 0;
-  showPreview = false;
 });
 
 holdButton.addEventListener("touchend", (e) => {
   e.preventDefault();
   isHolding = false;
 
-  const diff = Math.abs(radius - maxRadius);
+  const diff = Math.abs(radius - targetRadius);
+  const isSizeOk = diff < 8;
 
   const spikes = {
     star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
     spiked: 9, supernova: 10, spiralstar: 11, nebula: 12
   }[currentShape] || 5;
   const angleSnap = (2 * Math.PI) / spikes;
-
   const angleDiff = Math.min(Math.abs(rotation % angleSnap), Math.abs(angleSnap - (rotation % angleSnap)));
   const angleThreshold = 0.2;
   const isAngleOk = !needsRotationCheck || angleDiff < angleThreshold;
 
-  if (diff <= 8 && isAngleOk) {
+  if (isSizeOk && isAngleOk) {
     nextShape();
   } else {
     alert("Vedle – zkus znovu.");
   }
 });
-
 
 startLevel();
 draw();
