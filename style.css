@@ -4,48 +4,116 @@ html, body {
   background-color: black;
   height: 100%;
   overflow: hidden;
-  font-family: sans-serif;
+  font-family: 'Audiowide', sans-serif;
+  color: #ffffff;
+  background-color: #000000;
+  text-shadow: 0 0 2px #00ffff;
 }
 
+
+/* Canvas – herní plocha */
 canvas {
   display: block;
   width: 100vw;
   height: calc(100vh - 120px);
   background-color: transparent;
+  position: relative;
+  z-index: 1;
 }
 
-#holdButton {
+/* Obrázek pozadí panelu */
+#panelBg {
   position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background-color: #111;
-  color: #0ff;
-  font-size: 20px;
-  border: 2px solid #0ff;
-  box-shadow: 0 0 15px #0ff;
-  touch-action: none;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  z-index: 2;
 }
 
+/* Ovládací panel */
+#controlPanel {
+  height: 120px;
+  width: 100vw;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 20px;
+  box-sizing: border-box;
+  background: transparent;
+  z-index: 3;
+  
+}
+
+/* Srdce (životy) */
 #lives {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 10;
-  font-size: 20px;
+  display: flex;
+  gap: 1px;
+  font-size: 16px; /* zmenšeno z 28px */
   user-select: none;
 }
 
 .heart {
-  margin: 0 4px;
-  transition: opacity 0.3s ease;
   opacity: 1;
+  transition: opacity 0.3s ease;
 }
 
 .heart.lost {
   opacity: 0.3;
+}
+
+/* Tlačítko HOLD */
+#holdButton {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: #000000;
+  color: #0ff;
+  font-size: 20px;
+  font-weight: bold;
+  border: 2px solid #0ff;
+  box-shadow: 0 0 15px #0ff;
+  touch-action: none;
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%) translateY(-23%);
+  z-index: 2;
+  font-family: 'Audiowide', sans-serif;
+  transition: transform 0.5s ease, background-color 0.5s ease, box-shadow 0.6s ease;
+}
+
+#holdButton:active {
+  transform: translateX(-50%) translateY(-21%) scale(0.95);
+  background-color: #002f2f; /* tmavě cyan, ale plně krycí */
+  color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
+}
+
+
+/* Level Label */
+#leftPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  position: relative;
+  z-index: 2;
+  color: cyan;
+}
+
+#levelLabel {
+  font-size: 16px;
+  color: cyan; 
+  font-weight: bold;
+}
+
+#holdButton.active {
+  transform: translateX(-50%) translateY(-21%) scale(0.95);
+  background-color: #002f2f; /* tmavě cyan, ale plně krycí */
+  color: #0ff;
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
 }

@@ -5,17 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Evolve Dot – Mobile</title>
   <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <button id="holdButton">HOLD</button>
-  <div id="lives">
-  <span class="heart" data-index="0">❤️</span>
-  <span class="heart" data-index="1">❤️</span>
-  <span class="heart" data-index="2">❤️</span>
-  <span class="heart" data-index="3">❤️</span>
-  <span class="heart" data-index="4">❤️</span>
-</div>
+
+  <!-- Přidáno: obrázek pozadí panelu -->
+  <img id="panelBg" src="images/control-panel.webp" alt="panel background" />
+
+  <div id="controlPanel">
+    <div id="leftPanel">
+      <div id="lives">
+        <span class="heart">🚀</span>
+        <span class="heart">🚀</span>
+        <span class="heart">🚀</span>
+        <span class="heart">🚀</span>
+        <span class="heart">🚀</span>
+      </div>
+      <div id="levelLabel">LEVEL 1</div>
+    </div>
+
+    <!-- Tlačítko HOLD -->
+    <button id="holdButton">HOLD</button>
+  </div>
 
   <script src="script.js"></script>
 </body>

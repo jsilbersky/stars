@@ -3,6 +3,7 @@ const ctx = canvas.getContext("2d");
 
 let centerX, centerY;
 let stars = [];
+
 function generateStars(count = 100) {
   stars = Array.from({ length: count }, () => ({
     x: Math.random() * canvas.width,
@@ -46,8 +47,8 @@ const levels = [
   { lineWidth: 4, rotationSpeed: 0, rotationCheck: false }, // Level 2
   { lineWidth: 8, rotationSpeed: 0.01, rotationCheck: true }, // Level 3
   { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true }, // Level 4
-  { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true, move: true, bounce: true }, // Level 5 – pohyb
-  { lineWidth: 4, rotationSpeed: 0.02, rotationCheck: true, move: true, bounce: true } // Level 6 – pohyb + odraz
+  { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true, move: true, bounce: true }, // Level 5
+  { lineWidth: 4, rotationSpeed: 0.02, rotationCheck: true, move: true, bounce: true }  // Level 6
 ];
 
 function resizeCanvas() {
@@ -116,6 +117,12 @@ function updateLivesDisplay() {
   });
 }
 
+function updateLevelDisplay() {
+  const levelDisplay = document.getElementById("levelLabel");
+  if (levelDisplay) {
+    levelDisplay.textContent = `LEVEL ${level}`;
+  }
+}
 
 function startLevel() {
   const settings = levels[Math.min(level - 1, levels.length - 1)];
@@ -132,6 +139,7 @@ function startLevel() {
   shapeVY = (Math.random() - 0.5) * 4;
   nextShape();
   updateLivesDisplay();
+  updateLevelDisplay();
 }
 
 function nextShape() {
@@ -220,35 +228,29 @@ function draw() {
     }
   }
 
-  // aktualizace pozice cílového tvaru
   if (enableMove) {
-  // Nejdřív otestuj odraz před posunem
-  if (enableBounce) {
-    if (shapeX - targetRadius <= 0 && shapeVX < 0) {
-      shapeVX *= -1;
-      shapeX = targetRadius;
-    } else if (shapeX + targetRadius >= canvas.width && shapeVX > 0) {
-      shapeVX *= -1;
-      shapeX = canvas.width - targetRadius;
+    if (enableBounce) {
+      if (shapeX - targetRadius <= 0 && shapeVX < 0) {
+        shapeVX *= -1;
+        shapeX = targetRadius;
+      } else if (shapeX + targetRadius >= canvas.width && shapeVX > 0) {
+        shapeVX *= -1;
+        shapeX = canvas.width - targetRadius;
+      }
+
+      if (shapeY - targetRadius <= 0 && shapeVY < 0) {
+        shapeVY *= -1;
+        shapeY = targetRadius;
+      } else if (shapeY + targetRadius >= canvas.height && shapeVY > 0) {
+        shapeVY *= -1;
+        shapeY = canvas.height - targetRadius;
+      }
     }
 
-    if (shapeY - targetRadius <= 0 && shapeVY < 0) {
-      shapeVY *= -1;
-      shapeY = targetRadius;
-    } else if (shapeY + targetRadius >= canvas.height && shapeVY > 0) {
-      shapeVY *= -1;
-      shapeY = canvas.height - targetRadius;
-    }
+    shapeX += shapeVX;
+    shapeY += shapeVY;
   }
 
-  // Pak teprve posuň
-  shapeX += shapeVX;
-  shapeY += shapeVY;
-}
-
-
-
-  // vykresli cílový tvar
   ctx.save();
   ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
   ctx.lineWidth = lineWidth;
@@ -256,21 +258,21 @@ function draw() {
   ctx.restore();
 
   if (isHolding && radius < targetRadius + 20) {
-  radius += 1;
-}
-if (isHolding) {
-  drawShape(
-    currentShape,
-    shapeX, 
-    shapeY,
-    radius,
-    0,
-    `hsl(${hue + 60}, 100%, 50%)`,
-    5,
-    false
-  );
-}
+    radius += 1;
+  }
 
+  if (isHolding) {
+    drawShape(
+      currentShape,
+      shapeX,
+      shapeY,
+      radius,
+      0,
+      `hsl(${hue + 60}, 100%, 50%)`,
+      5,
+      false
+    );
+  }
 
   rotation += rotationSpeed;
   hue = (hue + 1) % 360;
@@ -287,6 +289,7 @@ function handleRelease() {
     star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
     spiked: 9, supernova: 10, spiralstar: 11, nebula: 12
   }[currentShape] || 5;
+
   const angleSnap = (2 * Math.PI) / spikes;
   const angleDiff = Math.min(Math.abs(rotation % angleSnap), Math.abs(angleSnap - (rotation % angleSnap)));
   const angleThreshold = 0.2;
@@ -301,17 +304,15 @@ function handleRelease() {
     showWrong = true;
     effectTimer = 30;
     lives--;
-updateLivesDisplay();
+    updateLivesDisplay();
 
-if (lives <= 0) {
-  // Game over handling
-  alert("Game Over!");
-  lives = 5;
-  updateLivesDisplay();
-  level = 1;
-  startLevel();
-}
-
+    if (lives <= 0) {
+      alert("Game Over!");
+      lives = 5;
+      updateLivesDisplay();
+      level = 1;
+      startLevel();
+    }
   }
 }
 
@@ -341,6 +342,16 @@ window.addEventListener("keydown", (e) => {
     level++;
     startLevel();
   }
+});
+
+
+
+holdButton.addEventListener('touchstart', () => {
+  holdButton.classList.add('active');
+});
+
+holdButton.addEventListener('touchend', () => {
+  holdButton.classList.remove('active');
 });
 
 
