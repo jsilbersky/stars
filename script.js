@@ -9,9 +9,17 @@ function generateStars(count = 100) {
     x: Math.random() * canvas.width,
     y: Math.random() * canvas.height,
     size: Math.random() * 1.5 + 0.5,
-    speed: Math.random() * 0.5 + 0.2
+    speed: Math.random() * 0.5 + 0.2,
+    offset: Math.random() * 1000,
+    shape: getRandomStarShape()
   }));
 }
+
+function getRandomStarShape() {
+  const options = ["star4", "star5", "star6", "star7", "star8", "star9"];
+  return options[Math.floor(Math.random() * options.length)];
+}
+
 
 let isHolding = false;
 let radius = 0;
@@ -40,7 +48,7 @@ let shapeVY = 0;
 let enableMove = false;
 let enableBounce = false;
 
-const allStarShapes = ["star5", "star6", "star8", "spiked", "supernova", "spiralstar", "nebula", "star4", "star7"];
+const allStarShapes = ["star4", "star5", "star6", "star7", "star8", "star9", "star10", "star11", "star12"];
 
 const levels = [
   { lineWidth: 8, rotationSpeed: 0, rotationCheck: false }, // Level 1
@@ -48,8 +56,11 @@ const levels = [
   { lineWidth: 8, rotationSpeed: 0.01, rotationCheck: true }, // Level 3
   { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true }, // Level 4
   { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true, move: true, bounce: true }, // Level 5
-  { lineWidth: 4, rotationSpeed: 0.02, rotationCheck: true, move: true, bounce: true }  // Level 6
+  { lineWidth: 4, rotationSpeed: 0.02, rotationCheck: true, move: true, bounce: true }, // Level 6
+  { lineWidth: 3, rotationSpeed: 0.02, rotationCheck: true, move: true, bounce: true, pulse: true, rainbow: true }, // ⭐ Level 7
+  { lineWidth: 2, rotationSpeed: 0.04, rotationCheck: true, move: true, bounce: true, pulse: true, rainbow: true, chaosColor: true } // 💥 Level 8
 ];
+
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
@@ -62,11 +73,17 @@ resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
 function drawStars() {
-  ctx.fillStyle = "white";
   stars.forEach(star => {
+    const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.size * 2);
+    gradient.addColorStop(0, "rgba(255, 255, 255, 0.8)");
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+    
+    ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
     ctx.fill();
+
+    // jemný parallax pohyb
     star.y += star.speed;
     if (star.y > canvas.height) {
       star.y = 0;
@@ -75,11 +92,12 @@ function drawStars() {
   });
 }
 
+
 function drawStarShape(shape, r) {
   ctx.beginPath();
   const spikes = {
     star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
-    spiked: 9, supernova: 10, spiralstar: 11, nebula: 12
+    star9: 9, star10: 10, star11: 11, star12: 12
   }[shape] || 5;
 
   const step = Math.PI / spikes;
@@ -292,7 +310,17 @@ function handleRelease() {
 
   const angleSnap = (2 * Math.PI) / spikes;
   const angleDiff = Math.min(Math.abs(rotation % angleSnap), Math.abs(angleSnap - (rotation % angleSnap)));
-  const angleThreshold = 0.2;
+  
+  let angleThreshold;
+
+if (level <= 3) {
+  angleThreshold = 0.35; // ±20°
+} else if (level <= 6) {
+  angleThreshold = 0.21; // ±12°
+} else {
+  angleThreshold = 0.31; // ±18° 
+}
+
   const isAngleOk = !needsRotationCheck || angleDiff < angleThreshold;
 
   if (isSizeOk && isAngleOk) {
