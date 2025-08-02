@@ -10,7 +10,7 @@ html, body {
 canvas {
   display: block;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 120px);
   background-color: transparent;
 }
 
@@ -28,4 +28,24 @@ canvas {
   border: 2px solid #0ff;
   box-shadow: 0 0 15px #0ff;
   touch-action: none;
+}
+
+#lives {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  font-size: 20px;
+  user-select: none;
+}
+
+.heart {
+  margin: 0 4px;
+  transition: opacity 0.3s ease;
+  opacity: 1;
+}
+
+.heart.lost {
+  opacity: 0.3;
 }
