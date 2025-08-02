@@ -106,7 +106,7 @@ canvas {
 }
 
 #levelLabel {
-  font-size: 16px;
+  font-size: 14px;
   color: cyan; 
   font-weight: bold;
 }
@@ -116,4 +116,12 @@ canvas {
   background-color: #002f2f; /* tmavě cyan, ale plně krycí */
   color: #0ff;
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
+}
+
+#matchLabel {
+  font-size: 14px;
+  font-weight: bold;
+  color: red;
+  text-shadow: 0 0 2px #ff0000ec;
+  font-weight: bold;
 }

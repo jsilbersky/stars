@@ -20,7 +20,6 @@ function getRandomStarShape() {
   return options[Math.floor(Math.random() * options.length)];
 }
 
-
 let isHolding = false;
 let radius = 0;
 let hue = 0;
@@ -46,85 +45,23 @@ let shapeY = 0;
 let shapeVX = 0;
 let shapeVY = 0;
 let enableMove = false;
+let holdStartTime = 0;
 let enableBounce = false;
+
+const matchLabel = document.getElementById("matchLabel");
 
 const allStarShapes = ["star4", "star5", "star6", "star7", "star8", "star9", "star10", "star11", "star12"];
 
 const levels = [
-  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false }, // Level 1
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false }, // Level 2
-  { lineWidth: 8, rotationSpeed: 0.01, rotationCheck: true }, // Level 3
-  { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true }, // Level 4
-  { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true, move: true, bounce: true }, // Level 5
-  { lineWidth: 4, rotationSpeed: 0.02, rotationCheck: true, move: true, bounce: true }, // Level 6
-  { lineWidth: 3, rotationSpeed: 0.02, rotationCheck: true, move: true, bounce: true, pulse: true, rainbow: true }, // ⭐ Level 7
-  { lineWidth: 2, rotationSpeed: 0.04, rotationCheck: true, move: true, bounce: true, pulse: true, rainbow: true, chaosColor: true } // 💥 Level 8
+  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false },
+  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false },
+  { lineWidth: 8, rotationSpeed: 0.01, rotationCheck: true },
+  { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true },
+  { lineWidth: 4, rotationSpeed: 0.01, rotationCheck: true, move: true, bounce: true },
+  { lineWidth: 4, rotationSpeed: 0.02, rotationCheck: true, move: true, bounce: true },
+  { lineWidth: 3, rotationSpeed: 0.02, rotationCheck: true, move: true, bounce: true, pulse: true, rainbow: true },
+  { lineWidth: 2, rotationSpeed: 0.04, rotationCheck: true, move: true, bounce: true, pulse: true, rainbow: true, chaosColor: true }
 ];
-
-
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  centerX = canvas.width / 2;
-  centerY = canvas.height / 2;
-  generateStars();
-}
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
-
-function drawStars() {
-  stars.forEach(star => {
-    const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.size * 2);
-    gradient.addColorStop(0, "rgba(255, 255, 255, 0.8)");
-    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-    
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // jemný parallax pohyb
-    star.y += star.speed;
-    if (star.y > canvas.height) {
-      star.y = 0;
-      star.x = Math.random() * canvas.width;
-    }
-  });
-}
-
-
-function drawStarShape(shape, r) {
-  ctx.beginPath();
-  const spikes = {
-    star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
-    star9: 9, star10: 10, star11: 11, star12: 12
-  }[shape] || 5;
-
-  const step = Math.PI / spikes;
-  for (let i = 0; i < 2 * spikes; i++) {
-    const radiusMod = i % 2 === 0 ? r : r * 0.5;
-    const angle = i * step;
-    const x = radiusMod * Math.cos(angle);
-    const y = radiusMod * Math.sin(angle);
-    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-  }
-  ctx.closePath();
-}
-
-function drawShape(shape, x, y, r, rotation, color = "white", width = 4, shadow = false) {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(rotation);
-  ctx.strokeStyle = color;
-  ctx.lineWidth = width;
-  drawStarShape(shape, r);
-  ctx.stroke();
-  ctx.restore();
-}
-
-function shuffle(array) {
-  return array.sort(() => Math.random() - 0.5);
-}
 
 let lives = 5;
 
@@ -150,7 +87,7 @@ function startLevel() {
   enableMove = settings.move || false;
   enableBounce = settings.bounce || false;
 
-  remainingShapes = shuffle([...allStarShapes]);
+  remainingShapes = [...allStarShapes].sort(() => Math.random() - 0.5);
   shapeX = centerX;
   shapeY = centerY;
   shapeVX = (Math.random() - 0.5) * 4;
@@ -158,6 +95,7 @@ function startLevel() {
   nextShape();
   updateLivesDisplay();
   updateLevelDisplay();
+  updateMatchLabel(0);
 }
 
 function nextShape() {
@@ -192,6 +130,53 @@ function createShards(x, y, count = 20) {
   }
 }
 
+function drawStarShape(shape, r) {
+  ctx.beginPath();
+  const spikes = {
+    star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
+    star9: 9, star10: 10, star11: 11, star12: 12
+  }[shape] || 5;
+
+  const step = Math.PI / spikes;
+  for (let i = 0; i < 2 * spikes; i++) {
+    const radiusMod = i % 2 === 0 ? r : r * 0.5;
+    const angle = i * step;
+    const x = radiusMod * Math.cos(angle);
+    const y = radiusMod * Math.sin(angle);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  }
+  ctx.closePath();
+}
+
+function drawShape(shape, x, y, r, rotation, color = "white", width = 4, shadow = false) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  drawStarShape(shape, r);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawStars() {
+  stars.forEach(star => {
+    const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.size * 2);
+    gradient.addColorStop(0, "rgba(255, 255, 255, 0.8)");
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    star.y += star.speed;
+    if (star.y > canvas.height) {
+      star.y = 0;
+      star.x = Math.random() * canvas.width;
+    }
+  });
+}
+
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawStars();
@@ -215,16 +200,12 @@ function draw() {
   if (showWrong) {
     ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     ctx.font = "bold 120px Arial";
     ctx.fillStyle = "red";
     ctx.textAlign = "center";
     ctx.fillText("✖", centerX, canvas.height * 0.25);
-
     effectTimer--;
-    if (effectTimer <= 0) {
-      showWrong = false;
-    }
+    if (effectTimer <= 0) showWrong = false;
   }
 
   if (showExplosion) {
@@ -238,7 +219,6 @@ function draw() {
       ctx.fillStyle = `hsl(${hue}, 100%, ${Math.random() * 30 + 50}%)`;
       ctx.fill();
     }
-
     effectTimer--;
     if (effectTimer <= 0) {
       showExplosion = false;
@@ -275,21 +255,10 @@ function draw() {
   drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, null, lineWidth, false);
   ctx.restore();
 
-  if (isHolding && radius < targetRadius + 20) {
-    radius += 1;
-  }
+  if (isHolding && radius < targetRadius + 600) radius += 1;
 
   if (isHolding) {
-    drawShape(
-      currentShape,
-      shapeX,
-      shapeY,
-      radius,
-      0,
-      `hsl(${hue + 60}, 100%, 50%)`,
-      5,
-      false
-    );
+    drawShape(currentShape, shapeX, shapeY, radius, 0, `hsl(${hue + 60}, 100%, 50%)`, 5, false);
   }
 
   rotation += rotationSpeed;
@@ -297,33 +266,52 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  centerX = canvas.width / 2;
+  centerY = canvas.height / 2;
+  generateStars();
+}
+resizeCanvas();
+window.addEventListener("resize", resizeCanvas);
+
+function updateMatchLabel(percentage) {
+  matchLabel.textContent = `MATCH: ${percentage}%`;
+  matchLabel.style.color = percentage >= 80 ? "lime" : "red";
+}
+
+
 function handleRelease() {
   isHolding = false;
 
-  const diff = Math.abs(radius - targetRadius);
-  const isSizeOk = diff < 8;
+  const maxSizeDiff = 30;
+  const maxAngleDiff = Math.PI / 6;
 
+  const sizeDiff = Math.abs(radius - targetRadius);
   const spikes = {
     star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
-    spiked: 9, supernova: 10, spiralstar: 11, nebula: 12
+    star9: 9, star10: 10, star11: 11, star12: 12
   }[currentShape] || 5;
 
-  const angleSnap = (2 * Math.PI) / spikes;
-  const angleDiff = Math.min(Math.abs(rotation % angleSnap), Math.abs(angleSnap - (rotation % angleSnap)));
-  
-  let angleThreshold;
+  const snapAngle = (2 * Math.PI) / spikes;
+  const angleOffset = rotation % snapAngle;
+  const angleDiff = Math.min(angleOffset, snapAngle - angleOffset);
 
-if (level <= 3) {
-  angleThreshold = 0.35; // ±20°
-} else if (level <= 6) {
-  angleThreshold = 0.21; // ±12°
-} else {
-  angleThreshold = 0.31; // ±18° 
-}
+  let sizeRatio;
+  if (radius > targetRadius + maxSizeDiff) {
+    sizeRatio = 0;
+  } else {
+    sizeRatio = 1 - sizeDiff / maxSizeDiff;
+  }
 
-  const isAngleOk = !needsRotationCheck || angleDiff < angleThreshold;
+  const angleRatio = Math.max(0, 1 - angleDiff / maxAngleDiff);
 
-  if (isSizeOk && isAngleOk) {
+  const match = Math.round(Math.max(0, sizeRatio * angleRatio * 100));
+  updateMatchLabel(match);
+
+  if (match >= 80) {
     showExplosion = true;
     effectTimer = 30;
     createShards(shapeX, shapeY);
@@ -337,12 +325,13 @@ if (level <= 3) {
     if (lives <= 0) {
       alert("Game Over!");
       lives = 5;
-      updateLivesDisplay();
       level = 1;
       startLevel();
     }
   }
 }
+
+
 
 const holdButton = document.getElementById("holdButton");
 
@@ -350,6 +339,7 @@ holdButton.addEventListener("touchstart", (e) => {
   e.preventDefault();
   isHolding = true;
   radius = 0;
+  holdStartTime = performance.now();
 });
 holdButton.addEventListener("touchend", (e) => {
   e.preventDefault();
@@ -359,11 +349,13 @@ holdButton.addEventListener("mousedown", (e) => {
   e.preventDefault();
   isHolding = true;
   radius = 0;
+  holdStartTime = performance.now();
 });
 holdButton.addEventListener("mouseup", (e) => {
   e.preventDefault();
   handleRelease();
 });
+
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "L") {
