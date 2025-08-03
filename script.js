@@ -4,6 +4,7 @@ const ctx = canvas.getContext("2d");
 let centerX, centerY;
 let stars = [];
 
+
 function generateStars(count = 100) {
   stars = Array.from({ length: count }, () => ({
     x: Math.random() * canvas.width,
@@ -47,6 +48,13 @@ let shapeVY = 0;
 let enableMove = false;
 let holdStartTime = 0;
 let enableBounce = false;
+
+let holdHueShift = 0;
+
+let holdHue = 200; 
+
+
+
 
 const matchLabel = document.getElementById("matchLabel");
 
@@ -109,6 +117,8 @@ function nextShape() {
   rotation = 0;
   radius = 0;
   targetRadius = Math.random() * 50 + 50;
+  currentColorShift = Math.random() * 360;
+
 }
 
 function createShards(x, y, count = 20) {
@@ -148,16 +158,28 @@ function drawStarShape(shape, r) {
   ctx.closePath();
 }
 
-function drawShape(shape, x, y, r, rotation, color = "white", width = 4, shadow = false) {
+function drawShape(shape, x, y, r, rotation, baseHue = 0, width = 4) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rotation);
-  ctx.strokeStyle = color;
+
+  const gradient = ctx.createLinearGradient(-r, -r, r, r);
+  gradient.addColorStop(0, `hsl(${(baseHue + 0) % 360}, 100%, 60%)`);
+  gradient.addColorStop(0.5, `hsl(${(baseHue + 60) % 360}, 100%, 60%)`);
+  gradient.addColorStop(1, `hsl(${(baseHue + 120) % 360}, 100%, 60%)`);
+
+  ctx.strokeStyle = gradient;
   ctx.lineWidth = width;
+
+  ctx.shadowBlur = 5;
+  ctx.shadowColor = `hsl(${(baseHue + 60) % 360}, 100%, 80%)`;
+
   drawStarShape(shape, r);
   ctx.stroke();
   ctx.restore();
 }
+
+
 
 function drawStars() {
   stars.forEach(star => {
@@ -252,14 +274,24 @@ function draw() {
   ctx.save();
   ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
   ctx.lineWidth = lineWidth;
-  drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, null, lineWidth, false);
+  drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
   ctx.restore();
 
   if (isHolding && radius < targetRadius + 600) radius += 1;
 
   if (isHolding) {
-    drawShape(currentShape, shapeX, shapeY, radius, 0, `hsl(${hue + 60}, 100%, 50%)`, 5, false);
-  }
+  // Jemná výplň
+  ctx.save();
+  ctx.translate(shapeX, shapeY);
+  ctx.rotate(0);
+  drawStarShape(currentShape, radius);
+  ctx.fill();
+  ctx.restore();
+
+  // Obrys
+  drawShape(currentShape, shapeX, shapeY, radius, 0, holdHue + hue, 5);
+}
+
 
   rotation += rotationSpeed;
   hue = (hue + 1) % 360;
@@ -282,33 +314,36 @@ function updateMatchLabel(percentage) {
   matchLabel.style.color = percentage >= 80 ? "lime" : "red";
 }
 
-
 function handleRelease() {
   isHolding = false;
 
-  const maxSizeDiff = 30;
-  const maxAngleDiff = Math.PI / 6;
+  // Přísnost se přizpůsobí podle pohybu
+  const isMoving = enableMove;
 
-  const sizeDiff = Math.abs(radius - targetRadius);
+  const maxSizeDiff = isMoving ? 40 : 30;
+  const baseAngleTolerance = Math.PI / 6;
+
   const spikes = {
     star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
     star9: 9, star10: 10, star11: 11, star12: 12
   }[currentShape] || 5;
 
   const snapAngle = (2 * Math.PI) / spikes;
+  const maxAngleDiff = isMoving ? baseAngleTolerance + snapAngle * 0.3 : baseAngleTolerance;
+
+  const sizeDiff = Math.abs(radius - targetRadius);
+
+  let sizeRatio = radius > targetRadius + maxSizeDiff
+    ? 0
+    : 1 - sizeDiff / maxSizeDiff;
+
   const angleOffset = rotation % snapAngle;
   const angleDiff = Math.min(angleOffset, snapAngle - angleOffset);
-
-  let sizeRatio;
-  if (radius > targetRadius + maxSizeDiff) {
-    sizeRatio = 0;
-  } else {
-    sizeRatio = 1 - sizeDiff / maxSizeDiff;
-  }
-
   const angleRatio = Math.max(0, 1 - angleDiff / maxAngleDiff);
 
   const match = Math.round(Math.max(0, sizeRatio * angleRatio * 100));
+
+  // ✅ Zobrazení aktuálního match vždy
   updateMatchLabel(match);
 
   if (match >= 80) {
@@ -323,14 +358,16 @@ function handleRelease() {
     updateLivesDisplay();
 
     if (lives <= 0) {
-      alert("Game Over!");
-      lives = 5;
-      level = 1;
-      startLevel();
+      // ✅ Oddálení alertu kvůli vykreslení
+      setTimeout(() => {
+        alert("Game Over!");
+        lives = 5;
+        level = 1;
+        startLevel();
+      }, 100);
     }
   }
 }
-
 
 
 const holdButton = document.getElementById("holdButton");
@@ -340,6 +377,7 @@ holdButton.addEventListener("touchstart", (e) => {
   isHolding = true;
   radius = 0;
   holdStartTime = performance.now();
+  holdHue = Math.random() * 360;
 });
 holdButton.addEventListener("touchend", (e) => {
   e.preventDefault();
@@ -350,6 +388,7 @@ holdButton.addEventListener("mousedown", (e) => {
   isHolding = true;
   radius = 0;
   holdStartTime = performance.now();
+  holdHue = Math.random() * 360;
 });
 holdButton.addEventListener("mouseup", (e) => {
   e.preventDefault();
