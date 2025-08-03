@@ -53,6 +53,9 @@ let holdHueShift = 0;
 
 let holdHue = 200; 
 
+let fragments = [];
+
+let firstStart = true;
 
 
 
@@ -87,6 +90,27 @@ function updateLevelDisplay() {
   }
 }
 
+function createFragments(shape, x, y) {
+  const count = Math.floor(Math.random() * 10) + 25;
+  for (let i = 0; i < count; i++) {
+    const angle = (i / count) * 2 * Math.PI;
+    const speed = Math.random() * 1.5 + 0.5;
+    const size = Math.random() * 10 + 5;
+
+    fragments.push({
+      shape,
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.1,
+      size,
+      alpha: 1
+    });
+  }
+}
+
 function startLevel() {
   const settings = levels[Math.min(level - 1, levels.length - 1)];
   lineWidth = settings.lineWidth;
@@ -100,11 +124,18 @@ function startLevel() {
   shapeY = centerY;
   shapeVX = (Math.random() - 0.5) * 4;
   shapeVY = (Math.random() - 0.5) * 4;
+
+  // ✅ MATCH: 0% jen při úplném spuštění hry
+  if (firstStart) {
+    updateMatchLabel(0);
+    firstStart = false;
+  }
+
   nextShape();
   updateLivesDisplay();
   updateLevelDisplay();
-  updateMatchLabel(0);
 }
+
 
 function nextShape() {
   if (remainingShapes.length === 0) {
@@ -118,7 +149,6 @@ function nextShape() {
   radius = 0;
   targetRadius = Math.random() * 50 + 50;
   currentColorShift = Math.random() * 360;
-
 }
 
 function createShards(x, y, count = 20) {
@@ -197,6 +227,21 @@ function drawStars() {
       star.x = Math.random() * canvas.width;
     }
   });
+  fragments.forEach(frag => {
+  ctx.save();
+  ctx.translate(frag.x, frag.y);
+  ctx.rotate(frag.rotation);
+  ctx.globalAlpha = frag.alpha;
+  drawShape(frag.shape, 0, 0, frag.size, 0, hue, 2);
+  ctx.restore();
+
+  frag.x += frag.vx;
+  frag.y += frag.vy;
+  frag.rotation += frag.rotationSpeed;
+  frag.alpha -= 0.0015;
+});
+fragments = fragments.filter(f => f.alpha > 0);
+
 }
 
 function draw() {
@@ -347,6 +392,7 @@ function handleRelease() {
   updateMatchLabel(match);
 
   if (match >= 80) {
+    createFragments(currentShape, shapeX, shapeY);
     showExplosion = true;
     effectTimer = 30;
     createShards(shapeX, shapeY);
@@ -363,6 +409,7 @@ function handleRelease() {
         alert("Game Over!");
         lives = 5;
         level = 1;
+        firstStart = true;
         startLevel();
       }, 100);
     }
