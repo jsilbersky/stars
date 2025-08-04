@@ -419,36 +419,48 @@ function handleRelease() {
 
 const holdButton = document.getElementById("holdButton");
 
-holdButton.addEventListener("touchstart", (e) => {
-  e.preventDefault();
+function startHold() {
   isHolding = true;
   radius = 0;
   holdStartTime = performance.now();
   holdHue = Math.random() * 360;
+  holdButton.classList.add('active');
+}
+
+function endHold() {
+  isHolding = false;
+  handleRelease();
+  holdButton.classList.remove('active');
+}
+
+// Dotykové události (mobil)
+holdButton.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  startHold();
 });
 holdButton.addEventListener("touchend", (e) => {
   e.preventDefault();
-  handleRelease();
+  endHold();
 });
+
+// Myš (desktop)
 holdButton.addEventListener("mousedown", (e) => {
   e.preventDefault();
-  isHolding = true;
-  radius = 0;
-  holdStartTime = performance.now();
-  holdHue = Math.random() * 360;
+  startHold();
 });
 holdButton.addEventListener("mouseup", (e) => {
   e.preventDefault();
-  handleRelease();
+  endHold();
 });
 
-
+// Klávesa pro testování levelů
 window.addEventListener("keydown", (e) => {
   if (e.key === "L") {
     level++;
     startLevel();
   }
 });
+
 
 
 
