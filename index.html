@@ -28,6 +28,18 @@
     <button id="holdButton">HOLD</button>
   </div>
 
+  <!-- Pop-up okno pro Game Over -->
+  <div id="gameOverPopup" class="hidden">
+    <div class="popup-content">
+      <h2>GAME OVER</h2>
+      <button id="newGameButton">NEW GAME</button>
+    </div>
+  </div>
+
   <script src="script.js"></script>
+  <script>
+    // Pro jistotu ještě přidáme ručně handler na tlačítko
+    document.getElementById("newGameButton").addEventListener("click", startNewGame);
+  </script>
 </body>
 </html>

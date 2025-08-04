@@ -113,6 +113,7 @@ function createFragments(shape, x, y) {
 }
 
 function startLevel() {
+  document.getElementById("gameOverPopup").classList.add("hidden");
   const settings = levels[Math.min(level - 1, levels.length - 1)];
   lineWidth = settings.lineWidth;
   rotationSpeed = settings.rotationSpeed;
@@ -408,15 +409,22 @@ function handleRelease() {
 
     if (lives <= 0) {
       setTimeout(() => {
-        alert("Game Over!");
-        lives = 5;
-        level = 1;
-        firstStart = true;
-        startLevel();
-      }, 100);
+        document.getElementById("gameOverPopup").classList.remove("hidden");
+      }, 500);
     }
   }
 }
+
+window.startNewGame = function () {
+document.getElementById("gameOverPopup").classList.add("hidden");
+
+lives = 5;
+level = 1;
+firstStart = true;
+startLevel();
+updateMatchLabel(0);
+};
+
 
 const holdButton = document.getElementById("holdButton");
 
