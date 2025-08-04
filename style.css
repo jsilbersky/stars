@@ -117,7 +117,7 @@ canvas {
 @media (max-width: 600px) {
   #controlPanel {
     height: 150px;
-    padding: 14px 22px; /* lehce upraveno */
+    padding: 20px 28px 24px; 
   }
 
   #panelBg {
@@ -134,22 +134,24 @@ canvas {
   }
 
   #leftPanel {
-    padding-bottom: 10px;
+    padding-bottom: 6px;
+    align-items: flex-start; 
   }
 
   #holdButton {
     width: 75px;
     height: 75px;
     font-size: 17px;
-    transform: translateX(-50%) translateY(-55%);
+    transform: translateX(-50%) translateY(-45%); 
   }
 
   #holdButton:active,
   #holdButton.active {
-    transform: translateX(-50%) translateY(-48%) scale(0.95);
+    transform: translateX(-50%) translateY(-40%) scale(0.95);
   }
 
   canvas {
     height: calc(100vh - 150px);
   }
 }
+
