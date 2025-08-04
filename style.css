@@ -40,7 +40,7 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 10px 20px;
+  padding: 20px 24px;
   box-sizing: border-box;
   background: transparent;
   z-index: 3;
@@ -56,7 +56,7 @@ canvas {
   position: relative;
   z-index: 2;
   color: cyan;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
 }
 
 #lives {
@@ -103,7 +103,7 @@ canvas {
   position: absolute;
   left: 50%;
   bottom: 0;
-  transform: translateX(-50%) translateY(-38%);
+  transform: translateX(-50%) translateY(-44%);
   z-index: 4;
   font-family: 'Audiowide', sans-serif;
   transition: transform 0.5s ease, background-color 0.5s ease, box-shadow 0.6s ease;
@@ -111,7 +111,7 @@ canvas {
 
 #holdButton:active,
 #holdButton.active {
-  transform: translateX(-50%) translateY(-36%) scale(0.95);
+  transform: translateX(-50%) translateY(-39%) scale(0.95);
   background-color: #002f2f;
   color: #0ff;
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
