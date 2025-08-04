@@ -117,7 +117,7 @@ canvas {
 @media (max-width: 600px) {
   #controlPanel {
     height: 150px;
-    padding: 20px 28px 24px; 
+    padding: 20px 26px 14px 30px; 
   }
 
   #panelBg {
