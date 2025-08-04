@@ -91,11 +91,11 @@ function updateLevelDisplay() {
 }
 
 function createFragments(shape, x, y) {
-  const count = Math.floor(Math.random() * 10) + 25;
+  const count = Math.floor(Math.random() * 30) + 180; // ✅ dost částic, ale ne přehnaně
   for (let i = 0; i < count; i++) {
-    const angle = (i / count) * 2 * Math.PI;
-    const speed = Math.random() * 1.5 + 0.5;
-    const size = Math.random() * 10 + 5;
+    const angle = Math.random() * 2 * Math.PI;
+    const speed = Math.random() * 1.8 + 0.4;     // ✅ přirozený pomalejší rozlet
+    const size = Math.random() * 6 + 4;          // ✅ o něco menší fragmenty
 
     fragments.push({
       shape,
@@ -104,12 +104,19 @@ function createFragments(shape, x, y) {
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.1,
+      rotationSpeed: (Math.random() - 0.5) * 0.05, // ✅ jemnější otáčení
       size,
       alpha: 1
     });
   }
+
+  if (fragments.length > 600) {
+    fragments.splice(0, fragments.length - 600); // ✅ udrží výkon
+  }
 }
+
+
+
 
 function startLevel() {
   const settings = levels[Math.min(level - 1, levels.length - 1)];
@@ -201,7 +208,7 @@ function drawShape(shape, x, y, r, rotation, baseHue = 0, width = 4) {
   ctx.strokeStyle = gradient;
   ctx.lineWidth = width;
 
-  ctx.shadowBlur = 5;
+  ctx.shadowBlur = 0;
   ctx.shadowColor = `hsl(${(baseHue + 60) % 360}, 100%, 80%)`;
 
   drawStarShape(shape, r);
@@ -227,20 +234,8 @@ function drawStars() {
       star.x = Math.random() * canvas.width;
     }
   });
-  fragments.forEach(frag => {
-  ctx.save();
-  ctx.translate(frag.x, frag.y);
-  ctx.rotate(frag.rotation);
-  ctx.globalAlpha = frag.alpha;
-  drawShape(frag.shape, 0, 0, frag.size, 0, hue, 2);
-  ctx.restore();
 
-  frag.x += frag.vx;
-  frag.y += frag.vy;
-  frag.rotation += frag.rotationSpeed;
-  frag.alpha -= 0.0015;
-});
-fragments = fragments.filter(f => f.alpha > 0);
+
 
 }
 
@@ -321,6 +316,33 @@ function draw() {
   ctx.lineWidth = lineWidth;
   drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
   ctx.restore();
+
+  // 💥 Výbuchy (fragments) vykreslené až přes hvězdu
+fragments.forEach(frag => {
+  ctx.save();
+  ctx.translate(frag.x, frag.y);
+  ctx.rotate(frag.rotation);
+  ctx.globalAlpha = frag.alpha;
+
+  const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, frag.size);
+  gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, ${frag.alpha})`);
+  gradient.addColorStop(1, `hsla(${hue}, 100%, 70%, 0)`);
+
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(0, 0, frag.size, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  frag.x += frag.vx;
+  frag.y += frag.vy;
+  frag.rotation += frag.rotationSpeed;
+  frag.size += 0.1;
+  frag.alpha -= 0.004;
+});
+
+fragments = fragments.filter(f => f.alpha > 0);
+
 
   if (isHolding && radius < targetRadius + 600) radius += 1;
 
