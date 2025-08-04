@@ -134,13 +134,14 @@ canvas {
   }
 
   #leftPanel {
+
     padding-bottom: 16px;
     align-items: flex-start; 
   }
 
   #holdButton {
-    width: 75px;
-    height: 75px;
+    width: 83px;
+    height: 83px;
     font-size: 17px;
     transform: translateX(-50%) translateY(-45%); 
   }
