@@ -10,17 +10,15 @@ html, body {
   touch-action: none;
 }
 
-/* Canvas – herní plocha */
 canvas {
   display: block;
   width: 100vw;
-  height: calc(100vh - 150px); /* zvýšeno pro vyšší control panel */
+  height: calc(100vh - 150px);
   background-color: transparent;
   position: relative;
   z-index: 1;
 }
 
-/* Obrázek pozadí panelu */
 #panelBg {
   position: absolute;
   bottom: 0;
@@ -31,7 +29,6 @@ canvas {
   z-index: 2;
 }
 
-/* Ovládací panel */
 #controlPanel {
   height: 150px;
   width: 100vw;
@@ -40,13 +37,12 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 20px 24px;
+  padding: 20px 28px; /* upraveno z 24px */
   box-sizing: border-box;
   background: transparent;
   z-index: 3;
 }
 
-/* Levý panel: životy, level, match */
 #leftPanel {
   display: flex;
   flex-direction: column;
@@ -56,7 +52,7 @@ canvas {
   position: relative;
   z-index: 2;
   color: cyan;
-  padding-bottom: 8px;
+  padding-bottom: 12px; /* upraveno z 8px */
 }
 
 #lives {
@@ -88,7 +84,6 @@ canvas {
   text-shadow: 0 0 2px #ff0000ec;
 }
 
-/* Tlačítko HOLD */
 #holdButton {
   width: 90px;
   height: 90px;
@@ -103,15 +98,16 @@ canvas {
   position: absolute;
   left: 50%;
   bottom: 0;
-  transform: translateX(-50%) translateY(-44%);
+  transform: translateX(-50%) translateY(-48%); /* upraveno z -44% */
   z-index: 4;
   font-family: 'Audiowide', sans-serif;
   transition: transform 0.5s ease, background-color 0.5s ease, box-shadow 0.6s ease;
+  box-sizing: border-box; /* přidáno */
 }
 
 #holdButton:active,
 #holdButton.active {
-  transform: translateX(-50%) translateY(-39%) scale(0.95);
+  transform: translateX(-50%) translateY(-46%) scale(0.95); /* upraveno z -39% */
   background-color: #002f2f;
   color: #0ff;
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
@@ -121,7 +117,7 @@ canvas {
 @media (max-width: 600px) {
   #controlPanel {
     height: 150px;
-    padding: 10px;
+    padding: 14px 22px; /* lehce upraveno */
   }
 
   #panelBg {
@@ -137,16 +133,20 @@ canvas {
     font-size: 13px;
   }
 
+  #leftPanel {
+    padding-bottom: 10px;
+  }
+
   #holdButton {
     width: 75px;
     height: 75px;
     font-size: 17px;
-    transform: translateX(-50%) translateY(-38%);
+    transform: translateX(-50%) translateY(-55%);
   }
 
   #holdButton:active,
   #holdButton.active {
-    transform: translateX(-50%) translateY(-36%) scale(0.95);
+    transform: translateX(-50%) translateY(-48%) scale(0.95);
   }
 
   canvas {
