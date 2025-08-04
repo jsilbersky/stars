@@ -4,7 +4,6 @@ const ctx = canvas.getContext("2d");
 let centerX, centerY;
 let stars = [];
 
-
 function generateStars(count = 100) {
   stars = Array.from({ length: count }, () => ({
     x: Math.random() * canvas.width,
@@ -57,8 +56,6 @@ let fragments = [];
 
 let firstStart = true;
 
-
-
 const matchLabel = document.getElementById("matchLabel");
 
 const allStarShapes = ["star4", "star5", "star6", "star7", "star8", "star9", "star10", "star11", "star12"];
@@ -91,11 +88,11 @@ function updateLevelDisplay() {
 }
 
 function createFragments(shape, x, y) {
-  const count = Math.floor(Math.random() * 30) + 180; // ✅ dost částic, ale ne přehnaně
+  const count = Math.floor(Math.random() * 30) + 90;
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * 2 * Math.PI;
-    const speed = Math.random() * 1.8 + 0.4;     // ✅ přirozený pomalejší rozlet
-    const size = Math.random() * 6 + 4;          // ✅ o něco menší fragmenty
+    const speed = Math.random() * 3 + 1;
+    const size = Math.random() * 15 + 10;
 
     fragments.push({
       shape,
@@ -104,19 +101,16 @@ function createFragments(shape, x, y) {
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.05, // ✅ jemnější otáčení
+      rotationSpeed: (Math.random() - 0.5) * 0.1,
       size,
       alpha: 1
     });
   }
 
-  if (fragments.length > 600) {
-    fragments.splice(0, fragments.length - 600); // ✅ udrží výkon
+  if (fragments.length > 500) {
+    fragments.splice(0, fragments.length - 500);
   }
 }
-
-
-
 
 function startLevel() {
   const settings = levels[Math.min(level - 1, levels.length - 1)];
@@ -132,7 +126,6 @@ function startLevel() {
   shapeVX = (Math.random() - 0.5) * 4;
   shapeVY = (Math.random() - 0.5) * 4;
 
-  // ✅ MATCH: 0% jen při úplném spuštění hry
   if (firstStart) {
     updateMatchLabel(0);
     firstStart = false;
@@ -142,7 +135,6 @@ function startLevel() {
   updateLivesDisplay();
   updateLevelDisplay();
 }
-
 
 function nextShape() {
   if (remainingShapes.length === 0) {
@@ -216,8 +208,6 @@ function drawShape(shape, x, y, r, rotation, baseHue = 0, width = 4) {
   ctx.restore();
 }
 
-
-
 function drawStars() {
   stars.forEach(star => {
     const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.size * 2);
@@ -234,9 +224,6 @@ function drawStars() {
       star.x = Math.random() * canvas.width;
     }
   });
-
-
-
 }
 
 function draw() {
@@ -288,36 +275,36 @@ function draw() {
     }
   }
 
-  if (enableMove) {
-    if (enableBounce) {
-      if (shapeX - targetRadius <= 0 && shapeVX < 0) {
-        shapeVX *= -1;
-        shapeX = targetRadius;
-      } else if (shapeX + targetRadius >= canvas.width && shapeVX > 0) {
-        shapeVX *= -1;
-        shapeX = canvas.width - targetRadius;
-      }
-
-      if (shapeY - targetRadius <= 0 && shapeVY < 0) {
-        shapeVY *= -1;
-        shapeY = targetRadius;
-      } else if (shapeY + targetRadius >= canvas.height && shapeVY > 0) {
-        shapeVY *= -1;
-        shapeY = canvas.height - targetRadius;
-      }
+if (enableMove) {
+  if (enableBounce) {
+    if (shapeX - targetRadius <= 0 && shapeVX < 0) {
+      shapeVX *= -1;
+      shapeX = targetRadius;
+    } else if (shapeX + targetRadius >= canvas.width && shapeVX > 0) {
+      shapeVX *= -1;
+      shapeX = canvas.width - targetRadius;
     }
 
-    shapeX += shapeVX;
-    shapeY += shapeVY;
+    if (shapeY - targetRadius <= 0 && shapeVY < 0) {
+      shapeVY *= -1;
+      shapeY = targetRadius;
+    } else if (shapeY + targetRadius >= canvas.height && shapeVY > 0) {
+      shapeVY *= -1;
+      shapeY = canvas.height - targetRadius;
+    }
   }
 
-  ctx.save();
-  ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
-  ctx.lineWidth = lineWidth;
-  drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
-  ctx.restore();
+  shapeX += shapeVX;
+  shapeY += shapeVY;
+}
 
-  // 💥 Výbuchy (fragments) vykreslené až přes hvězdu
+ctx.save();
+ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
+ctx.lineWidth = lineWidth;
+drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
+ctx.restore();
+
+// 💥 Výbuchy (fragments) vykreslené až přes hvězdu
 fragments.forEach(frag => {
   ctx.save();
   ctx.translate(frag.x, frag.y);
@@ -343,10 +330,9 @@ fragments.forEach(frag => {
 
 fragments = fragments.filter(f => f.alpha > 0);
 
+if (isHolding && radius < targetRadius + 600) radius += 1;
 
-  if (isHolding && radius < targetRadius + 600) radius += 1;
-
-  if (isHolding) {
+if (isHolding) {
   // Jemná výplň
   ctx.save();
   ctx.translate(shapeX, shapeY);
@@ -359,12 +345,10 @@ fragments = fragments.filter(f => f.alpha > 0);
   drawShape(currentShape, shapeX, shapeY, radius, 0, holdHue + hue, 5);
 }
 
-
-  rotation += rotationSpeed;
-  hue = (hue + 1) % 360;
-  requestAnimationFrame(draw);
+rotation += rotationSpeed;
+hue = (hue + 1) % 360;
+requestAnimationFrame(draw);
 }
-
 
 function resizeCanvas() {
   canvas.width = window.innerWidth;
@@ -384,9 +368,7 @@ function updateMatchLabel(percentage) {
 function handleRelease() {
   isHolding = false;
 
-  // Přísnost se přizpůsobí podle pohybu
   const isMoving = enableMove;
-
   const maxSizeDiff = isMoving ? 40 : 30;
   const baseAngleTolerance = Math.PI / 6;
 
@@ -410,7 +392,6 @@ function handleRelease() {
 
   const match = Math.round(Math.max(0, sizeRatio * angleRatio * 100));
 
-  // ✅ Zobrazení aktuálního match vždy
   updateMatchLabel(match);
 
   if (match >= 80) {
@@ -426,7 +407,6 @@ function handleRelease() {
     updateLivesDisplay();
 
     if (lives <= 0) {
-      // ✅ Oddálení alertu kvůli vykreslení
       setTimeout(() => {
         alert("Game Over!");
         lives = 5;
@@ -437,7 +417,6 @@ function handleRelease() {
     }
   }
 }
-
 
 const holdButton = document.getElementById("holdButton");
 
@@ -483,9 +462,6 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-
-
-
 holdButton.addEventListener('touchstart', () => {
   holdButton.classList.add('active');
 });
@@ -493,7 +469,6 @@ holdButton.addEventListener('touchstart', () => {
 holdButton.addEventListener('touchend', () => {
   holdButton.classList.remove('active');
 });
-
 
 startLevel();
 draw();
