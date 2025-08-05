@@ -48,7 +48,7 @@ canvas {
   flex-direction: column;
   align-items: flex-start;
   justify-content: flex-end;
-  gap: 4px;
+  gap: 10px;
   position: relative;
   z-index: 2;
   color: cyan;
@@ -57,19 +57,30 @@ canvas {
 
 #lives {
   display: flex;
-  gap: 2px;
-  font-size: 16px;
+  gap: 4px;            /* trochu větší mezera */
+  align-items: center;
   user-select: none;
+  line-height: 1.2;
 }
 
+
 .heart {
+  width: 22px;
+  height: 22px; /* Přidá výšku, aby byla podobná jako text */
+  object-fit: contain;
+  vertical-align: middle;
   opacity: 1;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
+
+
 
 .heart.lost {
   opacity: 0.3;
+  filter: grayscale(100%) drop-shadow(0 0 1px #888);
+  transform: scale(0.95);
 }
+
 
 #levelLabel {
   font-size: 14px;
@@ -185,6 +196,17 @@ canvas {
   pointer-events: none;
 }
 
+@keyframes matchPulse {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+
+#matchLabel.pulse {
+  animation: matchPulse 0.2s ease-out;
+}
+
+
 
 /* 🔽 Responsivní úpravy pro mobilní displeje */
 @media (max-width: 600px) {
@@ -210,6 +232,7 @@ canvas {
 
     padding-bottom: 16px;
     align-items: flex-start; 
+    gap: 6 px;
   }
 
   #holdButton {
@@ -227,5 +250,9 @@ canvas {
   canvas {
     height: calc(100vh - 150px);
   }
+
+  .heart {
+  width: 18px;
+}
 }
 
