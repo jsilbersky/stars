@@ -331,7 +331,7 @@ fragments.forEach(frag => {
 
 fragments = fragments.filter(f => f.alpha > 0);
 
-if (isHolding && radius < targetRadius + 600) radius += 1;
+if (isHolding && radius < targetRadius + 1000) radius += 1;
 
 if (isHolding) {
   // Jemná výplň
@@ -396,24 +396,35 @@ function handleRelease() {
   updateMatchLabel(match);
 
   if (match >= 80) {
-    createFragments(currentShape, shapeX, shapeY);
-    showExplosion = true;
-    effectTimer = 30;
-    createShards(shapeX, shapeY);
-    flashAlpha = 0.6;
-  } else {
-    showWrong = true;
-    effectTimer = 30;
-    lives--;
-    updateLivesDisplay();
+  createFragments(currentShape, shapeX, shapeY);
+  showExplosion = true;
+  effectTimer = 30;
+  createShards(shapeX, shapeY);
+  flashAlpha = 0.6;
 
-    if (lives <= 0) {
-      setTimeout(() => {
-        document.getElementById("gameOverPopup").classList.remove("hidden");
-      }, 500);
-    }
+  // 💥 Přehrát zvuk výbuchu
+  explosionSound.currentTime = 0;
+  explosionSound.play();
+
+  } else {
+  showWrong = true;
+  effectTimer = 30;
+  lives--;
+  updateLivesDisplay();
+
+  //Přehrát zvuk chyby
+  failSound.currentTime = 0;
+  failSound.play();
+
+  if (lives <= 0) {
+    setTimeout(() => {
+      document.getElementById("gameOverPopup").classList.remove("hidden");
+    }, 500);
   }
 }
+}
+
+
 
 window.startNewGame = function () {
 document.getElementById("gameOverPopup").classList.add("hidden");
@@ -427,6 +438,20 @@ updateMatchLabel(0);
 
 
 const holdButton = document.getElementById("holdButton");
+//Zvuk pro HOLD tlačítko
+const holdSound = new Audio('sounds/hold.mp3');
+holdSound.preload = 'auto';
+holdSound.volume = 1.0;
+
+const explosionSound = new Audio('sounds/explosion.mp3');
+explosionSound.preload = 'auto';
+explosionSound.volume = 1.0;
+
+const failSound = new Audio('sounds/fail.mp3');
+failSound.preload = 'auto';
+failSound.volume = 1.0;
+
+
 
 function startHold() {
   isHolding = true;
@@ -434,7 +459,12 @@ function startHold() {
   holdStartTime = performance.now();
   holdHue = Math.random() * 360;
   holdButton.classList.add('active');
+
+  // Spusť zvuk od začátku
+  holdSound.currentTime = 0.5;
+  holdSound.play();
 }
+
 
 function endHold() {
   isHolding = false;
