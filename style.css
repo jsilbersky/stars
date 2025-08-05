@@ -86,6 +86,7 @@ canvas {
   font-size: 14px;
   color: cyan;
   font-weight: bold;
+  text-shadow: none;
 }
 
 #matchLabel {
@@ -255,4 +256,3 @@ canvas {
   width: 18px;
 }
 }
-

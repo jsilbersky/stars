@@ -362,14 +362,18 @@ resizeCanvas();
 window.addEventListener("resize", resizeCanvas);
 
 function updateMatchLabel(percentage) {
-  matchLabel.textContent = `MATCH: ${percentage}%`;
   matchLabel.style.color = percentage >= 80 ? "lime" : "red";
+  matchLabel.style.textShadow = percentage >= 80 
+    ? "0 0 2px lime" 
+    : "0 0 2px red";
+}
+
 
   // Přehraj pulzovací animaci
   matchLabel.classList.remove("pulse");            // Resetuje animaci
   void matchLabel.offsetWidth;                     // Vynutí reflow (hack)
   matchLabel.classList.add("pulse");               // Spustí znovu
-}
+
 
 
 function handleRelease() {
