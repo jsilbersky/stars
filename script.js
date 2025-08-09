@@ -1,10 +1,46 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+// <<< NOVÉ: reference na HUD a panel + přesné měření a nastavení canvasu
+const hudTop = document.getElementById("hudTop");
+const controlPanel = document.getElementById("controlPanel");
+
+function sizeGameCanvas() {
+  const vpH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+  const vpW = window.visualViewport ? window.visualViewport.width  : window.innerWidth;
+
+  const hudH = hudTop ? hudTop.offsetHeight : 0;
+  const panelH = controlPanel ? controlPanel.offsetHeight : 0;
+
+  const availH = Math.max(100, Math.floor(vpH - hudH - panelH));
+  const availW = Math.floor(vpW);
+
+  // reálné pixelové rozměry (důležité pro fyziku a kreslení)
+  canvas.width  = availW;
+  canvas.height = availH;
+
+  // umístění mezi HUD a panel (jen vizuální styl)
+  canvas.style.position = "absolute";
+  canvas.style.top = hudH + "px";
+  canvas.style.left = "0";
+  canvas.style.width = "100vw";
+  canvas.style.height = availH + "px";
+
+  centerX = canvas.width / 2;
+  centerY = canvas.height / 2;
+
+  generateStars();
+}
+
+// přepočítávání při změně velikosti / orientace
+window.addEventListener("resize", sizeGameCanvas);
+window.addEventListener("orientationchange", sizeGameCanvas);
+if (window.visualViewport) window.visualViewport.addEventListener("resize", sizeGameCanvas);
+
+// ===== HUD prvky, čas a skóre =====
 let centerX, centerY;
 let stars = [];
 
-// ===== HUD prvky, čas a skóre =====
 const timerWrap = document.getElementById("timerWrap");
 const timerBar  = document.getElementById("timerBar");
 const scoreLabel = document.getElementById("scoreLabel");
@@ -21,7 +57,6 @@ function updateScoreUI() {
 function pulseScore() {
   if (!scoreLabel) return;
   scoreLabel.classList.remove('score-pulse');
-  // force reflow
   void scoreLabel.offsetWidth;
   scoreLabel.classList.add('score-pulse');
 }
@@ -36,6 +71,7 @@ function updateTimerUI() {
   const ratio = Math.max(0, Math.min(1, timeRemaining / TIMER_MAX));
   if (timerBar) timerBar.style.width = `${ratio * 100}%`;
 }
+let lastTick = performance.now();
 function tickTimer(now) {
   if (!lastTick) lastTick = now;
   const delta = (now - lastTick) / 1000;
@@ -48,12 +84,11 @@ function tickTimer(now) {
     return;
   }
 
-  // doplnit ze zásoby, když je místo
   if (timeRemaining < TIMER_MAX && timeBank > 0) {
     const give = Math.min(TIMER_MAX - timeRemaining, timeBank);
     timeRemaining += give;
     timeBank -= give;
-    blinkTimer(); // jemné potvrzení doplnění
+    blinkTimer();
   }
 
   updateTimerUI();
@@ -66,35 +101,27 @@ function triggerGameOver() {
   if (popup) popup.classList.remove("hidden");
 }
 
-// ===== Plovoucí text (nenarušující info o bodech/čase) =====
+// ===== Plovoucí text =====
 let floaters = [];
 function addFloater(text, x, y, color = '#00ffff', duration = 1500) {
-  floaters.push({
-    text, x, y,
-    color,
-    start: performance.now(),
-    duration,
-    vy: -0.4,          // rychlost vzhůru (px/frame-ish)
-    alphaFrom: 1,
-    alphaTo: 0
-  });
+  floaters.push({ text, x, y, color, start: performance.now(), duration, vy: -0.4, alphaFrom: 1, alphaTo: 0 });
 }
 function drawFloaters(now) {
   const kept = [];
   for (const f of floaters) {
-    const t = (now - f.start) / f.duration; // 0..1
+    const t = (now - f.start) / f.duration;
     if (t >= 1) continue;
-    const ease = t < 0.7 ? (t / 0.7) : 1;   // lehké zpomalení
+    const ease = t < 0.7 ? (t / 0.7) : 1;
     const alpha = f.alphaFrom + (f.alphaTo - f.alphaFrom) * t;
 
     ctx.save();
     ctx.globalAlpha = Math.max(0, alpha);
     ctx.fillStyle = f.color;
-    ctx.font = 'bold 22px Audiowide, sans-serif'; // bylo 18px → 22px
+    ctx.font = 'bold 22px Audiowide, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = f.color;
-    ctx.shadowBlur = 18; // bylo 10 → 18 pro silnější záři
+    ctx.shadowBlur = 18;
     ctx.fillText(f.text, f.x, f.y + f.vy * (ease * 120));
     ctx.restore();
 
@@ -103,8 +130,7 @@ function drawFloaters(now) {
   floaters = kept;
 }
 
-
-// ===== (Zbytek původní logiky) =====
+// ===== Hvězdné pozadí =====
 function generateStars(count = 100) {
   stars = Array.from({ length: count }, () => ({
     x: Math.random() * canvas.width,
@@ -156,8 +182,6 @@ let firstStart = true;
 let holdGrowth = 1;
 
 let timeBank = 0;
-let lastTick = performance.now();
-
 
 const matchLabel = document.getElementById("matchLabel");
 const allStarShapes = ["star5", "star6", "star7", "star8", "star9"];
@@ -165,27 +189,19 @@ const allStarShapes = ["star5", "star6", "star7", "star8", "star9"];
 const levels = [
   { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, holdGrowth: 1.00 },
   { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, holdGrowth: 1.1 },
-  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false,
-    oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.045, holdGrowth: 1.18 },
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false,
-    oscillate: true, scaleMin: 0.86, scaleMax: 1.14, scaleSpeed: 0.060, holdGrowth: 1.25 },
-  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false,
-    move: true, bounce: true, speed: 3.0, holdGrowth: 1.30 },
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false,
-    move: true, bounce: true, speed: 3.8, holdGrowth: 1.36 },
-  { lineWidth: 8, move: true, bounce: true,
-    oscillate: true, scaleMin: 0.85, scaleMax: 1.15, scaleSpeed: 0.075, speed: 4.4, holdGrowth: 1.42 },
-  { lineWidth: 4, move: true, bounce: true,
-    oscillate: true, scaleMin: 0.84, scaleMax: 1.16, scaleSpeed: 0.080, speed: 4.9, holdGrowth: 1.50 }
+  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.045, holdGrowth: 1.18 },
+  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, oscillate: true, scaleMin: 0.86, scaleMax: 1.14, scaleSpeed: 0.060, holdGrowth: 1.25 },
+  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 3.0, holdGrowth: 1.30 },
+  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 3.8, holdGrowth: 1.36 },
+  { lineWidth: 8, move: true, bounce: true, oscillate: true, scaleMin: 0.85, scaleMax: 1.15, scaleSpeed: 0.075, speed: 4.4, holdGrowth: 1.42 },
+  { lineWidth: 4, move: true, bounce: true, oscillate: true, scaleMin: 0.84, scaleMax: 1.16, scaleSpeed: 0.080, speed: 4.9, holdGrowth: 1.50 }
 ];
 
 // ❤️ životy
 let lives = 5;
 function updateLivesDisplay() {
   const hearts = document.querySelectorAll(".heart");
-  hearts.forEach((heart, index) => {
-    heart.classList.toggle("lost", index >= lives);
-  });
+  hearts.forEach((heart, index) => heart.classList.toggle("lost", index >= lives));
 }
 function updateLevelDisplay() {
   const levelDisplay = document.getElementById("levelLabel");
@@ -209,9 +225,7 @@ function createFragments(shape, x, y) {
       alpha: 1
     });
   }
-  if (fragments.length > 500) {
-    fragments.splice(0, fragments.length - 500);
-  }
+  if (fragments.length > 500) fragments.splice(0, fragments.length - 500);
 }
 
 /* OSCILACE */
@@ -295,11 +309,7 @@ function createShards(x, y, count = 20) {
 
 function drawStarShape(shape, r) {
   ctx.beginPath();
-  const spikes = {
-    star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
-    star9: 9, star10: 10, star11: 11, star12: 12
-  }[shape] || 5;
-
+  const spikes = { star4: 4, star5: 5, star6: 6, star7: 7, star8: 8, star9: 9, star10: 10, star11: 11, star12: 12 }[shape] || 5;
   const step = Math.PI / spikes;
   for (let i = 0; i < 2 * spikes; i++) {
     const radiusMod = i % 2 === 0 ? r : r * 0.5;
@@ -404,16 +414,10 @@ function draw() {
 
   if (enableMove) {
     if (enableBounce) {
-      if (shapeX - targetRadius <= 0 && shapeVX < 0) {
-        shapeVX *= -1; shapeX = targetRadius;
-      } else if (shapeX + targetRadius >= canvas.width && shapeVX > 0) {
-        shapeVX *= -1; shapeX = canvas.width - targetRadius;
-      }
-      if (shapeY - targetRadius <= 0 && shapeVY < 0) {
-        shapeVY *= -1; shapeY = targetRadius;
-      } else if (shapeY + targetRadius >= canvas.height && shapeVY > 0) {
-        shapeVY *= -1; shapeY = canvas.height - targetRadius;
-      }
+      if (shapeX - targetRadius <= 0 && shapeVX < 0) { shapeVX *= -1; shapeX = targetRadius; }
+      else if (shapeX + targetRadius >= canvas.width && shapeVX > 0) { shapeVX *= -1; shapeX = canvas.width - targetRadius; }
+      if (shapeY - targetRadius <= 0 && shapeVY < 0) { shapeVY *= -1; shapeY = targetRadius; }
+      else if (shapeY + targetRadius >= canvas.height && shapeVY > 0) { shapeVY *= -1; shapeY = canvas.height - targetRadius; }
     }
     shapeX += shapeVX;
     shapeY += shapeVY;
@@ -434,7 +438,6 @@ function draw() {
   drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
   ctx.restore();
 
-  // 💬 Plovoucí informátory
   drawFloaters(now);
 
   fragments.forEach(frag => {
@@ -479,15 +482,8 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  centerX = canvas.width / 2;
-  centerY = canvas.height / 2;
-  generateStars();
-}
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
+// <<< PŮVODNÍ resizeCanvas NAHRAZEN >>>
+sizeGameCanvas(); // nastavit plátno hned po startu
 
 function updateMatchLabel(percentage) {
   matchLabel.textContent = `MATCH: ${percentage}%`;
@@ -505,10 +501,7 @@ function handleRelease() {
   const maxSizeDiff = isMoving ? 40 : 30;
   const baseAngleTolerance = Math.PI / 6;
 
-  const spikes = {
-    star4: 4, star5: 5, star6: 6, star7: 7, star8: 8,
-    star9: 9, star10: 10, star11: 11, star12: 12
-  }[currentShape] || 5;
+  const spikes = { star4: 4, star5: 5, star6: 6, star7: 7, star8: 8, star9: 9, star10: 10, star11: 11, star12: 12 }[currentShape] || 5;
 
   const snapAngle = (2 * Math.PI) / spikes;
   const maxAngleDiff = isMoving ? baseAngleTolerance + snapAngle * 0.3 : baseAngleTolerance;
@@ -524,10 +517,9 @@ function handleRelease() {
   updateMatchLabel(match);
 
   if (match >= 80) {
-    // ✅ Bodování
     let add = 0;
     let infoText = '';
-    let color = '#9cd6ff'; // 80–89
+    let color = '#9cd6ff';
     if (match >= 95) { add = 3; infoText = '+3 ★  +TIME'; color = '#00ffff'; }
     else if (match >= 90) { add = 2; infoText = '+2 ★'; color = '#00ffff'; }
     else { add = 1; infoText = '+1 ★'; }
@@ -536,19 +528,16 @@ function handleRelease() {
     updateScoreUI();
     pulseScore();
 
-    // +3 s bonus a krátký blink progress baru uložení do zásoby
     if (match >= 95) {
-  if (timeRemaining < TIMER_MAX) {
-    timeRemaining = Math.min(TIMER_MAX, timeRemaining + 3);
-  } else {
-    timeBank += 3; // uložit do zásoby
-  }
-  updateTimerUI();
-  blinkTimer();
-}
+      if (timeRemaining < TIMER_MAX) {
+        timeRemaining = Math.min(TIMER_MAX, timeRemaining + 3);
+      } else {
+        timeBank += 3;
+      }
+      updateTimerUI();
+      blinkTimer();
+    }
 
-
-    // 💬 Plovoucí text u výbuchu
     addFloater(infoText, shapeX, Math.max(20, shapeY - (targetRadius + 24)), color, 1100);
 
     createFragments(currentShape, shapeX, shapeY);
@@ -581,7 +570,7 @@ window.startNewGame = function () {
   firstStart = true;
 
   timeRemaining = TIMER_MAX;
-  timeBank = 0; // 🔹 reset zásoby času
+  timeBank = 0;
   lastTimeStamp = performance.now();
   isGameOver = false;
   score = 0;
@@ -591,7 +580,6 @@ window.startNewGame = function () {
   startLevel();
   updateMatchLabel(0);
 };
-
 
 const holdButton = document.getElementById("holdButton");
 const holdSound = new Audio('sounds/hold.mp3'); holdSound.preload = 'auto'; holdSound.volume = 1.0;
@@ -615,23 +603,24 @@ function endHold() {
   holdButton.classList.remove('active');
 }
 
-// Dotyk
+// Dotyk / myš
 holdButton.addEventListener("touchstart", (e) => { e.preventDefault(); startHold(); });
 holdButton.addEventListener("touchend",   (e) => { e.preventDefault(); endHold(); });
-// Myš
-holdButton.addEventListener("mousedown", (e) => { e.preventDefault(); startHold(); });
-holdButton.addEventListener("mouseup",   (e) => { e.preventDefault(); endHold(); });
+holdButton.addEventListener("mousedown",  (e) => { e.preventDefault(); startHold(); });
+holdButton.addEventListener("mouseup",    (e) => { e.preventDefault(); endHold(); });
 // Klávesa L
 window.addEventListener("keydown", (e) => { if (e.key === "L") { level++; startLevel(); } });
 
 holdButton.addEventListener('touchstart', () => { holdButton.classList.add('active'); });
 holdButton.addEventListener('touchend',   () => { holdButton.classList.remove('active'); });
 
-// Inicializace UI
+// Inicializace
 updateScoreUI();
 updateTimerUI();
 
+// start hry po nastavení plátna
 function drawInit() {
+  sizeGameCanvas();
   startLevel();
   draw();
 }
