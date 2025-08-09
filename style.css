@@ -1,7 +1,8 @@
 /* =================== GLOBAL =================== */
 :root {
-  --hudTopH: 48px;   /* výška horního HUDu */
+  --hudTopH: 38px;   /* výška horního HUDu */
   --panelH: 150px;   /* výška spodního panelu */
+  --scoreMinW: 96px; /* MIN šířka pro text 'SCORE: 9999' na desktopu */
 }
 
 html, body {
@@ -29,20 +30,21 @@ body { position: relative; }
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 8px 14px;
+  padding: 4px 10px; /* mírně zmenšené odsazení */
   box-sizing: border-box;
-  z-index: 30;              /* nejvýš */
+  z-index: 30;
   background: transparent;
   backdrop-filter: none;
 }
 
 #timerWrap {
   position: relative;
-  flex: 1;
-  height: 12px;
+  flex: 1 1 auto; /* vyplní zbytek řádku */
+  max-width: calc(100% - var(--scoreMinW) - 16px); /* minus šířka score a gap */
+  height: 8px; /* bylo 12px – menší výška */
   border: 2px solid cyan;
   border-radius: 999px;
-  box-shadow: 0 0 12px rgba(0,255,255,0.6), inset 0 0 6px rgba(0,255,255,0.2);
+  box-shadow: 0 0 8px rgba(0,255,255,0.6), inset 0 0 4px rgba(0,255,255,0.2);
   overflow: hidden;
 }
 
@@ -51,17 +53,18 @@ body { position: relative; }
   left: 0; top: 0;
   height: 100%; width: 100%;
   background: linear-gradient(90deg, rgba(0,255,255,0.95), rgba(180,255,255,0.95));
-  box-shadow: 0 0 16px rgba(0,255,255,0.9);
+  box-shadow: 0 0 10px rgba(0,255,255,0.9);
   transition: width 0.2s linear;
 }
 
 #scoreLabel {
-  min-width: 110px;
+  min-width: var(--scoreMinW); /* bylo 90/110px – nyní z proměnné */
+  flex: 0 0 var(--scoreMinW);  /* pevné místo pro score */
+  white-space: nowrap;         /* zabrání zalomení */
   text-align: right;
   color: #00ffff;
   font-weight: bold;
-  text-shadow: 0 0 6px #00ffff;
-  font-size: 14px;
+  font-size: 12px; /* bylo 14px */
 }
 
 @keyframes scorePulse {
@@ -135,6 +138,7 @@ body { position: relative; }
   align-items: center;
   user-select: none;
   line-height: 1.2;
+  margin-bottom: 6px;
 }
 
 .heart {
@@ -259,8 +263,9 @@ body { position: relative; }
 /* =================== RESPONSIVE =================== */
 @media (max-width: 600px) {
   :root {
-    --hudTopH: 44px;     /* menší horní lišta na mobilech */
+    --hudTopH: 34px;     /* menší horní lišta na mobilech */
     --panelH: 150px;
+    --scoreMinW: 90px;   /* trochu menší rezervy pro mobil */
   }
 
   #hudTop {
@@ -269,7 +274,8 @@ body { position: relative; }
   }
 
   #scoreLabel {
-    min-width: 90px;
+    min-width: var(--scoreMinW);
+    flex: 0 0 var(--scoreMinW);
     font-size: 13px;
   }
 
