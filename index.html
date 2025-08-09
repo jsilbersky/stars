@@ -8,6 +8,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
 </head>
 <body>
+  <!-- 🔹 NOVÝ HORNÍ HUD: timer + score -->
+  <div id="hudTop">
+    <div id="timerWrap" aria-label="time remaining">
+      <div id="timerBar"></div>
+    </div>
+    <div id="scoreLabel" aria-label="score">SCORE: 0</div>
+  </div>
+
   <canvas id="gameCanvas"></canvas>
 
   <!-- Obrázek pozadí panelu -->
@@ -16,12 +24,12 @@
   <div id="controlPanel">
     <div id="leftPanel">
       <div id="lives">
-  <img class="heart" src="images/heart.svg" alt="heart life">
-  <img class="heart" src="images/heart.svg" alt="heart life">
-  <img class="heart" src="images/heart.svg" alt="heart life">
-  <img class="heart" src="images/heart.svg" alt="heart life">
-  <img class="heart" src="images/heart.svg" alt="heart life">
-</div>
+        <img class="heart" src="images/heart.svg" alt="heart life">
+        <img class="heart" src="images/heart.svg" alt="heart life">
+        <img class="heart" src="images/heart.svg" alt="heart life">
+        <img class="heart" src="images/heart.svg" alt="heart life">
+        <img class="heart" src="images/heart.svg" alt="heart life">
+      </div>
 
       <div id="levelLabel">LEVEL 1</div>
       <div id="matchLabel">MATCH: 0 %</div>

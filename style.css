@@ -1,3 +1,81 @@
+/* ====== NOVÝ HORNÍ HUD (timer + score) ====== */
+#hudTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 14px;
+  box-sizing: border-box;
+  z-index: 5;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+#timerWrap {
+  position: relative;
+  flex: 1;
+  height: 12px;
+  border: 2px solid cyan;
+  border-radius: 999px;
+  box-shadow: 0 0 12px rgba(0,255,255,0.6), inset 0 0 6px rgba(0,255,255,0.2);
+  overflow: hidden;
+}
+
+#timerBar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(0,255,255,0.95), rgba(180,255,255,0.95));
+  box-shadow: 0 0 16px rgba(0,255,255,0.9);
+  transition: width 0.2s linear;
+}
+
+#scoreLabel {
+  min-width: 110px;
+  text-align: right;
+  color: #00ffff;
+  font-weight: bold;
+  text-shadow: 0 0 6px #00ffff;
+  font-size: 14px;
+}
+
+/* Mikro‑animace – nenarušující feedback */
+@keyframes scorePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.08); text-shadow: 0 0 10px #00ffff; }
+  100% { transform: scale(1); }
+}
+.score-pulse { animation: scorePulse 0.35s ease; }
+
+@keyframes timerBlink {
+  0% { box-shadow: 0 0 12px rgba(0,255,255,0.6), inset 0 0 6px rgba(0,255,255,0.2); }
+  50% { box-shadow: 0 0 22px rgba(0,255,255,1), inset 0 0 10px rgba(0,255,255,0.5); }
+  100% { box-shadow: 0 0 12px rgba(0,255,255,0.6), inset 0 0 6px rgba(0,255,255,0.2); }
+}
+.timer-blink { animation: timerBlink 0.3s ease; }
+
+/* Mobilní drobnosti */
+@media (max-width: 600px) {
+  #hudTop {
+    height: 44px;
+    padding: 8px 10px;
+    gap: 10px;
+  }
+  #scoreLabel {
+    min-width: 90px;
+    font-size: 13px;
+  }
+}
+
+/* ====== (zbytek tvých stylů beze změny) ====== */
+
 html, body {
   margin: 0;
   padding: 0;
@@ -16,7 +94,7 @@ canvas {
   height: calc(100vh - 150px);
   background-color: transparent;
   position: relative;
-  z-index: 1;
+  z-index: 9;
 }
 
 #panelBg {
@@ -37,7 +115,7 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  padding: 20px 28px; /* upraveno z 24px */
+  padding: 20px 28px;
   box-sizing: border-box;
   background: transparent;
   z-index: 3;
@@ -52,35 +130,31 @@ canvas {
   position: relative;
   z-index: 2;
   color: cyan;
-  padding-bottom: 12px; /* upraveno z 8px */
+  padding-bottom: 12px;
 }
 
 #lives {
   display: flex;
-  gap: 4px;            /* trochu větší mezera */
+  gap: 4px;
   align-items: center;
   user-select: none;
   line-height: 1.2;
 }
 
-
 .heart {
   width: 22px;
-  height: 22px; /* Přidá výšku, aby byla podobná jako text */
+  height: 22px;
   object-fit: contain;
   vertical-align: middle;
   opacity: 1;
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-
-
 .heart.lost {
   opacity: 0.3;
   filter: grayscale(100%) drop-shadow(0 0 1px #888);
   transform: scale(0.95);
 }
-
 
 #levelLabel {
   font-size: 14px;
@@ -110,16 +184,16 @@ canvas {
   position: absolute;
   left: 50%;
   bottom: 0;
-  transform: translateX(-50%) translateY(-48%); /* upraveno z -44% */
+  transform: translateX(-50%) translateY(-48%);
   z-index: 4;
   font-family: 'Audiowide', sans-serif;
   transition: transform 0.5s ease, background-color 0.5s ease, box-shadow 0.6s ease;
-  box-sizing: border-box; /* přidáno */
+  box-sizing: border-box;
 }
 
 #holdButton:active,
 #holdButton.active {
-  transform: translateX(-50%) translateY(-46%) scale(0.95); /* upraveno z -39% */
+  transform: translateX(-50%) translateY(-46%) scale(0.95);
   background-color: #002f2f;
   color: #0ff;
   box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
@@ -131,7 +205,7 @@ canvas {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(10, 10, 30, 0.8); /* tmavý space nádech */
+  background: rgba(10, 10, 30, 0.8);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -139,7 +213,7 @@ canvas {
 }
 
 .popup-content {
-  background: linear-gradient(145deg, #0a0a1e, #1a1a3a); /* space gradient */
+  background: linear-gradient(145deg, #0a0a1e, #1a1a3a);
   border: 3px solid cyan;
   border-radius: 20px;
   padding: 40px;
@@ -151,7 +225,7 @@ canvas {
   color: cyan;
   font-size: 2em;
   margin-bottom: 20px;
-  font-family: 'Orbitron', sans-serif; /* volitelné pro sci-fi font */
+  font-family: 'Orbitron', sans-serif;
 }
 
 .popup-content button {
@@ -170,9 +244,7 @@ canvas {
   background-color: #00ffff;
 }
 
-.hidden {
-  display: none;
-}
+.hidden { display: none; }
 
 #gameOverPopup {
   position: fixed;
@@ -180,7 +252,7 @@ canvas {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(10, 10, 30, 0.85); /* tmavý vesmírný nádech */
+  background: rgba(10, 10, 30, 0.85);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -198,62 +270,21 @@ canvas {
 }
 
 @keyframes matchPulse {
-  0%   { transform: scale(1); }
-  50%  { transform: scale(1.1); }
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
   100% { transform: scale(1); }
 }
+#matchLabel.pulse { animation: matchPulse 0.4s ease-out; }
 
-#matchLabel.pulse {
-  animation: matchPulse 0.4s ease-out;
-}
-
-
-
-
-/* 🔽 Responsivní úpravy pro mobilní displeje */
+/* Responsivní */
 @media (max-width: 600px) {
-  #controlPanel {
-    height: 150px;
-    padding: 20px 26px 14px 30px; 
-  }
-
-  #panelBg {
-    height: 150px;
-  }
-
-  #lives {
-    font-size: 13px;
-  }
-
-  #levelLabel,
-  #matchLabel {
-    font-size: 13px;
-  }
-
-  #leftPanel {
-
-    padding-bottom: 16px;
-    align-items: flex-start; 
-    gap: 6 px;
-  }
-
-  #holdButton {
-    width: 83px;
-    height: 83px;
-    font-size: 17px;
-    transform: translateX(-50%) translateY(-45%); 
-  }
-
-  #holdButton:active,
-  #holdButton.active {
-    transform: translateX(-50%) translateY(-40%) scale(0.95);
-  }
-
-  canvas {
-    height: calc(100vh - 150px);
-  }
-
-  .heart {
-  width: 18px;
-}
+  #controlPanel { height: 150px; padding: 20px 26px 14px 30px; }
+  #panelBg { height: 150px; }
+  #lives { font-size: 13px; }
+  #levelLabel, #matchLabel { font-size: 13px; }
+  #leftPanel { padding-bottom: 16px; align-items: flex-start; gap: 6 px; }
+  #holdButton { width: 83px; height: 83px; font-size: 17px; transform: translateX(-50%) translateY(-45%); }
+  #holdButton:active, #holdButton.active { transform: translateX(-50%) translateY(-40%) scale(0.95); }
+  canvas { height: calc(100vh - 150px); }
+  .heart { width: 18px; }
 }
