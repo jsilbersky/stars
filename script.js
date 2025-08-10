@@ -122,7 +122,7 @@ function triggerGameOver() {
 
   statsEl.innerHTML = `
     <li><strong>Score:</strong> ${score}</li>
-    <li><strong>Successful matches:</strong> ${successfulMatches}</li>
+    <li><strong>Stars hit:</strong> ${successfulMatches}</li>
     <li><strong>Average accuracy:</strong> ${averageAccuracy()} %</li>
   `;
 
@@ -629,8 +629,8 @@ window.startNewGame = function () {
 };
 
 const holdButton = document.getElementById("holdButton");
-const holdSound = new Audio('sounds/hold.mp3'); holdSound.preload = 'auto'; holdSound.volume = 1.0;
-const explosionSound = new Audio('sounds/explosion.mp3'); explosionSound.preload = 'auto'; explosionSound.volume = 1.0;
+const holdSound = new Audio('sounds/hold.mp3'); holdSound.preload = 'auto'; holdSound.volume = 0.4;
+const explosionSound = new Audio('sounds/explosion.mp3'); explosionSound.preload = 'auto'; explosionSound.volume = 0.6;
 const failSound = new Audio('sounds/fail.mp3'); failSound.preload = 'auto'; failSound.volume = 1.0;
 
 function startHold() {
