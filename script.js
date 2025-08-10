@@ -45,11 +45,20 @@ const timerWrap = document.getElementById("timerWrap");
 const timerBar  = document.getElementById("timerBar");
 const scoreLabel = document.getElementById("scoreLabel");
 
-const TIMER_MAX = 90;
+const TIMER_MAX = 60;
 let timeRemaining = TIMER_MAX;
 let lastTimeStamp = performance.now();
 let score = 0;
 let isGameOver = false;
+
+// <<< NOVÉ STATISTIKY >>>
+let attempts = 0;              // počet pokusů (release)
+let successfulMatches = 0;     // počet úspěšných matchů (>= 80 %)
+let sumAccuracy = 0;           // součet procent (pro průměr)
+
+function averageAccuracy() {
+  return attempts > 0 ? Math.round(sumAccuracy / attempts) : 0;
+}
 
 function updateScoreUI() {
   if (scoreLabel) scoreLabel.textContent = `SCORE: ${score}`;
@@ -97,8 +106,33 @@ function tickTimer(now) {
 function triggerGameOver() {
   if (isGameOver) return;
   isGameOver = true;
+
   const popup = document.getElementById("gameOverPopup");
-  if (popup) popup.classList.remove("hidden");
+  if (!popup) return;
+
+  const content = popup.querySelector(".popup-content");
+  const btn = document.getElementById("newGameButton");
+
+  let statsEl = document.getElementById("gameOverStats");
+  if (!statsEl) {
+    statsEl = document.createElement("ul");
+    statsEl.id = "gameOverStats";
+    content.insertBefore(statsEl, btn);
+  }
+
+  statsEl.innerHTML = `
+    <li><strong>Score:</strong> ${score}</li>
+    <li><strong>Successful matches:</strong> ${successfulMatches}</li>
+    <li><strong>Average accuracy:</strong> ${averageAccuracy()} %</li>
+  `;
+
+  popup.classList.remove("hidden");
+}
+
+
+// <<< Pomocná obálka pro konec na čas >>>
+function endGame() {
+  triggerGameOver();
 }
 
 // ===== Plovoucí text =====
@@ -516,6 +550,13 @@ function handleRelease() {
   const match = Math.round(Math.max(0, sizeRatio * angleRatio * 100));
   updateMatchLabel(match);
 
+  // <<< NOVÉ STATISTIKY >>>
+  attempts++;
+  sumAccuracy += match;
+  if (match >= 80) {
+    successfulMatches++;
+  }
+
   if (match >= 80) {
     let add = 0;
     let infoText = '';
@@ -574,6 +615,12 @@ window.startNewGame = function () {
   lastTimeStamp = performance.now();
   isGameOver = false;
   score = 0;
+
+  // <<< RESET STATISTIK >>>
+  attempts = 0;
+  successfulMatches = 0;
+  sumAccuracy = 0;
+
   updateScoreUI();
   updateTimerUI();
 
