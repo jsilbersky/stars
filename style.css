@@ -254,6 +254,17 @@ body { position: relative; }
   font-weight: 700;
 }
 
+/* Překryvné okno pro úvodní nápovědu i Game Over */
+.popup {
+  position: fixed;
+  inset: 0;
+  display: flex; /* budeš skriptem měnit na none/flex */
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,.75);
+  z-index: 9999;
+}
+
 
 /* Panel – čistší glow, lepší layout */
 .popup-content {
@@ -362,4 +373,41 @@ body { position: relative; }
 
 @media (prefers-reduced-motion: reduce) {
   .popup-content button { transition: none; }
+}
+
+
+/* ====== 3-2-1 COUNTDOWN OVERLAY ====== */
+#countdownOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto; /* blokuje kliknutí na HOLD */
+}
+
+#countdownOverlay.hidden { display: none; }
+
+.countdown-wrap {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+}
+
+#countdownNum {
+  font-family: 'Audiowide', sans-serif;
+  font-size: clamp(72px, 18vw, 220px);
+  color: #00ffff;
+  text-shadow: 0 0 30px rgba(0,255,255,.8), 0 0 6px #00ffff;
+  animation: cdPulse .9s ease-out infinite;
+  user-select: none;
+}
+
+@keyframes cdPulse {
+  0%   { transform: scale(0.7); opacity: .2; }
+  40%  { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(0.85); opacity: .6; }
 }

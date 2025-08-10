@@ -51,6 +51,39 @@ let lastTimeStamp = performance.now();
 let score = 0;
 let isGameOver = false;
 
+// FIX: blokuj časovač už od začátku (pomáhá, když je otevřený help popup)
+let isCountdown = true; // FIX
+
+function runCountdown(thenStartFn) {
+  const overlay = document.getElementById('countdownOverlay');
+  const numEl   = document.getElementById('countdownNum');
+  if (!overlay || !numEl) { thenStartFn?.(); return; }
+
+  isCountdown = true;
+  overlay.classList.remove('hidden');
+
+  let n = 3;
+  numEl.textContent = n;
+
+  const tick = () => {
+    n--;
+    if (n >= 1) {
+      numEl.textContent = n;
+      setTimeout(tick, 1000);
+    } else {
+      numEl.textContent = 'GO';
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        isCountdown = false;
+        lastTick = performance.now(); // FIX: reset proti velké deltě
+        thenStartFn?.();
+      }, 600);
+    }
+  };
+  setTimeout(tick, 1000);
+}
+
+
 // <<< NOVÉ STATISTIKY >>>
 let attempts = 0;              // počet pokusů (release)
 let successfulMatches = 0;     // počet úspěšných matchů (>= 80 %)
@@ -80,6 +113,7 @@ function updateTimerUI() {
   const ratio = Math.max(0, Math.min(1, timeRemaining / TIMER_MAX));
   if (timerBar) timerBar.style.width = `${ratio * 100}%`;
 }
+
 let lastTick = performance.now();
 function tickTimer(now) {
   if (!lastTick) lastTick = now;
@@ -101,6 +135,26 @@ function tickTimer(now) {
   }
 
   updateTimerUI();
+}
+
+function beginNewGameFlow(fromHelp = false) {
+  // schovej pop-upy
+  const help = document.getElementById('helpPopup');
+  const over = document.getElementById('gameOverPopup');
+
+  if (fromHelp && help) help.style.display = 'none';
+  if (over) over.classList.add('hidden');
+
+  // spusť 3-2-1 a teprve POTOM reset + start
+  runCountdown(() => {
+    startNewGame();     // reset + startLevel()
+  });
+}
+
+// FIX: registraci NEW GAME uděláme JEDNOU mimo flow
+const newGameBtn = document.getElementById('newGameButton'); // FIX
+if (newGameBtn) {
+  newGameBtn.addEventListener('click', () => beginNewGameFlow(false)); // FIX
 }
 
 function triggerGameOver() {
@@ -396,7 +450,9 @@ function drawStars() {
 
 function draw() {
   const now = performance.now();
-  tickTimer(now);
+
+  // FIX: timer jen když neběží odpočet a hra není u konce
+  if (!isCountdown && !isGameOver) tickTimer(now); // FIX
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawStars();
@@ -634,7 +690,7 @@ const explosionSound = new Audio('sounds/explosion.mp3'); explosionSound.preload
 const failSound = new Audio('sounds/fail.mp3'); failSound.preload = 'auto'; failSound.volume = 1.0;
 
 function startHold() {
-  if (isGameOver) return;
+  if (isGameOver || isCountdown) return;  // ⬅ blok během countdownu
   isHolding = true;
   radius = 0;
   holdStartTime = performance.now();
@@ -644,7 +700,7 @@ function startHold() {
   holdSound.play();
 }
 function endHold() {
-  if (isGameOver) return;
+  if (isGameOver || isCountdown) return;
   isHolding = false;
   handleRelease();
   holdButton.classList.remove('active');
@@ -668,7 +724,186 @@ updateTimerUI();
 // start hry po nastavení plátna
 function drawInit() {
   sizeGameCanvas();
-  startLevel();
+  startLevel(); // necháme běžet scénu v pozadí; čas se stejně neodečítá díky isCountdown
   draw();
 }
 drawInit();
+
+// === HELP POPUP + CANVAS DEMO (aligned to START, big 👆 from below) ===
+(function(){
+  const popup  = document.getElementById('helpPopup');
+  const start  = document.getElementById('startGameBtn');
+  const canvas = document.getElementById('helpDemo');
+  if (!popup || !canvas || !start) return;
+
+  const ctx = canvas.getContext('2d', { alpha: true });
+  popup.style.display = 'flex';
+
+  // FIX: START → countdown → startNewGame
+  start.addEventListener('click', () => {
+    beginNewGameFlow(true);
+  });
+
+  // canvas size je fixní (360×260), ale vše zarovnáváme na START
+  let W = canvas.width, H = canvas.height;
+  const LIFT = 20;
+  let cx = W/2, cy = Math.round(H * 0.45) - LIFT;
+
+  const COLOR_TARGET = '#00ffff';
+  const COLOR_PLAYER = '#a066ff';
+  const LW_TARGET = 3;
+  const LW_PLAYER = 3.5;
+
+  const target = { points: 7, scale: 48, angle: Math.PI * 0.18 };
+  let star = { scale: 10, angle: 0 };
+
+  const btn = { x: cx, y: H - 40 - LIFT, r: 24 };
+  let pressed = false;
+  let pressRipple = 0;
+
+  function drawHand(){
+    const baseGap = pressed ? 4 : 14;
+    const lift = pressed ? 0 : Math.sin(performance.now()/300) * 1.2;
+    ctx.save();
+    ctx.translate(btn.x, btn.y + btn.r + baseGap + lift);
+    ctx.font = '28px system-ui, Apple Color Emoji, Segoe UI Emoji';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('👆', 0, 0);
+    ctx.restore();
+  }
+
+  function syncAnchors(){
+    const canvasBB = canvas.getBoundingClientRect();
+    const startBB  = start.getBoundingClientRect();
+    const startCenterX = startBB.left + startBB.width/2 - canvasBB.left;
+    cx = Math.max(0, Math.min(W, startCenterX));
+    btn.x = cx;
+  }
+  window.addEventListener('resize', syncAnchors);
+  setTimeout(syncAnchors, 0);
+  setTimeout(syncAnchors, 100);
+
+  const P = { PRESS_GOOD:0, HOLD_GOOD:1, RELEASE_GOOD:2, PRESS_BAD:3, HOLD_BAD:4, RELEASE_BAD:5 };
+  let phase = P.PRESS_GOOD, t = 0;
+
+  const TAU = Math.PI*2;
+  const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+  const shortestDelta=(from,to)=>(((to-from+Math.PI)%TAU)-Math.PI);
+  const angleAbsDiff=(a,b)=>Math.abs(shortestDelta(a,b));
+  function approachLinear(cur, trg, rate, dt){
+    const d = trg - cur, step = rate*dt;
+    if (Math.abs(d) <= step) return trg;
+    return cur + Math.sign(d)*step;
+  }
+
+  function drawStarOutline(x,y,points,outerR,innerR,rot,stroke,lw=2,alpha=1){
+    ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x,y); ctx.rotate(rot);
+    ctx.beginPath();
+    for (let i=0;i<points*2;i++){
+      const ang = i*Math.PI/points;
+      const r = (i%2===0)?outerR:innerR;
+      const px=Math.cos(ang)*r, py=Math.sin(ang)*r;
+      i===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    }
+    ctx.closePath(); ctx.lineWidth = lw; ctx.strokeStyle=stroke; ctx.stroke(); ctx.restore();
+  }
+  function drawBadge(text, ok){
+    ctx.save();
+    ctx.font='bold 16px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='center'; ctx.fillStyle = ok ? '#1fbf75' : '#e5484d';
+    const yTop = cy - (target.scale + 16);
+    ctx.fillText(text, cx, yTop);
+    ctx.restore();
+  }
+  function drawButton(){
+    ctx.save(); ctx.translate(btn.x, btn.y);
+    const grad = ctx.createRadialGradient(0,-8,6, 0,0, pressed?30:26);
+    grad.addColorStop(0, pressed? '#4a7cff' : '#6a8dff');
+    grad.addColorStop(1, pressed? '#3157d8' : '#3d5de0');
+    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0,0,btn.r,0,TAU); ctx.fill();
+    ctx.globalAlpha = pressed? .35:.18; ctx.beginPath(); ctx.arc(0,0,btn.r+8,0,TAU);
+    ctx.fillStyle = pressed? '#6a8dff' : '#8aa2ff'; ctx.fill();
+    if (pressRipple>0){
+      ctx.globalAlpha = clamp(pressRipple,0,1);
+      ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(0,0, btn.r + pressRipple*10, 0, TAU); ctx.stroke();
+    }
+    ctx.globalAlpha = 1; ctx.fillStyle = '#000';
+    ctx.font='bold 12px Audiowide, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('HOLD',0,0);
+    ctx.restore();
+  }
+
+  function render(){
+    ctx.clearRect(0,0,W,H);
+
+    drawStarOutline(cx, cy, target.points, target.scale, target.scale*0.46, target.angle, COLOR_TARGET, LW_TARGET, 0.95);
+    drawStarOutline(cx, cy, target.points, star.scale, star.scale*0.46, star.angle, COLOR_PLAYER, LW_PLAYER, 1);
+
+    if (phase===P.RELEASE_GOOD) drawBadge('✅ Good match', true);
+    if (phase===P.RELEASE_BAD ) drawBadge('❌ Too late', false);
+
+    drawButton();
+    drawHand();
+  }
+
+  function update(dt){
+    t += dt; pressRipple = Math.max(0, pressRipple - dt*1.2);
+
+    switch(phase){
+      case P.PRESS_GOOD:
+        pressed = true; pressRipple = 1; t = 0; phase = P.HOLD_GOOD;
+        break;
+
+      case P.HOLD_GOOD:
+        star.scale = approachLinear(star.scale, target.scale, 30, dt);
+        star.angle += shortestDelta(star.angle, target.angle) * Math.min(1, 1.5*dt);
+        if (Math.abs(star.scale-target.scale)<0.9 && angleAbsDiff(star.angle,target.angle)<0.05){
+          star.scale = target.scale; star.angle = target.angle;
+          pressed = false; t = 0; phase = P.RELEASE_GOOD;
+        }
+        break;
+
+      case P.RELEASE_GOOD:
+        if (t>1.2){ star.scale=10; star.angle=0; pressed=true; pressRipple=1; t=0; phase=P.PRESS_BAD; }
+        break;
+
+      case P.PRESS_BAD:
+        if (t>0.2){ t=0; phase=P.HOLD_BAD; }
+        break;
+
+      case P.HOLD_BAD:
+        star.scale += 35*dt;
+        star.angle += 0.25*dt;
+        if (star.scale > target.scale*1.18){ pressed=false; t=0; phase=P.RELEASE_BAD; }
+        break;
+
+      case P.RELEASE_BAD:
+        if (t>1.2){ star.scale=10; star.angle=0; pressed=true; pressRipple=1; t=0; phase=P.PRESS_GOOD; }
+        break;
+    }
+  }
+
+  let last = performance.now();
+  let anchorT = 0;
+
+  function loop(now){
+    const dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+
+    anchorT += dt;
+    if (anchorT > 0.25) { 
+      syncAnchors(); 
+      anchorT = 0; 
+    }
+
+    update(dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  syncAnchors();
+  requestAnimationFrame(loop);
+})();
