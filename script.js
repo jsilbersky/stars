@@ -122,10 +122,12 @@ function tickTimer(now) {
 
   timeRemaining -= delta;
   if (timeRemaining <= 0) {
-    timeRemaining = 0;
-    endGame();
-    return;
-  }
+  timeRemaining = 0;
+  lockGame();
+  triggerGameOver();   // ukaž popup hned
+  return;
+}
+
 
   if (timeRemaining < TIMER_MAX && timeBank > 0) {
     const give = Math.min(TIMER_MAX - timeRemaining, timeBank);
@@ -158,8 +160,8 @@ if (newGameBtn) {
 }
 
 function triggerGameOver() {
-  if (isGameOver) return;
-  isGameOver = true;
+  if (gameOverShown) return;
+  gameOverShown = true;        // NEměň tady isGameOver
 
   const popup = document.getElementById("gameOverPopup");
   if (!popup) return;
@@ -270,6 +272,10 @@ let firstStart = true;
 let holdGrowth = 1;
 
 let timeBank = 0;
+
+let loopRunning = false;
+
+let gameOverShown = false; // zda už byl zobrazen popup
 
 const matchLabel = document.getElementById("matchLabel");
 const allStarShapes = ["star5", "star6", "star7", "star8", "star9"];
@@ -568,8 +574,14 @@ function draw() {
   }
 
   rotation += rotationSpeed;
-  hue = (hue + 1) % 360;
+hue = (hue + 1) % 360;
+
+if (!isGameOver) {
+  loopRunning = true;
   requestAnimationFrame(draw);
+} else {
+  loopRunning = false; // smyčka zastavena
+}
 }
 
 // <<< PŮVODNÍ resizeCanvas NAHRAZEN >>>
@@ -655,13 +667,29 @@ function handleRelease() {
     failSound.play();
 
     if (lives <= 0) {
-      setTimeout(() => { triggerGameOver(); }, 500);
-    }
+  lockGame();          // zamkni vstupy teď hned
+  triggerGameOver();   // a hned ukaž popup
+  return;
+}
+
+
   }
 }
 
 window.startNewGame = function () {
   document.getElementById("gameOverPopup").classList.add("hidden");
+
+  gameOverShown = false; // reset pro další hru
+
+    // 👉 vyčistit efekty z minulé hry (kříž, exploze, částice)
+  showWrong = false;
+  showExplosion = false;
+  effectTimer = 0;
+  floaters = [];
+  shards = [];
+  fragments = [];
+  flashAlpha = 0;
+
   lives = 5;
   level = 1;
   firstStart = true;
@@ -670,9 +698,14 @@ window.startNewGame = function () {
   timeBank = 0;
   lastTimeStamp = performance.now();
   isGameOver = false;
+  isHolding = false;
   score = 0;
 
-  // <<< RESET STATISTIK >>>
+  if (holdButton) {
+    holdButton.disabled = false;
+    holdButton.classList.remove('active');
+  }
+
   attempts = 0;
   successfulMatches = 0;
   sumAccuracy = 0;
@@ -682,7 +715,14 @@ window.startNewGame = function () {
 
   startLevel();
   updateMatchLabel(0);
+
+  if (!loopRunning) {
+  requestAnimationFrame(draw); // znovu startni render smyčku
+}
+
 };
+
+
 
 const holdButton = document.getElementById("holdButton");
 const holdSound = new Audio('sounds/hold.mp3'); holdSound.preload = 'auto'; holdSound.volume = 0.4;
@@ -705,6 +745,17 @@ function endHold() {
   handleRelease();
   holdButton.classList.remove('active');
 }
+
+function lockGame() {
+  if (isGameOver) return;          // už zamčeno
+  isGameOver = true;               // globální stopka
+  isHolding = false;               // okamžitě zastav růst hvězdy
+  if (holdButton) {
+    holdButton.disabled = true;    // zneaktivni Hold
+    holdButton.classList.remove('active');
+  }
+}
+
 
 // Dotyk / myš
 holdButton.addEventListener("touchstart", (e) => { e.preventDefault(); startHold(); });
