@@ -894,7 +894,7 @@ drawInit();
     drawStarOutline(cx, cy, target.points, star.scale, star.scale*0.46, star.angle, COLOR_PLAYER, LW_PLAYER, 1);
 
     if (phase===P.RELEASE_GOOD) drawBadge('✅ Good match', true);
-    if (phase===P.RELEASE_BAD ) drawBadge('❌ Too late', false);
+    if (phase===P.RELEASE_BAD ) drawBadge('❌ Bad match', false);
 
     drawButton();
     drawHand();
