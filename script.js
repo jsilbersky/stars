@@ -861,9 +861,9 @@ drawInit();
   }
   function drawBadge(text, ok){
     ctx.save();
-    ctx.font='bold 16px system-ui, -apple-system, Segoe UI, Roboto, Arial';
+    ctx.font='bold 15px system-ui, -apple-system, Segoe UI, Roboto, Arial';
     ctx.textAlign='center'; ctx.fillStyle = ok ? '#1fbf75' : '#e5484d';
-    const yTop = cy - (target.scale + 16);
+    const yTop = cy - (target.scale + 24);
     ctx.fillText(text, cx, yTop);
     ctx.restore();
   }
