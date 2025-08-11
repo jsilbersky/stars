@@ -755,7 +755,7 @@ drawInit();
   const LW_PLAYER = 3.5;
 
   const target = { points: 7, scale: 48, angle: Math.PI * 0.18 };
-  let star = { scale: 10, angle: 0 };
+  let star = { scale: 10, angle: target.angle };
 
   const btn = { x: cx, y: H - 40 - LIFT, r: 24 };
   let pressed = false;
@@ -850,41 +850,73 @@ drawInit();
   }
 
   function update(dt){
-    t += dt; pressRipple = Math.max(0, pressRipple - dt*1.2);
+  t += dt; 
+  pressRipple = Math.max(0, pressRipple - dt*1.2);
 
-    switch(phase){
-      case P.PRESS_GOOD:
-        pressed = true; pressRipple = 1; t = 0; phase = P.HOLD_GOOD;
-        break;
+  switch (phase){
+    case P.PRESS_GOOD:
+      pressed = true; 
+      pressRipple = 1; 
+      t = 0; 
+      phase = P.HOLD_GOOD;
+      break;
 
-      case P.HOLD_GOOD:
-        star.scale = approachLinear(star.scale, target.scale, 30, dt);
-        star.angle += shortestDelta(star.angle, target.angle) * Math.min(1, 1.5*dt);
-        if (Math.abs(star.scale-target.scale)<0.9 && angleAbsDiff(star.angle,target.angle)<0.05){
-          star.scale = target.scale; star.angle = target.angle;
-          pressed = false; t = 0; phase = P.RELEASE_GOOD;
-        }
-        break;
+    case P.HOLD_GOOD:
+      // jen rozpínání (žádná rotace)
+      star.scale = approachLinear(star.scale, target.scale, 30, dt);
+      star.angle = target.angle; // držíme zamknuté na target
 
-      case P.RELEASE_GOOD:
-        if (t>1.2){ star.scale=10; star.angle=0; pressed=true; pressRipple=1; t=0; phase=P.PRESS_BAD; }
-        break;
+      if (Math.abs(star.scale - target.scale) < 0.9){
+        star.scale = target.scale; 
+        star.angle = target.angle;
+        pressed = false; 
+        t = 0; 
+        phase = P.RELEASE_GOOD;
+      }
+      break;
 
-      case P.PRESS_BAD:
-        if (t>0.2){ t=0; phase=P.HOLD_BAD; }
-        break;
+    case P.RELEASE_GOOD:
+      if (t > 1.2){ 
+        star.scale = 10; 
+        star.angle = target.angle; // reset bez rotace
+        pressed = true; 
+        pressRipple = 1; 
+        t = 0; 
+        phase = P.PRESS_BAD; 
+      }
+      break;
 
-      case P.HOLD_BAD:
-        star.scale += 35*dt;
-        star.angle += 0.25*dt;
-        if (star.scale > target.scale*1.18){ pressed=false; t=0; phase=P.RELEASE_BAD; }
-        break;
+    case P.PRESS_BAD:
+      if (t > 0.2){ 
+        t = 0; 
+        phase = P.HOLD_BAD; 
+      }
+      break;
 
-      case P.RELEASE_BAD:
-        if (t>1.2){ star.scale=10; star.angle=0; pressed=true; pressRipple=1; t=0; phase=P.PRESS_GOOD; }
-        break;
-    }
+    case P.HOLD_BAD:
+      // i u "špatného" držení jen růst, bez rotace
+      star.scale += 35 * dt;
+      star.angle = target.angle;
+
+      if (star.scale > target.scale * 1.4){ 
+        pressed = false; 
+        t = 0; 
+        phase = P.RELEASE_BAD; 
+      }
+      break;
+
+    case P.RELEASE_BAD:
+      if (t > 1.2){ 
+        star.scale = 10; 
+        star.angle = target.angle; // reset bez rotace
+        pressed = true; 
+        pressRipple = 1; 
+        t = 0; 
+        phase = P.PRESS_GOOD; 
+      }
+      break;
   }
+}
 
   let last = performance.now();
   let anchorT = 0;
