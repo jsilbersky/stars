@@ -81,6 +81,20 @@ body { position: relative; }
 }
 .timer-blink { animation: timerBlink 0.3s ease; }
 
+/* trvalé pulzování pro posledních 10 s – červený neon */
+#timerWrap.timer-blink-10s {
+  animation: timerBlinkRed 0.6s ease-in-out infinite; /* ← změna */
+  border-color: #ff003c;
+  background-color: rgba(255,0,0,0.18);
+}
+
+@keyframes timerBlinkRed {
+  0%   { box-shadow: 0 0 12px rgba(255,0,60,0.6), inset 0 0 6px rgba(255,0,60,0.2); }
+  50%  { box-shadow: 0 0 22px rgba(255,0,60,1),   inset 0 0 10px rgba(255,0,60,0.5); }
+  100% { box-shadow: 0 0 12px rgba(255,0,60,0.6), inset 0 0 6px rgba(255,0,60,0.2); }
+}
+
+
 /* =================== CANVAS (hvězdy) =================== */
 /* Canvas je pozadí: mezi horním HUDem a panelem dole */
 #gameCanvas {

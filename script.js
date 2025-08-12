@@ -113,6 +113,13 @@ function updateTimerUI() {
   if (timerBar) timerBar.style.width = `${ratio * 100}%`;
 }
 
+function updateTimerPulseLast10s() {
+  if (!timerWrap) return;
+  const last10 = timeRemaining > 0 && timeRemaining <= 10;
+  timerWrap.classList.toggle('timer-blink-10s', last10);
+}
+
+
 let lastTick = performance.now();
 function tickTimer(now) {
   if (!lastTick) lastTick = now;
@@ -136,6 +143,7 @@ function tickTimer(now) {
   }
 
   updateTimerUI();
+  updateTimerPulseLast10s();
 }
 
 function beginNewGameFlow(fromHelp = false) {
@@ -269,6 +277,9 @@ let firstStart = true;
 let holdGrowth = 1;
 
 let timeBank = 0;
+
+let blinkActive = false;
+
 
 let loopRunning = false;
 
@@ -669,10 +680,8 @@ function handleRelease() {
   lockGame();          // zamkni vstupy teď hned
   triggerGameOver();   // a hned ukaž popup
   return;
-}
-
-
   }
+ }
 }
 
 window.startNewGame = function () {
@@ -700,6 +709,9 @@ window.startNewGame = function () {
   isHolding = false;
   score = 0;
 
+  timerBar.classList.remove('timer-blink');
+
+
   if (holdButton) {
     holdButton.disabled = false;
     holdButton.classList.remove('active');
@@ -710,6 +722,7 @@ window.startNewGame = function () {
   sumAccuracy = 0;
 
   updateScoreUI();
+  if (timerWrap) timerWrap.classList.remove('timer-blink-10s');
   updateTimerUI();
 
   startLevel();
@@ -849,6 +862,8 @@ window.addEventListener("keydown", (e) => {
     startLevel(); 
   } 
 });
+
+
 
 
 // Inicializace
