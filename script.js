@@ -47,7 +47,6 @@ const scoreLabel = document.getElementById("scoreLabel");
 
 const TIMER_MAX = 60;
 let timeRemaining = TIMER_MAX;
-let lastTimeStamp = performance.now();
 let score = 0;
 let isGameOver = false;
 
@@ -262,10 +261,8 @@ let shapeY = 0;
 let shapeVX = 0;
 let shapeVY = 0;
 let enableMove = false;
-let holdStartTime = 0;
 let enableBounce = false;
 
-let holdHueShift = 0;
 let holdHue = 200; 
 let fragments = [];
 let firstStart = true;
@@ -276,6 +273,8 @@ let timeBank = 0;
 let loopRunning = false;
 
 let gameOverShown = false; // zda už byl zobrazen popup
+
+let lastReleaseTs = 0;
 
 const matchLabel = document.getElementById("matchLabel");
 const allStarShapes = ["star5", "star6", "star7", "star8", "star9"];
@@ -596,7 +595,7 @@ function updateMatchLabel(percentage) {
 }
 
 function handleRelease() {
-  if (isGameOver) return;
+  if (isGameOver || lives <= 0 || timeRemaining <= 0) return;
   isHolding = false;
 
   const isMoving = enableMove;
@@ -696,7 +695,7 @@ window.startNewGame = function () {
 
   timeRemaining = TIMER_MAX;
   timeBank = 0;
-  lastTimeStamp = performance.now();
+  lastTick = performance.now();
   isGameOver = false;
   isHolding = false;
   score = 0;
@@ -725,6 +724,7 @@ window.startNewGame = function () {
 
 
 const holdButton = document.getElementById("holdButton");
+holdButton.style.touchAction = 'none';
 const holdSound = new Audio('sounds/hold.mp3'); holdSound.preload = 'auto'; holdSound.volume = 0.4;
 const explosionSound = new Audio('sounds/explosion.mp3'); explosionSound.preload = 'auto'; explosionSound.volume = 0.6;
 const failSound = new Audio('sounds/fail.mp3'); failSound.preload = 'auto'; failSound.volume = 1.0;
@@ -735,38 +735,121 @@ function startHold() {
   radius = 0;
   holdStartTime = performance.now();
   holdHue = Math.random() * 360;
-  holdButton.classList.add('active');
   holdSound.currentTime = 0.5;
   holdSound.play();
 }
 function endHold() {
+  // Debounce: ignoruj rychle po sobě jdoucí duplicitní "release"
+  const now = performance.now();
+  if (now - lastReleaseTs < 150) return;
+  lastReleaseTs = now;
+
   if (isGameOver || isCountdown) return;
   isHolding = false;
   handleRelease();
-  holdButton.classList.remove('active');
 }
 
+
 function lockGame() {
-  if (isGameOver) return;          // už zamčeno
-  isGameOver = true;               // globální stopka
-  isHolding = false;               // okamžitě zastav růst hvězdy
+  if (isGameOver) return;
+  isGameOver = true;
+  isHolding = false;
+
+  // Uklid všech efektů/floaterů v momentě Game Over
+  showWrong = false;
+  showExplosion = false;
+  effectTimer = 0;
+  floaters = [];
+  shards = [];
+  fragments = [];
+  flashAlpha = 0;
+
   if (holdButton) {
-    holdButton.disabled = true;    // zneaktivni Hold
+    holdButton.disabled = true;
     holdButton.classList.remove('active');
   }
 }
 
+// Zabránění kontextovému menu
+holdButton.addEventListener('contextmenu', (e) => e.preventDefault());
 
-// Dotyk / myš
-holdButton.addEventListener("touchstart", (e) => { e.preventDefault(); startHold(); });
-holdButton.addEventListener("touchend",   (e) => { e.preventDefault(); endHold(); });
-holdButton.addEventListener("mousedown",  (e) => { e.preventDefault(); startHold(); });
-holdButton.addEventListener("mouseup",    (e) => { e.preventDefault(); endHold(); });
-// Klávesa L
-window.addEventListener("keydown", (e) => { if (e.key === "L") { level++; startLevel(); } });
+function startHold() {
+  if (isGameOver || isCountdown) return;
+  isHolding = true; // držíme
+  radius = 0;
+  holdStartTime = performance.now();
+  holdHue = Math.random() * 360;
+  holdSound.currentTime = 0.5;
+  holdSound.play();
+}
 
-holdButton.addEventListener('touchstart', () => { holdButton.classList.add('active'); });
-holdButton.addEventListener('touchend',   () => { holdButton.classList.remove('active'); });
+function endHold() {
+  if (!isHolding) return; // když už nedržíme, nic nedělej
+  isHolding = false;
+  handleRelease(); // tvoje herní logika při puštění
+}
+
+// TOUCH
+holdButton.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  holdButton.classList.add('active');
+  startHold();
+}, { passive: false });
+
+holdButton.addEventListener('touchend', (e) => {
+  e.preventDefault();
+  holdButton.classList.remove('active');
+  endHold();
+}, { passive: false });
+
+holdButton.addEventListener('touchcancel', (e) => {
+  e.preventDefault();
+  holdButton.classList.remove('active');
+  endHold();
+}, { passive: false });
+
+// MOUSE
+holdButton.addEventListener('mousedown', (e) => {
+  e.preventDefault();
+  if (e.button !== 0) return; // jen levé tlačítko
+  holdButton.classList.add('active');
+  startHold();
+});
+
+holdButton.addEventListener('mouseup', (e) => {
+  e.preventDefault();
+  holdButton.classList.remove('active');
+  endHold();
+});
+
+// Pojistky – myš mimo tlačítko, puštění mimo, skrytí okna
+holdButton.addEventListener('mouseleave', () => {
+  if (isHolding) {
+    holdButton.classList.remove('active');
+    endHold();
+  }
+});
+window.addEventListener('mouseup', () => {
+  if (isHolding) {
+    holdButton.classList.remove('active');
+    endHold();
+  }
+});
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && isHolding) {
+    holdButton.classList.remove('active');
+    endHold();
+  }
+});
+
+// Klávesa L (bonus level skip)
+window.addEventListener("keydown", (e) => { 
+  if (e.key === "L") { 
+    level++; 
+    startLevel(); 
+  } 
+});
+
 
 // Inicializace
 updateScoreUI();
