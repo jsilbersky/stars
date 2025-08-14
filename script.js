@@ -529,13 +529,19 @@ function bonusSpawn(){
   const nowSec = performance.now()/1000;
   if (bonus.active) return false;
   if (nowSec - bonus.lastSpawnSec < bonus.spawnCooldownSec) return false;
+  
 
   bonusPrepareCleanScene();
 
   bonus.type = bonusPickType();
   bonus.hue  = bonus.type==='points' ? 48 : (bonus.type==='seconds' ? 200 : 0);
 
-  // padá středem obrazovky – čitelné a fér
+// přehraj zvuk objevení bonusu
+bonusAppearSound.currentTime = 0;
+bonusAppearSound.play();
+
+
+  // padá středem obrazovky
   bonus.x = centerX;
   bonus.y = -60;
   bonus.vy = Math.max(95, Math.min(140, canvas.height*0.22 + Math.random()*30));
@@ -939,6 +945,8 @@ holdButton.style.touchAction = 'none';
 const holdSound = new Audio('sounds/hold.mp3'); holdSound.preload = 'auto'; holdSound.volume = 0.4;
 const explosionSound = new Audio('sounds/explosion.mp3'); explosionSound.preload = 'auto'; explosionSound.volume = 0.6;
 const failSound = new Audio('sounds/fail.mp3'); failSound.preload = 'auto'; failSound.volume = 1.0;
+const bonusAppearSound = new Audio('sounds/bonus.mp3'); bonusAppearSound.preload = 'auto'; bonusAppearSound.volume = 0.9; 
+
 
 // (první definice – ponechána kvůli kompatibilitě; přepis bude níž)
 function startHold() {
