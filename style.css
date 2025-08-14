@@ -425,3 +425,38 @@ body { position: relative; }
   40%  { transform: scale(1.05); opacity: 1; }
   100% { transform: scale(0.85); opacity: .6; }
 }
+
+/* ===== BONUS MESSAGE (spodek nad panelem) ===== */
+#bonusMessage{
+  position: fixed;
+  left: 0; right: 0;
+  bottom: calc(var(--panelH) + 12px); /* nad ovládacím panelem */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0;
+  transform: translateY(6px) scale(0.98);
+  transition: opacity .18s ease, transform .18s ease;
+  font-family: 'Audiowide', sans-serif;
+  font-weight: 800;
+  letter-spacing: .5px;
+  text-transform: none; /* necháme původní zápis (+10 seconds...) */
+  text-shadow: 0 0 10px rgba(0,255,255,.35), 0 0 2px rgba(0,255,255,.2);
+  font-size: clamp(14px, 3.8vw, 22px);
+}
+#bonusMessage.show{
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Barevné varianty jako ve hře (body/čas/x2) */
+.bm-points  { color:#ffb300; text-shadow: 0 0 14px rgba(255,179,0,.35), 0 0 2px rgba(255,179,0,.25); }
+.bm-seconds { color:#3aa2ff; text-shadow: 0 0 14px rgba(58,162,255,.35), 0 0 2px rgba(58,162,255,.25); }
+.bm-x2      { color:#ff4d4d; text-shadow: 0 0 14px rgba(255,77,77,.35), 0 0 2px rgba(255,77,77,.25); }
+
+/* Na menších displejích o chlup výš */
+@media (max-width: 420px){
+  #bonusMessage{ bottom: calc(var(--panelH) + 16px); }
+}

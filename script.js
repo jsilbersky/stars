@@ -128,12 +128,11 @@ function tickTimer(now) {
 
   timeRemaining -= delta;
   if (timeRemaining <= 0) {
-  timeRemaining = 0;
-  lockGame();
-  triggerGameOver();   // ukaž popup hned
-  return;
-}
-
+    timeRemaining = 0;
+    lockGame();
+    triggerGameOver();   // ukaž popup hned
+    return;
+  }
 
   if (timeRemaining < TIMER_MAX && timeBank > 0) {
     const give = Math.min(TIMER_MAX - timeRemaining, timeBank);
@@ -464,14 +463,199 @@ function drawStars() {
   });
 }
 
+/* ======================= BONUS STAR (náhodná bonusová hvězda, single-focus) ======================= */
+// <<< BONUS: modul pro bonusovou hvězdu – čistá scéna, přebere HOLD >>>
+const bonus = {
+  active: false,
+  type: null,            // 'points' | 'seconds' | 'x2'
+  hue: 50,
+  x: 0,
+  y: -60,
+  vy: 120,               // zpomalený pád (férový hit)
+  baseR: 56,
+  pulseAmp: 0.10,
+  pulseHz: 1.8,
+  curR: 56,
+  hitWinR: 26,           // tolerance rozdílu poloměrů pro zásah
+  lastSpawnSec: 0,
+  spawnCooldownSec: 10,
+  captureHold: false,    // když true, HOLD rozpíná bonus.holdRadius
+  holdRadius: 0,
+  pauseMainScene: false, // čisté plátno pro bonus
+  announceEl: null
+};
+let bonusPrevTs = performance.now();
+
+// původně: bonusInitDOM() + bonusAnnounce()
+// NOVĚ: nic v DOM, vykreslíme text do canvasu přes floaters
+
+function bonusInitDOM(){
+  /* už nic – necháváme prázdné kvůli kompatibilitě */
+  bonus.announceEl = null;
+}
+
+function bonusAnnounce(txt, cls){
+  // mapa tříd -> barvy ve stylu hry
+  const color =
+    cls === 'bm-points'  ? '#ffb300' :
+    cls === 'bm-seconds' ? '#3aa2ff' :
+    cls === 'bm-x2'      ? '#ff4d4d' :
+                           '#00ffff';
+
+  // zobraz ve spodní části canvasu (nad panelem)
+  // 24px od spodního okraje canvasu (můžeš doladit)
+  addFloater(txt, centerX, canvas.height - 24, color, 2000);
+}
+
+function bonusPickType(){
+  const r = Math.random();
+  if (r < 0.34) return 'points';
+  if (r < 0.67) return 'seconds';
+  return 'x2';
+}
+function bonusPrepareCleanScene(){
+  // vyčisti efekty hlavní scény
+  showWrong = false;
+  showExplosion = false;
+  effectTimer = 0;
+  floaters = [];
+  shards = [];
+  fragments = [];
+  flashAlpha = 0;
+
+  bonus.pauseMainScene = true;
+}
+function bonusSpawn(){
+  const nowSec = performance.now()/1000;
+  if (bonus.active) return false;
+  if (nowSec - bonus.lastSpawnSec < bonus.spawnCooldownSec) return false;
+
+  bonusPrepareCleanScene();
+
+  bonus.type = bonusPickType();
+  bonus.hue  = bonus.type==='points' ? 48 : (bonus.type==='seconds' ? 200 : 0);
+
+  // padá středem obrazovky – čitelné a fér
+  bonus.x = centerX;
+  bonus.y = -60;
+  bonus.vy = Math.max(95, Math.min(140, canvas.height*0.22 + Math.random()*30));
+  bonus.baseR = 54 + Math.random()*8;
+  bonus.pulseAmp = 0.10;
+  bonus.pulseHz  = 1.8;
+  bonus.curR = bonus.baseR;
+
+  const label = bonus.type==='points' ? '+10 points' : (bonus.type==='seconds' ? '+10 seconds' : 'Score ×2');
+  const cls   = bonus.type==='points' ? 'bm-points' : (bonus.type==='seconds' ? 'bm-seconds' : 'bm-x2');
+  bonusAnnounce(label, cls);
+
+  bonus.captureHold = true;
+  bonus.holdRadius = 0;
+
+  bonus.active = true;
+  bonus.lastSpawnSec = nowSec;
+  return true;
+}
+function bonusUpdateAndDraw(now, dt){
+  if (!bonus.active) return;
+
+  // pohyb a pulz
+  bonus.y += bonus.vy * dt;
+  const t = (now/1000);
+  const scale = 1 + Math.sin(t * Math.PI*2 * bonus.pulseHz) * bonus.pulseAmp;
+  bonus.curR = bonus.baseR * scale;
+
+  // bonus hvězda
+  ctx.save();
+  ctx.globalAlpha = 0.98;
+  drawShape(currentShape, bonus.x, bonus.y, bonus.curR, 0, bonus.hue, 6);
+  ctx.restore();
+
+  // hráčova hvězda v režimu bonusu – kreslíme na pozici bonusu
+  if (bonus.captureHold && isHolding){
+    ctx.save();
+    drawShape(currentShape, bonus.x, bonus.y, bonus.holdRadius, 0, holdHue + hue, 5);
+    ctx.restore();
+  }
+
+  // zmizel pod panelem? návrat do hry
+  if (bonus.y - bonus.curR > canvas.height){
+    bonus.active = false;
+    bonus.captureHold = false;
+    bonus.pauseMainScene = false;
+  }
+}
+function bonusTryHitOnRelease(){
+  if (!bonus.active) return false;
+
+  const maxSizeDiff = 30;
+  const sizeDiff = Math.abs(bonus.holdRadius - bonus.curR);
+  const sizeRatio = bonus.holdRadius > bonus.curR + maxSizeDiff ? 0 : (1 - sizeDiff / maxSizeDiff);
+  const match = Math.round(Math.max(0, sizeRatio * 100));
+
+  updateMatchLabel(match);
+
+  let success = false;
+
+  if (match >= 80){
+    // ✅ úspěch – odměna
+    if (bonus.type==='points'){
+      score += 10; updateScoreUI(); pulseScore();
+    } else if (bonus.type==='seconds'){
+      if (timeRemaining < TIMER_MAX){ timeRemaining = Math.min(TIMER_MAX, timeRemaining + 10); }
+      else { timeBank += 10; }
+      updateTimerUI(); blinkTimer();
+    } else if (bonus.type==='x2'){
+      score = Math.floor(score * 2); updateScoreUI(); pulseScore();
+    }
+    createFragments(currentShape, bonus.x, bonus.y);
+    explosionSound.currentTime = 0; explosionSound.play();
+    success = true;
+
+  } else {
+    // ❌ neúspěch – ukaž křížek + zvuk „fail“
+    showWrong = true;
+    effectTimer = 30;                 // jak dlouho bude ✖ vidět (frame counter)
+    failSound.currentTime = 0;
+    failSound.play();
+
+  }
+
+  // po release bonus vždy končí
+  bonus.active = false;
+  bonus.captureHold = false;
+  bonus.pauseMainScene = false;
+
+  return success;
+}
+
+function bonusMaybeSpawnAfterRelease(){
+  if (bonus.active) return;
+  const nowSec = performance.now()/1000;
+  if (nowSec - bonus.lastSpawnSec < bonus.spawnCooldownSec) return;
+  if (Math.random() < 0.30){
+    setTimeout(() => { bonusSpawn(); }, 200);
+  }
+}
+// <<< /BONUS modul >>>
+
 function draw() {
   const now = performance.now();
+  const dtFrame = Math.min(0.05, (now - bonusPrevTs) / 1000);
+  bonusPrevTs = now;
+
+  // Při bonusu roste "bonus.holdRadius" místo běžného radiusu
+  if (bonus.captureHold && isHolding){
+    bonus.holdRadius += holdGrowth;
+  }
 
   // FIX: timer jen když neběží odpočet a hra není u konce
   if (!isCountdown && !isGameOver) tickTimer(now); // FIX
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawStars();
+
+  // BONUS: posun + kresba bonusové hvězdy
+  bonusUpdateAndDraw(now, dtFrame);
 
   shards.forEach(shard => {
     ctx.save();
@@ -538,11 +722,28 @@ function draw() {
     targetRadius = baseTargetRadius;
   }
 
-  ctx.save();
-  ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
-  ctx.lineWidth = lineWidth;
-  drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
-  ctx.restore();
+  // --- Hlavní scéna jen když není bonus v single-focus režimu ---
+  if (!bonus.pauseMainScene) {
+    ctx.save();
+    ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
+    ctx.lineWidth = lineWidth;
+    drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
+    ctx.restore();
+
+    if (isHolding && radius < targetRadius + 1000) radius += holdGrowth;
+
+    if (isHolding) {
+      ctx.save();
+      ctx.translate(shapeX, shapeY);
+      ctx.rotate(0);
+      drawStarShape(currentShape, radius);
+      ctx.fill();
+      ctx.restore();
+
+      drawShape(currentShape, shapeX, shapeY, radius, 0, holdHue + hue, 5);
+    }
+  }
+  // --- konec gate ---
 
   drawFloaters(now);
 
@@ -570,32 +771,21 @@ function draw() {
   });
   fragments = fragments.filter(f => f.alpha > 0);
 
-  if (isHolding && radius < targetRadius + 1000) radius += holdGrowth;
-
-  if (isHolding) {
-    ctx.save();
-    ctx.translate(shapeX, shapeY);
-    ctx.rotate(0);
-    drawStarShape(currentShape, radius);
-    ctx.fill();
-    ctx.restore();
-
-    drawShape(currentShape, shapeX, shapeY, radius, 0, holdHue + hue, 5);
-  }
-
   rotation += rotationSpeed;
-hue = (hue + 1) % 360;
+  hue = (hue + 1) % 360;
 
-if (!isGameOver) {
-  loopRunning = true;
-  requestAnimationFrame(draw);
-} else {
-  loopRunning = false; // smyčka zastavena
-}
+  if (!isGameOver) {
+    loopRunning = true;
+    requestAnimationFrame(draw);
+  } else {
+    loopRunning = false; // smyčka zastavena
+  }
 }
 
 // <<< PŮVODNÍ resizeCanvas NAHRAZEN >>>
 sizeGameCanvas(); // nastavit plátno hned po startu
+// <<< BONUS: init announcer >>>
+bonusInitDOM();
 
 function updateMatchLabel(percentage) {
   matchLabel.textContent = `MATCH: ${percentage}%`;
@@ -627,6 +817,8 @@ function handleRelease() {
 
   const match = Math.round(Math.max(0, sizeRatio * angleRatio * 100));
   updateMatchLabel(match);
+  // Pokus o zásah bonusové hvězdy (nezávislé na běžném hitu/missu)
+  bonusTryHitOnRelease();
 
   // <<< NOVÉ STATISTIKY >>>
   attempts++;
@@ -677,19 +869,27 @@ function handleRelease() {
     failSound.play();
 
     if (lives <= 0) {
-  lockGame();          // zamkni vstupy teď hned
-  triggerGameOver();   // a hned ukaž popup
-  return;
+      lockGame();          // zamkni vstupy teď hned
+      triggerGameOver();   // a hned ukaž popup
+      return;
+    }
   }
- }
+  // Po každém release je šance náhodně spustit bonus (pokud není aktivní)
+  bonusMaybeSpawnAfterRelease();
 }
 
 window.startNewGame = function () {
   document.getElementById("gameOverPopup").classList.add("hidden");
 
+  // <<< BONUS reset >>>
+  bonus.active = false;
+  bonus.captureHold = false;
+  bonus.pauseMainScene = false;
+  bonus.lastSpawnSec = performance.now()/1000;
+
   gameOverShown = false; // reset pro další hru
 
-    // 👉 vyčistit efekty z minulé hry (kříž, exploze, částice)
+  // 👉 vyčistit efekty z minulé hry (kříž, exploze, částice)
   showWrong = false;
   showExplosion = false;
   effectTimer = 0;
@@ -711,7 +911,6 @@ window.startNewGame = function () {
 
   timerBar.classList.remove('timer-blink');
 
-
   if (holdButton) {
     holdButton.disabled = false;
     holdButton.classList.remove('active');
@@ -729,9 +928,8 @@ window.startNewGame = function () {
   updateMatchLabel(0);
 
   if (!loopRunning) {
-  requestAnimationFrame(draw); // znovu startni render smyčku
-}
-
+    requestAnimationFrame(draw); // znovu startni render smyčku
+  }
 };
 
 
@@ -742,6 +940,7 @@ const holdSound = new Audio('sounds/hold.mp3'); holdSound.preload = 'auto'; hold
 const explosionSound = new Audio('sounds/explosion.mp3'); explosionSound.preload = 'auto'; explosionSound.volume = 0.6;
 const failSound = new Audio('sounds/fail.mp3'); failSound.preload = 'auto'; failSound.volume = 1.0;
 
+// (první definice – ponechána kvůli kompatibilitě; přepis bude níž)
 function startHold() {
   if (isGameOver || isCountdown) return;  // ⬅ blok během countdownu
   isHolding = true;
@@ -786,10 +985,17 @@ function lockGame() {
 // Zabránění kontextovému menu
 holdButton.addEventListener('contextmenu', (e) => e.preventDefault());
 
+// <<< BONUS: **přepis** startHold/endHold, aby HOLD fungoval i v bonusu >>>
 function startHold() {
   if (isGameOver || isCountdown) return;
   isHolding = true; // držíme
-  radius = 0;
+
+  if (bonus.captureHold) {
+    bonus.holdRadius = 0;      // růst pro bonus
+  } else {
+    radius = 0;                // růst pro hlavní hru
+  }
+
   holdStartTime = performance.now();
   holdHue = Math.random() * 360;
   holdSound.currentTime = 0.5;
@@ -797,10 +1003,23 @@ function startHold() {
 }
 
 function endHold() {
-  if (!isHolding) return; // když už nedržíme, nic nedělej
+  const now = performance.now();
+  if (now - lastReleaseTs < 150) return;
+  lastReleaseTs = now;
+
+  if (isGameOver || isCountdown) return;
+  if (!isHolding) return;
   isHolding = false;
+
+  // když běží bonus, řešíme jen bonus a NEvoláme handleRelease()
+  if (bonus.captureHold) {
+    bonusTryHitOnRelease();
+    return;
+  }
+
   handleRelease(); // tvoje herní logika při puštění
 }
+// <<< /BONUS přepis >>>
 
 // TOUCH
 holdButton.addEventListener('touchstart', (e) => {
@@ -864,9 +1083,8 @@ window.addEventListener("keydown", (e) => {
 });
 
 
-
-
 // Inicializace
+bonusInitDOM();
 updateScoreUI();
 updateTimerUI();
 
