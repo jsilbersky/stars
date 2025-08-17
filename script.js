@@ -497,9 +497,9 @@ function bonusInitDOM(){
 function bonusAnnounce(txt, cls){
   // mapa tříd -> barvy ve stylu hry
   const color =
-    cls === 'bm-points'  ? '#ffb300' :
-    cls === 'bm-seconds' ? '#3aa2ff' :
-    cls === 'bm-x2'      ? '#ff4d4d' :
+    cls === 'bm-points'  ? '#00ffff' :
+    cls === 'bm-seconds' ? '#00ffff' :
+    cls === 'bm-x2'      ? '#00ffff' :
                            '#00ffff';
 
   // zobraz ve spodní části canvasu (nad panelem)
