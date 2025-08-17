@@ -30,6 +30,11 @@ function sizeGameCanvas() {
   centerY = canvas.height / 2;
 
   generateStars();
+  // Při změně velikosti plátna přepočti multi-stars pozice
+if (multiStarMode && currentLevelSettings) {
+  spawnMultiStars(currentLevelSettings);
+}
+
 }
 
 // přepočítávání při změně velikosti / orientace
@@ -278,6 +283,17 @@ let holdGrowth = 1;
 let timeBank = 0;
 
 let blinkActive = false;
+// === Multi-star config ===
+const MS_MAX_STARS = 5;     // tvrdý strop počtu hvězd
+const MS_MARGIN = 16;       // bezpečný okraj (zvednuto)
+const MS_PACKING_SCALE = 1.10; // +12 % rezerva pro ostré špičky
+
+let multiStarMode = false;
+let msStars = [];            // hvězdy na scéně (decoy + aktivní)
+let msActiveIndex = null;    // index hvězdy, která se po HOLD rozpíná
+const MS_SIZE_POOL = [0.84, 0.92, 1.00, 1.08, 1.16]; // 5 velikostí jako ve výchozím stavu
+let currentLevelSettings = null; // abychom mohli po hitu znovu naspawnovat stejné chování
+
 
 
 let loopRunning = false;
@@ -297,7 +313,31 @@ const levels = [
   { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 3.0, holdGrowth: 1.30 },
   { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 3.8, holdGrowth: 1.36 },
   { lineWidth: 8, move: true, bounce: true, oscillate: true, scaleMin: 0.85, scaleMax: 1.15, scaleSpeed: 0.075, speed: 4.4, holdGrowth: 1.42 },
-  { lineWidth: 4, move: true, bounce: true, oscillate: true, scaleMin: 0.84, scaleMax: 1.16, scaleSpeed: 0.080, speed: 4.9, holdGrowth: 1.50 }
+  { lineWidth: 4, move: true, bounce: true, oscillate: true, scaleMin: 0.84, scaleMax: 1.16, scaleSpeed: 0.080, speed: 4.9, holdGrowth: 1.50 },
+  // === Levels 9–16: multi-star decoys ===
+  // 9–10: 2 pulzující hvězdy
+{ lineWidth: 8,  multiStars: true, starsCount: 2, oscillate: true,  
+  scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.070, holdGrowth: 1.6 },
+{ lineWidth: 4,  multiStars: true, starsCount: 2, oscillate: true,  
+  scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.075, holdGrowth: 1.6 },
+
+// 11–12: 3 pulzující hvězdy
+{ lineWidth: 8,  multiStars: true, starsCount: 3, oscillate: true,  
+  scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.080, holdGrowth: 1.7 },
+{ lineWidth: 4,  multiStars: true, starsCount: 3, oscillate: true,  
+  scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.085, holdGrowth: 1.7 },
+
+// 13–14: 4 pulzující hvězdy (větší rozsah, ale přehledné)
+{ lineWidth: 8,  multiStars: true, starsCount: 4, oscillate: true,  
+  scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.090, holdGrowth: 1.7 },
+{ lineWidth: 4,  multiStars: true, starsCount: 4, oscillate: true,  
+  scaleMin: 0.86, scaleMax: 1.14, scaleSpeed: 0.095, holdGrowth: 1.7 },
+
+// 15–16: 4 pulzující hvězdy (ještě rychlejší, agresivnější)
+{ lineWidth: 8,  multiStars: true, starsCount: 4, oscillate: true,  
+  scaleMin: 0.84, scaleMax: 1.16, scaleSpeed: 0.100, holdGrowth: 1.7 },
+{ lineWidth: 4,  multiStars: true, starsCount: 4, oscillate: true,  
+  scaleMin: 0.82, scaleMax: 1.18, scaleSpeed: 0.100, holdGrowth: 1.7 }
 ];
 
 // ❤️ životy
@@ -339,9 +379,209 @@ let scaleSpeed = 0;
 let scalePhase = 0;
 let baseTargetRadius = 80;
 
+
+
+// === Helpers pro MULTI-STARS ===
+function msShuffle(a){ for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function msRand(min, max){ return Math.random()*(max-min)+min; }
+function msDistance(ax,ay,bx,by){ return Math.hypot(ax-bx, ay-by); }
+
+// Dynamický základní poloměr pro multi-stars (menší na užších displejích)
+function msBaseRadius(){
+  const u = Math.min(canvas.width, canvas.height);
+  return Math.max(54, Math.floor(u * 0.20)); 
+}
+
+// Umístění jedné hvězdy bez překryvu, s efektivním poloměrem (včetně pulzu + tloušťky)
+function msPlaceNonOverlappingStar(effR, list){
+  // effR = efektivní (největší) poloměr hvězdy včetně pulzu, čáry a marginu
+  for (let tries = 0; tries < 300; tries++){
+    const x = msRand(effR, canvas.width  - effR);
+    const y = msRand(effR, canvas.height - effR);
+    let ok = true;
+    for (const o of list){
+      if (msDistance(x, y, o.x, o.y) < (effR + o.effR)) { ok = false; break; }
+    }
+    if (ok) return { x, y };
+  }
+  return null; // nešlo umístit bez kolize
+}
+
+
+// Vygeneruje sadu hvězd; pokud se nevejdou, zmenšuje je, dokud se nevejdou.
+function spawnMultiStars(settings){
+  msStars = [];
+  msActiveIndex = null;
+
+  // pevný limit počtu hvězd
+  const N = Math.min(settings.starsCount ?? 3, 4); // max 4 hvězdy
+
+
+  const isPulsing = !!settings.oscillate;
+  const sMin = isPulsing ? (settings.scaleMin ?? 1) : 1;
+  const sMax = isPulsing ? (settings.scaleMax ?? 1) : 1;
+
+  // pool velikostí přesně pro N
+  // pro 5 hvězd použij „větší“ sadu multiplikátorů
+const sizePool5 = [0.95, 1.00, 1.05, 1.12, 1.20];
+const poolBase = (N >= 5) ? sizePool5 : MS_SIZE_POOL;
+const pool = msShuffle([...poolBase]).slice(0, N);
+
+
+  // víc „vzduchu“ u hustších levelů
+  const packing = (N >= 5) ? Math.max(MS_PACKING_SCALE, 1.18) : MS_PACKING_SCALE;
+
+  // 1) zkus náhodné rozmístění s adaptivním zmenšováním
+  let base = msBaseRadius();
+  // N=5 → přidej 25 % velikosti (jen pro multi-stars s 5 kusy)
+if (N >= 5) base = Math.floor(base * 1.25);
+
+  if (N >= 5) base = Math.floor(base * 1.10); // 5 hvězd → +10 % velikost
+  for (let attempt = 0; attempt < 6; attempt++){
+    const tmp = [];
+    let ok = true;
+
+    for (let i = 0; i < N; i++){
+      const mul   = pool[i % pool.length];
+      const baseR = base * mul;
+
+      const maxStroke = Math.max(1, lineWidth) * 0.5;
+      const effR      = baseR * sMax * packing + maxStroke + MS_MARGIN;
+
+      const pos = msPlaceNonOverlappingStar(effR, tmp);
+      if (!pos){ ok = false; break; }
+
+      tmp.push({
+        x: pos.x, y: pos.y,
+        baseR, effR,
+        curR: baseR,
+        scaleMin: sMin, scaleMax: sMax,
+        scaleSpeed: isPulsing ? (settings.scaleSpeed ?? 0) : 0,
+        scalePhase: Math.random() * Math.PI * 2,
+        pulsing: isPulsing,
+        growRadius: 0
+      });
+    }
+
+    if (ok){ msStars = tmp; return; }
+    base = Math.floor(base * 0.9); // zmenši a zkus znovu
+  }
+
+  // 2) GRID fallback – vždy bez kolize
+    // 2) HEX/STAGGER fallback – pestřejší rozložení bez kolizí
+  // z dostupných (cols, rows) vyber vyvážené rozdělení a trochu ho náhodně obměň
+  const options = [];
+  for (let c = 1; c <= N; c++){
+    const r = Math.ceil(N / c);
+    options.push([c, r]);
+  }
+  options.sort((a,b)=>Math.abs(a[0]-a[1]) - Math.abs(b[0]-b[1]));
+  let [cols, rows] = options[Math.min(Math.floor(Math.random()*2), options.length-1)];
+  if (Math.random() < 0.5) [cols, rows] = [rows, cols]; // občas prohoď osy
+
+  const cellW = canvas.width  / cols;
+  const cellH = canvas.height / rows;
+
+  const maxStroke = Math.max(1, lineWidth) * 0.5;
+
+  const cellScale = (N >= 5) ? 0.48 : 0.42; // pro 5 hvězd větší buňky
+const cellR = Math.max(24, Math.floor(Math.min(cellW, cellH) * cellScale));
+
+  const baseFromCell = (cellR - maxStroke - MS_MARGIN) / (sMax * packing);
+
+  const JITTER = Math.min(cellW, cellH) * 0.14;              // lehké rozházení
+  const rowOffsetSign = Math.random() < 0.5 ? 1 : -1;        // směr stagger posunu
+
+  msStars = [];
+  const poolShuffled = msShuffle([...pool]);                 // aby se nevytvářel stejný vzor
+
+  for (let i = 0; i < N; i++){
+    const r = Math.floor(i / cols);
+    const c = i % cols;
+
+    // střed buňky
+    let cx = (c + 0.5) * cellW;
+    let cy = (r + 0.5) * cellH;
+
+    // „hex“ stagger: každý lichý řádek posuň o půl buňky
+    if (r % 2 === 1){
+      cx += rowOffsetSign * 0.5 * cellW;
+    }
+
+    // omez do canvasu, kdyby posun vyjel ven
+    cx = Math.max(cellR, Math.min(canvas.width  - cellR, cx));
+    cy = Math.max(cellR, Math.min(canvas.height - cellR, cy));
+
+    // náhodné rozházení v rámci buňky
+    cx += msRand(-JITTER, JITTER);
+    cy += msRand(-JITTER, JITTER);
+
+    const mul   = poolShuffled[i % poolShuffled.length];
+    const baseR = Math.max(20, baseFromCell * mul);
+    const effR  = baseR * sMax * packing + maxStroke + MS_MARGIN;
+
+    const x = Math.max(effR, Math.min(canvas.width  - effR, cx));
+    const y = Math.max(effR, Math.min(canvas.height - effR, cy));
+
+    msStars.push({
+      x, y,
+      baseR, effR,
+      curR: baseR,
+      scaleMin: sMin, scaleMax: sMax,
+      scaleSpeed: isPulsing ? (settings.scaleSpeed ?? 0) : 0,
+      scalePhase: Math.random() * Math.PI * 2,
+      pulsing: isPulsing,
+      growRadius: 0
+    });
+  }
+
+  // náhodné zrcadlení rozložení, ať se neokouká
+  if (Math.random() < 0.5){ for (const s of msStars) s.x = canvas.width  - s.x; }
+  if (Math.random() < 0.5){ for (const s of msStars) s.y = canvas.height - s.y; }
+}
+
+// === /Helpers pro MULTI-STARS ===
+
+// updater a renderer pro multi-stars (MIMO startLevel, na top-levelu)
+function updateMultiStars(dt){
+  for (const s of msStars){
+    if (s.pulsing){
+      s.scalePhase += s.scaleSpeed;
+      const t = (Math.sin(s.scalePhase) + 1) / 2;
+      const ratio = s.scaleMin + (s.scaleMax - s.scaleMin) * t;
+      s.curR = s.baseR * ratio;
+    } else {
+      s.curR = s.baseR;
+    }
+  }
+}
+
+function drawMultiStars(){
+  // decoy hvězdy
+  for (let i = 0; i < msStars.length; i++){
+    const s = msStars[i];
+    drawShape(currentShape, s.x, s.y, s.curR, 0, currentColorShift + hue, lineWidth);
+  }
+  // aktivní rozpínaná hvězda navrch (pokud existuje)
+  if (msActiveIndex != null){
+    const s = msStars[msActiveIndex];
+    drawShape(currentShape, s.x, s.y, s.growRadius, 0, holdHue + hue, Math.max(5, lineWidth));
+  }
+}
+
+
 function startLevel() {
   document.getElementById("gameOverPopup").classList.add("hidden");
+
+  // 1) Nastavení levelu
   const settings = levels[Math.min(level - 1, levels.length - 1)];
+  currentLevelSettings = settings;
+  if (settings.multiStars) {
+  settings.starsCount = Math.min(settings.starsCount ?? 3, MS_MAX_STARS);
+}
+
+
+  // 2) Základní parametry (single-target default)
   lineWidth = settings.lineWidth;
   rotationSpeed = settings.rotationSpeed ?? 0;
   needsRotationCheck = settings.rotationCheck;
@@ -355,12 +595,37 @@ function startLevel() {
     shapeVY = (Math.random() - 0.5) * spd;
   }
 
-  oscillate = settings.oscillate || false;
-  scaleMin  = settings.scaleMin ?? 1;
-  scaleMax  = settings.scaleMax ?? 1;
-  scaleSpeed = settings.scaleSpeed ?? 0;
-  scalePhase = 0;
+  oscillate   = settings.oscillate || false;
+  scaleMin    = settings.scaleMin ?? 1;
+  scaleMax    = settings.scaleMax ?? 1;
+  scaleSpeed  = settings.scaleSpeed ?? 0;
+  scalePhase  = 0;
 
+  // 3) Multi-stars režim?
+  multiStarMode = !!settings.multiStars;
+
+  if (multiStarMode) {
+    // Multi-stars: bez pohybu/odrazu (statické návnady, jen pulz dle settings)
+    enableMove = false;
+    enableBounce = false;
+
+    remainingShapes = [...allStarShapes].sort(() => Math.random() - 0.5);
+
+    if (firstStart) {
+      updateMatchLabel(0);
+      firstStart = false;
+    }
+
+    // Vyber tvar (stejný tvar pro všechny hvězdy v této várce) a spawn
+    nextShape();
+    spawnMultiStars(settings);
+
+    updateLivesDisplay();
+    updateLevelDisplay();
+    return; // ukončit – single-target inicializaci níž nechceme spustit
+  }
+
+  // 4) Single-target (levely 1–8) – původní chování
   remainingShapes = [...allStarShapes].sort(() => Math.random() - 0.5);
   shapeX = centerX;
   shapeY = centerY;
@@ -728,27 +993,55 @@ function draw() {
     targetRadius = baseTargetRadius;
   }
 
-  // --- Hlavní scéna jen když není bonus v single-focus režimu ---
-  if (!bonus.pauseMainScene) {
+ // --- Hlavní scéna jen když není bonus v single-focus režimu ---
+if (!bonus.pauseMainScene) {
+
+  if (multiStarMode){
+  if (typeof updateMultiStars === 'function') {
+    updateMultiStars(dtFrame);
+  }
+
+  if (isHolding){
+    if (msActiveIndex == null && msStars.length > 0){
+      msActiveIndex = Math.floor(Math.random() * msStars.length);
+      msStars[msActiveIndex].growRadius = 0;
+    }
+    if (msActiveIndex != null){
+  const s = msStars[msActiveIndex];
+  // menší hvězda → pomalejší růst, větší hvězda → o trochu rychlejší
+  const sizeFactor = Math.max(0.65, Math.min(1.15, s.curR / 90));
+  const speedScale = 0.80; // globální zpomalení multi-stars
+  s.growRadius += holdGrowth * speedScale * sizeFactor;
+}
+
+  }
+
+  if (typeof drawMultiStars === 'function') {
+    drawMultiStars();
+  }
+} else {
+  // původní single-target větev (tu nech tak, jak ji máš)
+  ctx.save();
+  ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
+  ctx.lineWidth = lineWidth;
+  drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
+  ctx.restore();
+
+  if (isHolding && radius < targetRadius + 1000) radius += holdGrowth;
+
+  if (isHolding) {
     ctx.save();
-    ctx.strokeStyle = `hsl(${hue}, 100%, 70%)`;
-    ctx.lineWidth = lineWidth;
-    drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
+    ctx.translate(shapeX, shapeY);
+    ctx.rotate(0);
+    drawStarShape(currentShape, radius);
+    ctx.fill();
     ctx.restore();
 
-    if (isHolding && radius < targetRadius + 1000) radius += holdGrowth;
-
-    if (isHolding) {
-      ctx.save();
-      ctx.translate(shapeX, shapeY);
-      ctx.rotate(0);
-      drawStarShape(currentShape, radius);
-      ctx.fill();
-      ctx.restore();
-
-      drawShape(currentShape, shapeX, shapeY, radius, 0, holdHue + hue, 5);
-    }
+    drawShape(currentShape, shapeX, shapeY, radius, 0, holdHue + hue, 5);
   }
+}
+}
+
   // --- konec gate ---
 
   drawFloaters(now);
@@ -804,6 +1097,59 @@ function updateMatchLabel(percentage) {
 function handleRelease() {
   if (isGameOver || lives <= 0 || timeRemaining <= 0) return;
   isHolding = false;
+
+  // --- Multi-star MODE (žádná rotace, hodnotíme jen velikost) ---
+if (multiStarMode) {
+  // edge-case: pokud hráč pustil bez aktivace, náhodně jednu vyber
+  if (msActiveIndex == null && msStars.length > 0) {
+    msActiveIndex = Math.floor(Math.random() * msStars.length);
+  }
+  if (msActiveIndex == null) return;
+
+  const s = msStars[msActiveIndex];
+  const maxSizeDiff = 30;
+  const sizeDiff = Math.abs(s.growRadius - s.curR);
+  const sizeRatio = s.growRadius > s.curR + maxSizeDiff ? 0 : 1 - sizeDiff / maxSizeDiff;
+  const match = Math.round(Math.max(0, sizeRatio * 100));
+  updateMatchLabel(match);
+
+  // statistiky
+  attempts++;
+  sumAccuracy += match;
+  if (match >= 80) successfulMatches++;
+
+  if (match >= 80) {
+    let add = 0; let infoText=''; let color='#9cd6ff';
+    if (match >= 95) { 
+      add = 3; infoText = '+3 ★  +TIME'; color = '#00ffff';
+      if (timeRemaining < TIMER_MAX) { timeRemaining = Math.min(TIMER_MAX, timeRemaining + 3); } 
+      else { timeBank += 3; }
+      updateTimerUI(); blinkTimer();
+    } else if (match >= 90) { add = 2; infoText = '+2 ★'; color = '#00ffff'; }
+    else { add = 1; infoText = '+1 ★'; }
+
+    score += add; updateScoreUI(); pulseScore();
+    addFloater(infoText, s.x, Math.max(20, s.y - (s.curR + 24)), color, 1100);
+
+    createFragments(currentShape, s.x, s.y);
+    explosionSound.currentTime = 0; explosionSound.play();
+
+    // další tvar + nové rozložení návnad
+    nextShape();
+    spawnMultiStars(currentLevelSettings);
+
+  } else {
+    showWrong = true; effectTimer = 30; lives--; updateLivesDisplay();
+    failSound.currentTime = 0; failSound.play();
+    if (lives <= 0) { lockGame(); triggerGameOver(); return; }
+    // necháme stejné rozložení, ale další HOLD vybere novou aktivní
+    msActiveIndex = null;
+  }
+
+  bonusMaybeSpawnAfterRelease();
+  return; // důležité – nezapojuj původní single-target logiku
+}
+
 
   const isMoving = enableMove;
   const maxSizeDiff = isMoving ? 40 : 30;
@@ -1003,6 +1349,13 @@ function startHold() {
   } else {
     radius = 0;                // růst pro hlavní hru
   }
+  // Multi-star: při prvním HOLD zvol náhodnou hvězdu, která bude růst
+if (multiStarMode){
+  if (msActiveIndex == null && msStars.length > 0){
+    msActiveIndex = Math.floor(Math.random() * msStars.length);
+    msStars[msActiveIndex].growRadius = 0;
+  }
+}
 
   holdStartTime = performance.now();
   holdHue = Math.random() * 360;
