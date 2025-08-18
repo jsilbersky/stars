@@ -1732,24 +1732,33 @@ drawInit();
     ctx.restore();
   }
   function drawButton(){
-    ctx.save(); ctx.translate(btn.x, btn.y);
-    const grad = ctx.createRadialGradient(0,-8,6, 0,0, pressed?30:26);
-    grad.addColorStop(0, pressed? '#4a7cff' : '#6a8dff');
-    grad.addColorStop(1, pressed? '#3157d8' : '#3d5de0');
-    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0,0,btn.r,0,TAU); ctx.fill();
-    ctx.globalAlpha = pressed? .35:.18; ctx.beginPath(); ctx.arc(0,0,btn.r+8,0,TAU);
-    ctx.fillStyle = pressed? '#6a8dff' : '#8aa2ff'; ctx.fill();
-    if (pressRipple>0){
-      ctx.globalAlpha = clamp(pressRipple,0,1);
-      ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.arc(0,0, btn.r + pressRipple*10, 0, TAU); ctx.stroke();
-    }
-    ctx.globalAlpha = 1; ctx.fillStyle = '#000';
-    ctx.font='bold 12px Audiowide, system-ui, -apple-system, Segoe UI, Roboto, Arial';
-    ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('HOLD',0,0);
-    ctx.restore();
-  }
+  ctx.save();
+  ctx.translate(btn.x, btn.y);
+
+  // černý základ tlačítka
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(0, 0, btn.r, 0, TAU);
+  ctx.fill();
+
+  // cyan obvod
+  ctx.strokeStyle = '#00ffff';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(0, 0, btn.r, 0, TAU);
+  ctx.stroke();
+
+  // text HOLD uprostřed
+  ctx.fillStyle = '#00ffff';
+  ctx.font = 'bold 11px Audiowide, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('HOLD', 0, 0);
+
+  ctx.restore();
+}
+
+
 
   function render(){
     ctx.clearRect(0,0,W,H);
