@@ -342,6 +342,11 @@ const levels = [
 
 // ❤️ životy
 let lives = 5;
+
+// DOPLNĚNÉ: strop a checkpoint levely
+const MAX_LIVES = 5;
+const CHECKPOINT_LEVELS = new Set([6, 8, 10, 12, 14, 16]);
+
 function updateLivesDisplay() {
   const hearts = document.querySelectorAll(".heart");
   hearts.forEach((heart, index) => heart.classList.toggle("lost", index >= lives));
@@ -573,35 +578,37 @@ function drawMultiStars(){
 // === LEVEL ANNOUNCE (canvas overlay) ===
 const levelAnnounce = { active:false, text:'', start:0, dur:1400 };
 
-function triggerLevelAnnounce(n, ms = 1400){
+function triggerLevelAnnounce(n, ms = 1400, extra = "") {
   levelAnnounce.active = true;
   levelAnnounce.text = `LEVEL ${n}`;
+  levelAnnounce.extra = extra;   // nový řádek
   levelAnnounce.start = performance.now();
   levelAnnounce.dur   = ms;
 }
+
 
 function drawLevelAnnounce(now){
   if (!levelAnnounce.active) return;
   const t = (now - levelAnnounce.start) / levelAnnounce.dur;
   if (t >= 1){ levelAnnounce.active = false; return; }
 
-  // kratší náběh/odběh
+  // fade-in/out
   const fade = 0.15;
   let alpha;
   if (t < fade) alpha = t / fade;
   else if (t > 1 - fade) alpha = (1 - t) / fade;
   else alpha = 1;
 
-  // 👉 méně výrazný „pop“
-  const SCALE_AMP = 0.02;       // bylo 0.04
-  const MAX_ALPHA = 0.80;       // bylo 1.00
+  // parametry hlavního nápisu
+  const SCALE_AMP = 0.02;
+  const MAX_ALPHA = 0.80;
 
-  // 👉 menší písmo a výš o chlup
-  const fs = Math.round(Math.min(32, Math.max(18, canvas.width * 0.065))); // bylo 28–48, *0.09
-  const posY = Math.max(24, canvas.height * 0.12); // bylo *0.18
+  const fs = Math.round(Math.min(32, Math.max(18, canvas.width * 0.065)));
+  const posY = Math.max(24, canvas.height * 0.12);
 
   const scale = 0.98 + SCALE_AMP * Math.sin(Math.min(1, t) * Math.PI);
 
+  // === Hlavní "LEVEL X" (může se lehce škálovat) ===
   ctx.save();
   ctx.globalAlpha = Math.max(0, alpha) * MAX_ALPHA;
   ctx.translate(canvas.width / 2, posY);
@@ -611,22 +618,69 @@ function drawLevelAnnounce(now){
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // 👉 slabší glow a tenčí obrys
   ctx.shadowColor = '#00ffff';
-  ctx.shadowBlur  = 5;  // bylo 22
-  ctx.lineWidth   = 1;   // bylo 4
+  ctx.shadowBlur  = 5;
+  ctx.lineWidth   = 1;
   ctx.strokeStyle = 'rgba(0,0,0,.5)';
   ctx.fillStyle   = 'rgba(0,255,255,.85)';
 
   ctx.strokeText(levelAnnounce.text, 0, 0);
   ctx.fillText(levelAnnounce.text, 0, 0);
   ctx.restore();
+
+  // === EXTRA řádek pod LEVEL (statický, bez škálování/posuvu) ===
+  if (levelAnnounce.extra){
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, alpha) * 0.95; // může být klidně o chlup výraznější
+    ctx.translate(canvas.width / 2, posY + fs * 0.95); // pevně pod LEVEL (cca 1 řádek)
+
+    // volitelný "pill" podklad pro čitelnost
+    const extraText = levelAnnounce.extra;
+    ctx.font = `bold ${Math.round(fs * 0.78)}px Audiowide, system-ui, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // podklad (tmavý průsvitný obdélník se zakulacením)
+    const metrics = ctx.measureText(extraText);
+    const txtW = metrics.width;
+    const padX = Math.round(fs * 0.40);
+    const padY = Math.round(fs * 0.28);
+    const pillW = txtW + padX * 2;
+    const pillH = Math.round(fs * 0.95);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    const rx = pillW / 2, ry = pillH / 2, r = Math.min(12, fs * 0.4);
+    ctx.beginPath();
+    ctx.moveTo(-rx + r, -ry);
+    ctx.lineTo(rx - r, -ry);
+    ctx.quadraticCurveTo(rx, -ry, rx, -ry + r);
+    ctx.lineTo(rx, ry - r);
+    ctx.quadraticCurveTo(rx, ry, rx - r, ry);
+    ctx.lineTo(-rx + r, ry);
+    ctx.quadraticCurveTo(-rx, ry, -rx, ry - r);
+    ctx.lineTo(-rx, -ry + r);
+    ctx.quadraticCurveTo(-rx, -ry, -rx + r, -ry);
+    ctx.closePath();
+    ctx.fill();
+
+    // samotný text
+    ctx.fillStyle = '#ffea00';
+    ctx.shadowColor = '#ffea00';
+    ctx.shadowBlur  = 10;
+    ctx.fillText(extraText, 0, 0);
+
+    ctx.restore();
+  }
 }
+
 
 
 
 function startLevel() {
   document.getElementById("gameOverPopup").classList.add("hidden");
+    // Nikdy nepřekroč level 16 (kvůli zobrazování LEVEL 17+)
+  if (level > 16) level = 16;
+
 
   // 1) Nastavení levelu
   const settings = levels[Math.min(level - 1, levels.length - 1)];
@@ -655,6 +709,19 @@ function startLevel() {
   scaleSpeed  = settings.scaleSpeed ?? 0;
   scalePhase  = 0;
 
+ // ★ CHECKPOINT LIFE – na začátku vybraných levelů doplň +1 (max 5)
+//    + zároveň si připravíme text pro banner (vedle "LEVEL X")
+let bannerExtra = "";
+if (CHECKPOINT_LEVELS.has(level)) {
+  const before = lives;
+  if (before < MAX_LIVES) {
+    lives = Math.min(MAX_LIVES, lives + 1);
+    updateLivesDisplay && updateLivesDisplay();
+    if (lives > before) bannerExtra = "+1 LIFE"; // zobraz jen, když se skutečně přidalo
+  }
+}
+
+
   // 3) Multi-stars režim?
   multiStarMode = !!settings.multiStars;
 
@@ -678,7 +745,11 @@ function startLevel() {
     updateLevelDisplay();
 
     // ✅ OZNÁMENÍ LEVELU V CANVASU (jen od 2. levelu výš)
-    if (level > 1) triggerLevelAnnounce(level, 1500);
+    if (level > 1) {
+  triggerLevelAnnounce(level, 1500, bannerExtra);
+}
+
+
 
     return; // konec větve multi-stars
   }
@@ -700,16 +771,27 @@ function startLevel() {
   updateLevelDisplay();
 
   // ✅ OZNÁMENÍ LEVELU V CANVASU (jen od 2. levelu výš)
-  if (level > 1) triggerLevelAnnounce(level, 1500);
+  if (level > 1) triggerLevelAnnounce(level, 1500, bannerExtra);
 }
 
 
 function nextShape() {
+  // Když dojdou tvary v levelu…
   if (remainingShapes.length === 0) {
-    level++;
-    startLevel();
-    return;
+    if (level < 16) {
+      // …do levelu 15 přecházíme normálně do dalšího levelu
+      level++;
+      startLevel();
+      return;
+    } else {
+      // ★ Jsme v posledním levelu (16): NEZVYŠUJ level,
+      // jen znovu naplň sadu tvarů a pokračuj dál bez změny obtížnosti.
+      remainingShapes = [...allStarShapes].sort(() => Math.random() - 0.5);
+      // nevoláme startLevel(), zůstáváme v 16 a jedeme dál
+    }
   }
+
+  // standardní přidělení dalšího tvaru
   currentShape = remainingShapes.pop();
   rotation = 0;
   radius = 0;
@@ -718,6 +800,7 @@ function nextShape() {
   targetRadius = baseTargetRadius;
   currentColorShift = Math.random() * 360;
 }
+
 
 function createShards(x, y, count = 20) {
   shards = [];
@@ -1624,10 +1707,10 @@ document.addEventListener('visibilitychange', () => {
 
 // Klávesa L (bonus level skip)
 window.addEventListener("keydown", (e) => { 
-  if (e.key === "L") { 
-    level++; 
-    startLevel(); 
-  } 
+  if (e.key === "L") {
+    level = Math.min(16, level + 1); // ★ strop
+    startLevel();
+  }
 });
 
 
@@ -1731,9 +1814,16 @@ drawInit();
     ctx.fillText(text, cx, yTop);
     ctx.restore();
   }
+
   function drawButton(){
   ctx.save();
   ctx.translate(btn.x, btn.y);
+
+  // pokud je tlačítko stisknuté → cyan stín
+  if (pressed) {
+    ctx.shadowColor = '#00ffff';
+    ctx.shadowBlur = 10;
+  }
 
   // černý základ tlačítka
   ctx.fillStyle = '#000';
@@ -1757,6 +1847,7 @@ drawInit();
 
   ctx.restore();
 }
+
 
 
 
