@@ -204,7 +204,7 @@ function endGame() {
 
 // ===== Plovoucí text =====
 let floaters = [];
-function addFloater(text, x, y, color = '#00ffff', duration = 1500) {
+function addFloater(text, x, y, color = '#00ffff', duration = 1700) {
   floaters.push({ text, x, y, color, start: performance.now(), duration, vy: -0.4, alphaFrom: 1, alphaTo: 0 });
 }
 function drawFloaters(now) {
@@ -223,7 +223,7 @@ function drawFloaters(now) {
     ctx.textBaseline = 'middle';
     ctx.shadowColor = f.color;
     ctx.shadowBlur = 18;
-    ctx.fillText(f.text, f.x, f.y + f.vy * (ease * 120));
+    ctx.fillText(f.text, f.x, f.y + f.vy * (ease * 90));
     ctx.restore();
 
     kept.push(f);
@@ -243,7 +243,7 @@ function generateStars(count = 100) {
   }));
 }
 function getRandomStarShape() {
-  const options = ["star5", "star6", "star7", "star8", "star9"];
+  const options = ["star5", "star6", "star7", "star8"];
   return options[Math.floor(Math.random() * options.length)];
 }
 
@@ -303,7 +303,7 @@ let gameOverShown = false; // zda už byl zobrazen popup
 let lastReleaseTs = 0;
 
 const matchLabel = document.getElementById("matchLabel");
-const allStarShapes = ["star5", "star6", "star7", "star8", "star9"];
+const allStarShapes = ["star5", "star6", "star7", "star8"];
 
 const levels = [
   { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, holdGrowth: 1.00 },
@@ -677,7 +677,7 @@ function createShards(x, y, count = 20) {
 
 function drawStarShape(shape, r) {
   ctx.beginPath();
-  const spikes = { star4: 4, star5: 5, star6: 6, star7: 7, star8: 8, star9: 9, star10: 10, star11: 11, star12: 12 }[shape] || 5;
+  const spikes = { star5: 5, star6: 6, star7: 7, star8: 8 }[shape] || 5;
   const step = Math.PI / spikes;
   for (let i = 0; i < 2 * spikes; i++) {
     const radiusMod = i % 2 === 0 ? r : r * 0.5;
@@ -759,7 +759,7 @@ function bonusInitDOM(){
   bonus.announceEl = null;
 }
 
-function bonusAnnounce(txt, cls){
+function bonusAnnounce(){
   // mapa tříd -> barvy ve stylu hry
   const color =
     cls === 'bm-points'  ? '#00ffff' :
@@ -814,10 +814,6 @@ bonusAppearSound.play();
   bonus.pulseAmp = 0.10;
   bonus.pulseHz  = 1.8;
   bonus.curR = bonus.baseR;
-
-  const label = bonus.type==='points' ? '+10 points' : (bonus.type==='seconds' ? '+10 seconds' : 'Score ×2');
-  const cls   = bonus.type==='points' ? 'bm-points' : (bonus.type==='seconds' ? 'bm-seconds' : 'bm-x2');
-  bonusAnnounce(label, cls);
 
   bonus.captureHold = true;
   bonus.holdRadius = 0;
@@ -881,6 +877,16 @@ function bonusTryHitOnRelease(){
     createFragments(currentShape, bonus.x, bonus.y);
     explosionSound.currentTime = 0; explosionSound.play();
     success = true;
+
+        // floater u exploze bonusu (stejně jako body u běžných hvězd)
+    const label =
+      bonus.type==='points'  ? '+10 points' :
+      bonus.type==='seconds' ? '+10 seconds' :
+                               'Score ×2';
+
+    const fxY = Math.max(20, bonus.y - (bonus.curR + 24)); // ať neleze nad horní okraj
+    addFloater(label, bonus.x, fxY, '#00ffff', 1700);
+
 
   } else {
     // ❌ neúspěch – ukaž křížek + zvuk „fail“
