@@ -570,6 +570,61 @@ function drawMultiStars(){
 }
 
 
+// === LEVEL ANNOUNCE (canvas overlay) ===
+const levelAnnounce = { active:false, text:'', start:0, dur:1400 };
+
+function triggerLevelAnnounce(n, ms = 1400){
+  levelAnnounce.active = true;
+  levelAnnounce.text = `LEVEL ${n}`;
+  levelAnnounce.start = performance.now();
+  levelAnnounce.dur   = ms;
+}
+
+function drawLevelAnnounce(now){
+  if (!levelAnnounce.active) return;
+  const t = (now - levelAnnounce.start) / levelAnnounce.dur;
+  if (t >= 1){ levelAnnounce.active = false; return; }
+
+  // kratší náběh/odběh
+  const fade = 0.15;
+  let alpha;
+  if (t < fade) alpha = t / fade;
+  else if (t > 1 - fade) alpha = (1 - t) / fade;
+  else alpha = 1;
+
+  // 👉 méně výrazný „pop“
+  const SCALE_AMP = 0.02;       // bylo 0.04
+  const MAX_ALPHA = 0.80;       // bylo 1.00
+
+  // 👉 menší písmo a výš o chlup
+  const fs = Math.round(Math.min(32, Math.max(18, canvas.width * 0.065))); // bylo 28–48, *0.09
+  const posY = Math.max(24, canvas.height * 0.12); // bylo *0.18
+
+  const scale = 0.98 + SCALE_AMP * Math.sin(Math.min(1, t) * Math.PI);
+
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, alpha) * MAX_ALPHA;
+  ctx.translate(canvas.width / 2, posY);
+  ctx.scale(scale, scale);
+
+  ctx.font = `bold ${fs}px Audiowide, system-ui, sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+
+  // 👉 slabší glow a tenčí obrys
+  ctx.shadowColor = '#00ffff';
+  ctx.shadowBlur  = 5;  // bylo 22
+  ctx.lineWidth   = 1;   // bylo 4
+  ctx.strokeStyle = 'rgba(0,0,0,.5)';
+  ctx.fillStyle   = 'rgba(0,255,255,.85)';
+
+  ctx.strokeText(levelAnnounce.text, 0, 0);
+  ctx.fillText(levelAnnounce.text, 0, 0);
+  ctx.restore();
+}
+
+
+
 function startLevel() {
   document.getElementById("gameOverPopup").classList.add("hidden");
 
@@ -577,9 +632,8 @@ function startLevel() {
   const settings = levels[Math.min(level - 1, levels.length - 1)];
   currentLevelSettings = settings;
   if (settings.multiStars) {
-  settings.starsCount = Math.min(settings.starsCount ?? 3, MS_MAX_STARS);
-}
-
+    settings.starsCount = Math.min(settings.starsCount ?? 3, MS_MAX_STARS);
+  }
 
   // 2) Základní parametry (single-target default)
   lineWidth = settings.lineWidth;
@@ -605,7 +659,7 @@ function startLevel() {
   multiStarMode = !!settings.multiStars;
 
   if (multiStarMode) {
-    // Multi-stars: bez pohybu/odrazu (statické návnady, jen pulz dle settings)
+    // Multi-stars: bez pohybu/odrazu
     enableMove = false;
     enableBounce = false;
 
@@ -616,16 +670,20 @@ function startLevel() {
       firstStart = false;
     }
 
-    // Vyber tvar (stejný tvar pro všechny hvězdy v této várce) a spawn
+    // Vyber tvar a spawn
     nextShape();
     spawnMultiStars(settings);
 
     updateLivesDisplay();
     updateLevelDisplay();
-    return; // ukončit – single-target inicializaci níž nechceme spustit
+
+    // ✅ OZNÁMENÍ LEVELU V CANVASU (jen od 2. levelu výš)
+    if (level > 1) triggerLevelAnnounce(level, 1500);
+
+    return; // konec větve multi-stars
   }
 
-  // 4) Single-target (levely 1–8) – původní chování
+  // 4) Single-target (levely 1–8)
   remainingShapes = [...allStarShapes].sort(() => Math.random() - 0.5);
   shapeX = centerX;
   shapeY = centerY;
@@ -640,7 +698,11 @@ function startLevel() {
   nextShape();
   updateLivesDisplay();
   updateLevelDisplay();
+
+  // ✅ OZNÁMENÍ LEVELU V CANVASU (jen od 2. levelu výš)
+  if (level > 1) triggerLevelAnnounce(level, 1500);
 }
+
 
 function nextShape() {
   if (remainingShapes.length === 0) {
@@ -728,6 +790,57 @@ function drawStars() {
   });
 }
 
+// === GOLD RENDERING FOR BONUS STAR ===
+function drawGoldStar(x, y, r, rotation = 0, width = 6) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rotation);
+
+  // Jemný zlatý halo
+  const halo = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, r * 1.4);
+  halo.addColorStop(0, 'rgba(255, 230, 120, 0.35)');
+  halo.addColorStop(1, 'rgba(255, 230, 120, 0)');
+  ctx.fillStyle = halo;
+  ctx.beginPath();
+  ctx.arc(0, 0, r * 1.25, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Zlatý stroke (lesklý přechod)
+  const g = ctx.createLinearGradient(-r, -r, r, r);
+  g.addColorStop(0.00, '#FFE07A'); // světle zlatá
+  g.addColorStop(0.45, '#FFC93C'); // sytější zlatá
+  g.addColorStop(0.55, '#FFD66E'); // highlight
+  g.addColorStop(1.00, '#E3A500'); // tmavší zlatá
+  ctx.strokeStyle = g;
+  ctx.lineWidth = Math.max(3, width);
+  ctx.shadowColor = '#FFD45A';
+  ctx.shadowBlur = Math.max(8, r * 0.25);
+
+  drawStarShape(currentShape, r);
+  ctx.stroke();
+  ctx.restore();
+}
+
+// Jedna zlatá jiskra (pro trail)
+function drawGoldSparkle(s) {
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, s.a);
+  ctx.translate(s.x, s.y);
+  ctx.rotate(s.rot);
+
+  const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, s.size);
+  grad.addColorStop(0, 'rgba(255, 240, 180, 0.95)');
+  grad.addColorStop(0.4, 'rgba(255, 208, 90, 0.85)');
+  grad.addColorStop(1, 'rgba(255, 208, 90, 0)');
+  ctx.fillStyle = grad;
+
+  ctx.beginPath();
+  ctx.arc(0, 0, s.size, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+
 /* ======================= BONUS STAR (náhodná bonusová hvězda, single-focus) ======================= */
 // <<< BONUS: modul pro bonusovou hvězdu – čistá scéna, přebere HOLD >>>
 const bonus = {
@@ -747,9 +860,17 @@ const bonus = {
   captureHold: false,    // když true, HOLD rozpíná bonus.holdRadius
   holdRadius: 0,
   pauseMainScene: false, // čisté plátno pro bonus
-  announceEl: null
+  announceEl: null,      // ⬅️ chyběla čárka!
+
+  // --- VIZUÁLNÍ ODLÍŠENÍ (always gold) ---
+  alwaysGold: true,      // ⬅️ správná kapitalizace „G“
+  sparkles: [],          // zlatý prach
+  emitAccumulator: 0,    // akumulátor pro emisi jisker (podle rychlosti pádu)
+  prevX: 0,
+  prevY: -60
 };
 let bonusPrevTs = performance.now();
+
 
 // původně: bonusInitDOM() + bonusAnnounce()
 // NOVĚ: nic v DOM, vykreslíme text do canvasu přes floaters
@@ -821,6 +942,12 @@ bonusAppearSound.play();
   bonus.active = true;
   bonus.lastSpawnSec = nowSec;
   return true;
+
+  bonus.prevX = bonus.x;
+  bonus.prevY = bonus.y;
+  bonus.sparkles.length = 0;
+  bonus.emitAccumulator = 0;
+
 }
 function bonusUpdateAndDraw(now, dt){
   if (!bonus.active) return;
@@ -831,13 +958,62 @@ function bonusUpdateAndDraw(now, dt){
   const scale = 1 + Math.sin(t * Math.PI*2 * bonus.pulseHz) * bonus.pulseAmp;
   bonus.curR = bonus.baseR * scale;
 
-  // bonus hvězda
+  // === EMIT ZLATÝCH JISKER (trail) podél dráhy ===
+  // emise úměrná rychlosti pádu, hladká přes akumulátor
+  const emitRate = Math.max(12, Math.min(60, bonus.vy * 0.35)); // j/s
+  bonus.emitAccumulator += emitRate * dt;
+
+  while (bonus.emitAccumulator >= 1) {
+    bonus.emitAccumulator -= 1;
+
+    const ang = Math.PI + (Math.random() * 0.6 - 0.3); // většinou "dozadu"
+    const spd = 25 + Math.random() * 50;
+    const offR = bonus.curR * (0.15 + Math.random() * 0.25);
+
+    bonus.sparkles.push({
+      x: bonus.x + (Math.random() * 2 - 1) * offR,
+      y: bonus.y + (Math.random() * 2 - 1) * offR,
+      vx: Math.cos(ang) * spd * 0.6,
+      vy: Math.sin(ang) * spd * 0.6 + 20,
+      rot: Math.random() * Math.PI * 2,
+      vr: (Math.random() - 0.5) * 0.6,
+      size: 2 + Math.random() * 4,
+      a: 0.95,
+      fa: 0.015 + Math.random() * 0.02 // rychlost blednutí
+    });
+  }
+
+  // update + draw sparkles (ZA hvězdou, proto dřív než hvězdu)
+  const kept = [];
+  for (const s of bonus.sparkles) {
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    s.rot += s.vr * dt;
+    s.a -= s.fa;
+    if (s.a > 0 && s.size > 0.3) {
+      drawGoldSparkle(s);
+      kept.push(s);
+    }
+  }
+  bonus.sparkles = kept;
+
+  // === BONUS HVĚZDA: vždy zlatá ===
   ctx.save();
   ctx.globalAlpha = 0.98;
-  drawShape(currentShape, bonus.x, bonus.y, bonus.curR, 0, bonus.hue, 6);
+
+  if (bonus.alwaysGold) {
+    // silnější “additive” look
+    const prevOp = ctx.globalCompositeOperation;
+    ctx.globalCompositeOperation = 'lighter';
+    drawGoldStar(bonus.x, bonus.y, bonus.curR, 0, 6);
+    ctx.globalCompositeOperation = prevOp;
+  } else {
+    // fallback (kdybys někdy chtěl vrátit barvy dle typu)
+    drawShape(currentShape, bonus.x, bonus.y, bonus.curR, 0, bonus.hue, 6);
+  }
   ctx.restore();
 
-  // hráčova hvězda v režimu bonusu – kreslíme na pozici bonusu
+  // Hráčova hvězda (držení) – zůstává původní, ale kreslíme ji NAVRCHU
   if (bonus.captureHold && isHolding){
     ctx.save();
     drawShape(currentShape, bonus.x, bonus.y, bonus.holdRadius, 0, holdHue + hue, 5);
@@ -849,8 +1025,10 @@ function bonusUpdateAndDraw(now, dt){
     bonus.active = false;
     bonus.captureHold = false;
     bonus.pauseMainScene = false;
+    bonus.sparkles.length = 0; // uklid
   }
 }
+
 function bonusTryHitOnRelease(){
   if (!bonus.active) return false;
 
@@ -894,7 +1072,7 @@ function bonusTryHitOnRelease(){
     effectTimer = 30;                 // jak dlouho bude ✖ vidět (frame counter)
     failSound.currentTime = 0;
     failSound.play();
-
+    addFloater('NO LIFE LOST', bonus.x, Math.max(20, bonus.y - (bonus.curR + 24)), '#FFD45A', 1700);
   }
 
   // po release bonus vždy končí
@@ -1075,6 +1253,9 @@ if (!bonus.pauseMainScene) {
     frag.alpha -= 0.004;
   });
   fragments = fragments.filter(f => f.alpha > 0);
+
+   drawLevelAnnounce(now);
+
 
   rotation += rotationSpeed;
   hue = (hue + 1) % 360;
