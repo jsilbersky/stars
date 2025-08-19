@@ -80,12 +80,22 @@ function runCountdown(thenStartFn) {
         overlay.classList.add('hidden');
         isCountdown = false;
         lastTick = performance.now(); // FIX: reset proti velké deltě
+
+        // 1) spusť hru (např. startLevel)
         thenStartFn?.();
+
+        // 2) AŽ po skrytí overlaye + spuštění levelu ukaž ruku
+        //    requestAnimationFrame zajistí vykreslení na čisté scéně
+        requestAnimationFrame(() => {
+          showHandCueIfNeeded();
+        });
+
       }, 600);
     }
   };
   setTimeout(tick, 1000);
 }
+
 
 
 // <<< NOVÉ STATISTIKY >>>
@@ -150,6 +160,35 @@ function tickTimer(now) {
   updateTimerPulseLast10s();
 }
 
+/* === Hand cue (naváděcí ruka po GO) ==================================== */
+let showHandCueNextStart = false; // nastaví se při START z help okna
+
+function showHandCueAtElement(el, emoji = '👆') {
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+
+  // Pozice ruky: lehce nad pravým horním kvadrantem tlačítka
+  const px = rect.left + rect.width * 0.70;
+  const py = rect.top  + rect.height * 0.85;
+
+  const cue = document.createElement('div');
+  cue.id = 'handCue';
+  cue.textContent = emoji; 
+  cue.style.left = `${px}px`;
+  cue.style.top  = `${py}px`;
+  document.body.appendChild(cue);
+
+  setTimeout(() => cue.remove(), 2000);
+}
+
+function showHandCueIfNeeded() {
+  if (!showHandCueNextStart) return;
+  const holdBtn = document.getElementById('holdButton');
+  showHandCueAtElement(holdBtn, '👆');
+  showHandCueNextStart = false;
+}
+
+
 function beginNewGameFlow(fromHelp = false) {
   // schovej pop-upy
   const help = document.getElementById('helpPopup');
@@ -196,6 +235,23 @@ function triggerGameOver() {
   popup.classList.remove("hidden");
 }
 
+// START z How to play → ukaž ruku po GO
+document.getElementById('startGameBtn')?.addEventListener('click', () => {
+  // nastavíme flag, že se má ruka ukázat
+  showHandCueNextStart = true;
+
+  // zavři okno How to play (pomocí style.display = "none")
+  const help = document.getElementById('helpPopup');
+  if (help) help.style.display = 'none';
+
+  // spusť odpočet nebo hru
+  if (typeof startCountdown === 'function') {
+    startCountdown(); // pokud používáš 3-2-1-GO
+  } else if (typeof startLevel === 'function') {
+    startLevel();     // pokud jdeš rovnou do levelu
+  }
+});
+
 
 // <<< Pomocná obálka pro konec na čas >>>
 function endGame() {
@@ -222,8 +278,8 @@ function drawFloaters(now) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = f.color;
-    ctx.shadowBlur = 18;
-    ctx.fillText(f.text, f.x, f.y + f.vy * (ease * 90));
+    ctx.shadowBlur = 12;
+    ctx.fillText(f.text, f.x, f.y + f.vy * (ease * 65));
     ctx.restore();
 
     kept.push(f);
@@ -231,17 +287,87 @@ function drawFloaters(now) {
   floaters = kept;
 }
 
-// ===== Hvězdné pozadí =====
-function generateStars(count = 100) {
+// ===== Hvězdné pozadí – 3D průlet k hráči (subtle warp) =====
+let _bgLastTs = performance.now();
+
+function generateStars(count = 200) {
+  // 3D prostor kolem středu (-0.9..0.9), z = hloubka
+  const Z_NEAR = 0.22;
+  const Z_FAR  = 1.6;
+
   stars = Array.from({ length: count }, () => ({
-    x: Math.random() * canvas.width,
-    y: Math.random() * canvas.height,
-    size: Math.random() * 1.5 + 0.5,
-    speed: Math.random() * 0.5 + 0.2,
-    offset: Math.random() * 1000,
-    shape: getRandomStarShape()
+    x: (Math.random() - 0.5) * 1.8,               // -0.9..0.9 (později škálujeme F/z)
+    y: (Math.random() - 0.5) * 1.8,
+    z: Math.random() * (Z_FAR - Z_NEAR) + Z_NEAR, // hloubka
+    v: 0.14 * (0.85 + Math.random() * 0.30),      // rychlost k hráči (jemná variace)
+    r: 0.3 + Math.random() * 0.7,                  // základní poloměr
+    px: null, py: null                             // pro krátkou „střelku“
   }));
+
+  _bgLastTs = performance.now(); // reset času (důležité po resize)
 }
+
+function drawStars() {
+  const now = performance.now();
+  const dt  = Math.min(0.05, (now - _bgLastTs) / 1000); // ochrana proti lagům
+  _bgLastTs = now;
+
+  // Projekční „ohnisko“ → určuje sílu perspektivy
+  const F = Math.min(canvas.width, canvas.height) * 0.36;
+
+  const Z_NEAR = 0.22;
+  const Z_FAR  = 1.6;
+
+  for (const s of stars) {
+    // posun k hráči
+    s.z -= s.v * dt;
+
+    // když proletí kolem kamery → respawn vzadu
+    if (s.z <= Z_NEAR) {
+      s.x = (Math.random() - 0.5) * 1.8;
+      s.y = (Math.random() - 0.5) * 1.8;
+      s.z = Z_FAR;
+      s.px = s.py = null;
+    }
+
+    // 3D → 2D projekce kolem centerX/centerY (ty už máš spočítané)
+    const k  = F / s.z;
+    const sx = centerX + s.x * k;
+    const sy = centerY + s.y * k;
+
+    // velikost + průhlednost dle hloubky (nerušivé)
+    const radius = Math.max(0.4, s.r * (2.0 - s.z));   // větší hvězdy
+    const alpha  = Math.min(0.6, 0.20 + (1.7 - s.z) * 0.28); // jasnější
+
+
+    // krátká „střelka“ (trail) – nenápadná
+    if (s.px != null && s.py != null) {
+      ctx.globalAlpha = Math.min(0.35, alpha * 0.5);
+      ctx.lineWidth = 0.6;
+      ctx.beginPath();
+      ctx.moveTo(s.px, s.py);
+      ctx.lineTo(sx, sy);
+      ctx.strokeStyle = 'white';
+      ctx.stroke();
+    }
+
+    // měkká tečka (radial gradient)
+    const grad = ctx.createRadialGradient(sx, sy, 0, sx, sy, radius * 2);
+    grad.addColorStop(0, 'rgba(255,255,255,0.8)');
+    grad.addColorStop(1, 'rgba(255,255,255,0.0)');
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(sx, sy, radius * 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // uložit předchozí 2D pozici
+    s.px = sx; s.py = sy;
+  }
+
+  ctx.globalAlpha = 1;
+}
+
 function getRandomStarShape() {
   const options = ["star5", "star6", "star7", "star8"];
   return options[Math.floor(Math.random() * options.length)];
@@ -855,23 +981,6 @@ function drawShape(shape, x, y, r, rotation, baseHue = 0, width = 4) {
   ctx.restore();
 }
 
-function drawStars() {
-  stars.forEach(star => {
-    const gradient = ctx.createRadialGradient(star.x, star.y, 0, star.x, star.y, star.size * 2);
-    gradient.addColorStop(0, "rgba(255, 255, 255, 0.8)");
-    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    star.y += star.speed;
-    if (star.y > canvas.height) {
-      star.y = 0;
-      star.x = Math.random() * canvas.width;
-    }
-  });
-}
 
 // === GOLD RENDERING FOR BONUS STAR ===
 function drawGoldStar(x, y, r, rotation = 0, width = 6) {
@@ -1155,7 +1264,7 @@ function bonusTryHitOnRelease(){
     effectTimer = 30;                 // jak dlouho bude ✖ vidět (frame counter)
     failSound.currentTime = 0;
     failSound.play();
-    addFloater('NO LIFE LOST', bonus.x, Math.max(20, bonus.y - (bonus.curR + 24)), '#FFD45A', 1700);
+    addFloater('NO LIFE LOST', bonus.x, Math.max(20, bonus.y - (bonus.curR + 18)), '#FFD45A', 1700);
   }
 
   // po release bonus vždy končí
@@ -1399,7 +1508,7 @@ if (multiStarMode) {
     else { add = 1; infoText = '+1 ★'; }
 
     score += add; updateScoreUI(); pulseScore();
-    addFloater(infoText, s.x, Math.max(20, s.y - (s.curR + 24)), color, 1100);
+    addFloater(infoText, s.x, Math.max(20, s.y - (s.curR + 18)), color, 1100);
 
     createFragments(currentShape, s.x, s.y);
     explosionSound.currentTime = 0; explosionSound.play();
@@ -1471,7 +1580,7 @@ if (multiStarMode) {
       blinkTimer();
     }
 
-    addFloater(infoText, shapeX, Math.max(20, shapeY - (targetRadius + 24)), color, 1100);
+    addFloater(infoText, shapeX, Math.max(20, shapeY - (targetRadius + 18)), color, 1100);
 
     createFragments(currentShape, shapeX, shapeY);
     showExplosion = true;

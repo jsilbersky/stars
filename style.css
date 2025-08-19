@@ -460,3 +460,30 @@ body { position: relative; }
 @media (max-width: 420px){
   #bonusMessage{ bottom: calc(var(--panelH) + 16px); }
 }
+
+/* === Hand cue (naváděcí ruka) ========================================== */
+#handCue {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  font-size: 32px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  animation: handPulse 2s ease-in-out forwards;
+  z-index: 9999;
+}
+
+@keyframes handPulse {
+  0%   { opacity: 0;   transform: translate(-50%, -50%) scale(0.7); }
+  10%  { opacity: 1;   transform: translate(-50%, -50%) scale(1.3); }
+  25%  {               transform: translate(-50%, -50%) scale(0.9); }
+  45%  {               transform: translate(-50%, -50%) scale(1.3); }
+  65%  {               transform: translate(-50%, -50%) scale(0.9); }
+  85%  { opacity: 1;   transform: translate(-50%, -50%) scale(1.2); }
+  100% { opacity: 0;   transform: translate(-50%, -50%) scale(0.8); }
+}
+
+
+
+
+#gameOverPopup, #helpPopup { user-select: none; }
