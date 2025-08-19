@@ -432,39 +432,39 @@ const matchLabel = document.getElementById("matchLabel");
 const allStarShapes = ["star5", "star6", "star7", "star8"];
 
 const levels = [
+  // 1–4: onboarding (statika -> jemná pulzace)
   { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, holdGrowth: 1.00 },
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, holdGrowth: 1.1 },
-  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.045, holdGrowth: 1.18 },
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, oscillate: true, scaleMin: 0.86, scaleMax: 1.14, scaleSpeed: 0.060, holdGrowth: 1.25 },
-  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 3.0, holdGrowth: 1.30 },
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 3.8, holdGrowth: 1.36 },
-  { lineWidth: 8, move: true, bounce: true, oscillate: true, scaleMin: 0.85, scaleMax: 1.15, scaleSpeed: 0.075, speed: 4.4, holdGrowth: 1.42 },
-  { lineWidth: 4, move: true, bounce: true, oscillate: true, scaleMin: 0.84, scaleMax: 1.16, scaleSpeed: 0.080, speed: 4.9, holdGrowth: 1.50 },
-  // === Levels 9–16: multi-star decoys ===
-  // 9–10: 2 pulzující hvězdy
-{ lineWidth: 8,  multiStars: true, starsCount: 2, oscillate: true,  
-  scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.070, holdGrowth: 1.6 },
-{ lineWidth: 4,  multiStars: true, starsCount: 2, oscillate: true,  
-  scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.075, holdGrowth: 1.6 },
+  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, holdGrowth: 1.06 },
+  // 3–4: onboarding – pulzace víc viditelná, ale stále jemná
+  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, oscillate: true, scaleMin: 0.94, scaleMax: 1.06, scaleSpeed: 0.050, holdGrowth: 1.12 },
+  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, oscillate: true, scaleMin: 0.93, scaleMax: 1.09, scaleSpeed: 0.058, holdGrowth: 1.16 },
 
-// 11–12: 3 pulzující hvězdy
-{ lineWidth: 8,  multiStars: true, starsCount: 3, oscillate: true,  
-  scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.080, holdGrowth: 1.7 },
-{ lineWidth: 4,  multiStars: true, starsCount: 3, oscillate: true,  
-  scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.085, holdGrowth: 1.7 },
+  // 5–6: pohyb + odrazy (bez pulzace i rotace) – čitelná trajektorie
+  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 2.2, holdGrowth: 1.18 },
+  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 2.6, holdGrowth: 1.22 },
 
-// 13–14: 4 pulzující hvězdy (větší rozsah, ale přehledné)
-{ lineWidth: 8,  multiStars: true, starsCount: 4, oscillate: true,  
-  scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.090, holdGrowth: 1.7 },
-{ lineWidth: 4,  multiStars: true, starsCount: 4, oscillate: true,  
-  scaleMin: 0.86, scaleMax: 1.14, scaleSpeed: 0.095, holdGrowth: 1.7 },
+  // 7–8: single-star výraznější pulzace + bounce
+  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.065, speed: 2.4, holdGrowth: 1.24 },
+  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.070, speed: 2.7, holdGrowth: 1.26 },
 
-// 15–16: 4 pulzující hvězdy (ještě rychlejší, agresivnější)
-{ lineWidth: 8,  multiStars: true, starsCount: 4, oscillate: true,  
-  scaleMin: 0.84, scaleMax: 1.16, scaleSpeed: 0.100, holdGrowth: 1.7 },
-{ lineWidth: 4,  multiStars: true, starsCount: 4, oscillate: true,  
-  scaleMin: 0.82, scaleMax: 1.18, scaleSpeed: 0.100, holdGrowth: 1.7 }
+
+  // 9–10: 2 hvězdy, jen pulzace (čitelné „decoys“)
+  { lineWidth: 6,  multiStars: true, starsCount: 2, oscillate: true, scaleMin: 0.93, scaleMax: 1.07, scaleSpeed: 0.060, holdGrowth: 1.30 },
+  { lineWidth: 4,  multiStars: true, starsCount: 2, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.065, holdGrowth: 1.32 },
+
+  // 11–12: 3 hvězdy, trochu rychlejší pulzace
+  { lineWidth: 6,  multiStars: true, starsCount: 3, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.070, holdGrowth: 1.35 },
+  { lineWidth: 4,  multiStars: true, starsCount: 3, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.075, holdGrowth: 1.38 },
+
+  // 13–14: 4 hvězdy, střední rozsah pulzace
+  { lineWidth: 6,  multiStars: true, starsCount: 4, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.080, holdGrowth: 1.40 },
+  { lineWidth: 4,  multiStars: true, starsCount: 4, oscillate: true, scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.085, holdGrowth: 1.42 },
+
+  // 15–16: finále – 4 hvězdy, širší rozsah + rychlejší pulzace (pořád férové)
+  { lineWidth: 6,  multiStars: true, starsCount: 4, oscillate: true, scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.090, holdGrowth: 1.44 },
+  { lineWidth: 4,  multiStars: true, starsCount: 4, oscillate: true, scaleMin: 0.86, scaleMax: 1.14, scaleSpeed: 0.100, holdGrowth: 1.46 }
 ];
+
 
 // ❤️ životy
 let lives = 5;
