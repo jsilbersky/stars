@@ -469,7 +469,7 @@ body { position: relative; }
   line-height: 1;
   pointer-events: none;
   user-select: none;
-  animation: handPulse 2s ease-in-out forwards;
+  animation: handPulse 3s ease-in-out forwards;
   z-index: 9999;
 }
 

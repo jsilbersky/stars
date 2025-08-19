@@ -178,7 +178,7 @@ function showHandCueAtElement(el, emoji = '👆') {
   cue.style.top  = `${py}px`;
   document.body.appendChild(cue);
 
-  setTimeout(() => cue.remove(), 2000);
+  setTimeout(() => cue.remove(), 3000);
 }
 
 function showHandCueIfNeeded() {
