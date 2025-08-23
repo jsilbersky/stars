@@ -436,25 +436,22 @@ const levels = [
   { lineWidth: 6, holdGrowth: 1.00 }, // statická
   { lineWidth: 6, oscillate: true, scaleMin: 0.94, scaleMax: 1.06, scaleSpeed: 0.055, holdGrowth: 1.12 }, // pulzující
   { lineWidth: 6, rotationSpeed: 0.002, rotationCheck: true, holdGrowth: 1.16 }, // rotující
-  { lineWidth: 6, move: true, bounce: true, speed: 2.4, holdGrowth: 1.20, noOverlap: true }, // odrážející
-  { lineWidth: 6, move: true, bounce: true, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.065, speed: 2.6, holdGrowth: 1.24, noOverlap: true }, // odrážející + pulzující
-  { lineWidth: 6, rotationSpeed: 0.0025, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.070, speed: 2.8, holdGrowth: 1.28, noOverlap: true }, // 🔥 finále série – rotující + odrážející + pulzující
+  { lineWidth: 6, move: true, bounce: true, rotationSpeed: 0.0022, rotationCheck: true, speed: 2.4, holdGrowth: 1.20, noOverlap: true }, // odrážející + rotující
+  { lineWidth: 6, rotationSpeed: 0.0025, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.070, speed: 2.8, holdGrowth: 1.28, noOverlap: true }, // 🔥 finále – odrážející + pulzující + rotující
 
   // === 2 hvězdy ===
   { lineWidth: 6, multiStars: true, starsCount: 2, holdGrowth: 1.30 }, // statické
   { lineWidth: 6, multiStars: true, starsCount: 2, oscillate: true, scaleMin: 0.93, scaleMax: 1.07, scaleSpeed: 0.065, holdGrowth: 1.34 }, // pulzující
   { lineWidth: 6, multiStars: true, starsCount: 2, rotationSpeed: 0.003, rotationCheck: true, holdGrowth: 1.36 }, // rotující
-  { lineWidth: 6, multiStars: true, starsCount: 2, move: true, bounce: true, speed: 2.8, holdGrowth: 1.38, noOverlap: true }, // odrážející
-  { lineWidth: 6, multiStars: true, starsCount: 2, move: true, bounce: true, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.070, speed: 3.0, holdGrowth: 1.42, noOverlap: true }, // odrážející + pulzující
-  { lineWidth: 6, multiStars: true, starsCount: 2, rotationSpeed: 0.004, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.075, speed: 3.2, holdGrowth: 1.46, noOverlap: true }, // 🔥 finále série – rotující + odrážející + pulzující
+  { lineWidth: 6, multiStars: true, starsCount: 2, move: true, bounce: true, rotationSpeed: 0.0025, rotationCheck: true, speed: 2.8, holdGrowth: 1.38, noOverlap: true }, // odrážející + rotující
+  { lineWidth: 6, multiStars: true, starsCount: 2, rotationSpeed: 0.004, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.075, speed: 3.2, holdGrowth: 1.42, noOverlap: true }, // 🔥 finále – odrážející + pulzující + rotující
 
   // === 3 hvězdy ===
   { lineWidth: 6, multiStars: true, starsCount: 3, holdGrowth: 1.48 }, // statické
   { lineWidth: 6, multiStars: true, starsCount: 3, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.070, holdGrowth: 1.52 }, // pulzující
   { lineWidth: 6, multiStars: true, starsCount: 3, rotationSpeed: 0.0035, rotationCheck: true, holdGrowth: 1.54 }, // rotující
-  { lineWidth: 6, multiStars: true, starsCount: 3, move: true, bounce: true, speed: 3.2, holdGrowth: 1.56, noOverlap: true }, // odrážející
-  { lineWidth: 6, multiStars: true, starsCount: 3, move: true, bounce: true, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.080, speed: 3.4, holdGrowth: 1.60, noOverlap: true }, // odrážející + pulzující
-  { lineWidth: 6, multiStars: true, starsCount: 3, rotationSpeed: 0.004, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.090, speed: 3.6, holdGrowth: 1.64, noOverlap: true }, // 🔥 finále série – rotující + odrážející + pulzující
+  { lineWidth: 6, multiStars: true, starsCount: 3, move: true, bounce: true, rotationSpeed: 0.0027, rotationCheck: true, speed: 3.2, holdGrowth: 1.56, noOverlap: true }, // odrážející + rotující
+  { lineWidth: 6, multiStars: true, starsCount: 3, rotationSpeed: 0.004, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.090, speed: 3.6, holdGrowth: 1.60, noOverlap: true }, // 🔥 finále – odrážející + pulzující + rotující
 ];
 
 
@@ -464,7 +461,7 @@ let lives = 5;
 
 // DOPLNĚNÉ: strop a checkpoint levely
 const MAX_LIVES = 5;
-const CHECKPOINT_LEVELS = new Set([6, 8, 10, 12, 14, 16, 18]);
+const CHECKPOINT_LEVELS = new Set([6, 8, 10, 12, 14]);
 
 function updateLivesDisplay() {
   const hearts = document.querySelectorAll(".heart");
@@ -847,8 +844,8 @@ function drawLevelAnnounce(now){
 
 function startLevel() {
   document.getElementById("gameOverPopup").classList.add("hidden");
-    // Nikdy nepřekroč level 18 (kvůli zobrazování LEVEL 19+)
-  if (level > 18) level = 18;
+    // Nikdy nepřekroč level 15 (kvůli zobrazování LEVEL 15+)
+  if (level > 15) level = 15;
 
 
   // 1) Nastavení levelu
@@ -947,13 +944,13 @@ if (CHECKPOINT_LEVELS.has(level)) {
 function nextShape() {
   // Když dojdou tvary v levelu…
   if (remainingShapes.length === 0) {
-    if (level < 18) {
+    if (level < 15) {
       // …do levelu 17 přecházíme normálně do dalšího levelu
       level++;
       startLevel();
       return;
     } else {
-      // ★ Jsme v posledním levelu (16): NEZVYŠUJ level,
+      // ★ Jsme v posledním levelu (15): NEZVYŠUJ level,
       // jen znovu naplň sadu tvarů a pokračuj dál bez změny obtížnosti.
       remainingShapes = [...allStarShapes].sort(() => Math.random() - 0.5);
       // nevoláme startLevel(), zůstáváme v 18 a jedeme dál
@@ -1867,7 +1864,7 @@ document.addEventListener('visibilitychange', () => {
 // Klávesa L (bonus level skip)
 window.addEventListener("keydown", (e) => { 
   if (e.key === "L") {
-    level = Math.min(18, level + 1); // ★ strop
+    level = Math.min(15, level + 1); // ★ strop
     startLevel();
   }
 });
