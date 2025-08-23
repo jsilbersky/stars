@@ -432,38 +432,31 @@ const matchLabel = document.getElementById("matchLabel");
 const allStarShapes = ["star5", "star6", "star7", "star8"];
 
 const levels = [
-  // 1–4: onboarding (statika -> jemná pulzace)
-  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, holdGrowth: 1.00 },
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, holdGrowth: 1.06 },
-  // 3–4: onboarding – pulzace víc viditelná, ale stále jemná
-  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, oscillate: true, scaleMin: 0.94, scaleMax: 1.06, scaleSpeed: 0.050, holdGrowth: 1.12 },
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, oscillate: true, scaleMin: 0.93, scaleMax: 1.09, scaleSpeed: 0.058, holdGrowth: 1.16 },
+  // === 1 hvězda ===
+  { lineWidth: 6, holdGrowth: 1.00 }, // statická
+  { lineWidth: 6, oscillate: true, scaleMin: 0.94, scaleMax: 1.06, scaleSpeed: 0.055, holdGrowth: 1.12 }, // pulzující
+  { lineWidth: 6, rotationSpeed: 0.002, rotationCheck: true, holdGrowth: 1.16 }, // rotující
+  { lineWidth: 6, move: true, bounce: true, speed: 2.4, holdGrowth: 1.20, noOverlap: true }, // odrážející
+  { lineWidth: 6, move: true, bounce: true, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.065, speed: 2.6, holdGrowth: 1.24, noOverlap: true }, // odrážející + pulzující
+  { lineWidth: 6, rotationSpeed: 0.0025, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.070, speed: 2.8, holdGrowth: 1.28, noOverlap: true }, // 🔥 finále série – rotující + odrážející + pulzující
 
-  // 5–6: pohyb + odrazy (bez pulzace i rotace) – čitelná trajektorie
-  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 2.2, holdGrowth: 1.18 },
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, speed: 2.6, holdGrowth: 1.22 },
+  // === 2 hvězdy ===
+  { lineWidth: 6, multiStars: true, starsCount: 2, holdGrowth: 1.30 }, // statické
+  { lineWidth: 6, multiStars: true, starsCount: 2, oscillate: true, scaleMin: 0.93, scaleMax: 1.07, scaleSpeed: 0.065, holdGrowth: 1.34 }, // pulzující
+  { lineWidth: 6, multiStars: true, starsCount: 2, rotationSpeed: 0.003, rotationCheck: true, holdGrowth: 1.36 }, // rotující
+  { lineWidth: 6, multiStars: true, starsCount: 2, move: true, bounce: true, speed: 2.8, holdGrowth: 1.38, noOverlap: true }, // odrážející
+  { lineWidth: 6, multiStars: true, starsCount: 2, move: true, bounce: true, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.070, speed: 3.0, holdGrowth: 1.42, noOverlap: true }, // odrážející + pulzující
+  { lineWidth: 6, multiStars: true, starsCount: 2, rotationSpeed: 0.004, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.075, speed: 3.2, holdGrowth: 1.46, noOverlap: true }, // 🔥 finále série – rotující + odrážející + pulzující
 
-  // 7–8: single-star výraznější pulzace + bounce
-  { lineWidth: 8, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.065, speed: 2.4, holdGrowth: 1.24 },
-  { lineWidth: 4, rotationSpeed: 0, rotationCheck: false, move: true, bounce: true, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.070, speed: 2.7, holdGrowth: 1.26 },
-
-
-  // 9–10: 2 hvězdy, jen pulzace (čitelné „decoys“)
-  { lineWidth: 6,  multiStars: true, starsCount: 2, oscillate: true, scaleMin: 0.93, scaleMax: 1.07, scaleSpeed: 0.060, holdGrowth: 1.30 },
-  { lineWidth: 4,  multiStars: true, starsCount: 2, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.065, holdGrowth: 1.32 },
-
-  // 11–12: 3 hvězdy, trochu rychlejší pulzace
-  { lineWidth: 6,  multiStars: true, starsCount: 3, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.070, holdGrowth: 1.35 },
-  { lineWidth: 4,  multiStars: true, starsCount: 3, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.075, holdGrowth: 1.38 },
-
-  // 13–14: 4 hvězdy, střední rozsah pulzace
-  { lineWidth: 6,  multiStars: true, starsCount: 4, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.080, holdGrowth: 1.40 },
-  { lineWidth: 4,  multiStars: true, starsCount: 4, oscillate: true, scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.085, holdGrowth: 1.42 },
-
-  // 15–16: finále – 4 hvězdy, širší rozsah + rychlejší pulzace (pořád férové)
-  { lineWidth: 6,  multiStars: true, starsCount: 4, oscillate: true, scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.090, holdGrowth: 1.44 },
-  { lineWidth: 4,  multiStars: true, starsCount: 4, oscillate: true, scaleMin: 0.86, scaleMax: 1.14, scaleSpeed: 0.100, holdGrowth: 1.46 }
+  // === 3 hvězdy ===
+  { lineWidth: 6, multiStars: true, starsCount: 3, holdGrowth: 1.48 }, // statické
+  { lineWidth: 6, multiStars: true, starsCount: 3, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.070, holdGrowth: 1.52 }, // pulzující
+  { lineWidth: 6, multiStars: true, starsCount: 3, rotationSpeed: 0.0035, rotationCheck: true, holdGrowth: 1.54 }, // rotující
+  { lineWidth: 6, multiStars: true, starsCount: 3, move: true, bounce: true, speed: 3.2, holdGrowth: 1.56, noOverlap: true }, // odrážející
+  { lineWidth: 6, multiStars: true, starsCount: 3, move: true, bounce: true, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.080, speed: 3.4, holdGrowth: 1.60, noOverlap: true }, // odrážející + pulzující
+  { lineWidth: 6, multiStars: true, starsCount: 3, rotationSpeed: 0.004, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.090, speed: 3.6, holdGrowth: 1.64, noOverlap: true }, // 🔥 finále série – rotující + odrážející + pulzující
 ];
+
 
 
 // ❤️ životy
@@ -471,7 +464,7 @@ let lives = 5;
 
 // DOPLNĚNÉ: strop a checkpoint levely
 const MAX_LIVES = 5;
-const CHECKPOINT_LEVELS = new Set([6, 8, 10, 12, 14, 16]);
+const CHECKPOINT_LEVELS = new Set([6, 8, 10, 12, 14, 16, 18]);
 
 function updateLivesDisplay() {
   const hearts = document.querySelectorAll(".heart");
@@ -590,7 +583,9 @@ if (N >= 5) base = Math.floor(base * 1.25);
         scaleSpeed: isPulsing ? (settings.scaleSpeed ?? 0) : 0,
         scalePhase: Math.random() * Math.PI * 2,
         pulsing: isPulsing,
-        growRadius: 0
+        growRadius: 0,
+        vx: (Math.random() - 0.5) * (settings.speed ?? 2.5),
+        vy: (Math.random() - 0.5) * (settings.speed ?? 2.5)
       });
     }
 
@@ -676,6 +671,7 @@ const cellR = Math.max(24, Math.floor(Math.min(cellW, cellH) * cellScale));
 // updater a renderer pro multi-stars (MIMO startLevel, na top-levelu)
 function updateMultiStars(dt){
   for (const s of msStars){
+    // pulzace
     if (s.pulsing){
       s.scalePhase += s.scaleSpeed;
       const t = (Math.sin(s.scalePhase) + 1) / 2;
@@ -684,19 +680,66 @@ function updateMultiStars(dt){
     } else {
       s.curR = s.baseR;
     }
+
+    // pohyb + odrazy od stěn
+    if (currentLevelSettings.move && currentLevelSettings.bounce){
+      s.x += s.vx * dt * 60; // 60 = korekce na framerate
+      s.y += s.vy * dt * 60;
+
+      if (s.x - s.curR <= 0 && s.vx < 0) { s.vx *= -1; s.x = s.curR; }
+      if (s.x + s.curR >= canvas.width && s.vx > 0) { s.vx *= -1; s.x = canvas.width - s.curR; }
+      if (s.y - s.curR <= 0 && s.vy < 0) { s.vy *= -1; s.y = s.curR; }
+      if (s.y + s.curR >= canvas.height && s.vy > 0) { s.vy *= -1; s.y = canvas.height - s.curR; }
+    }
+  }
+
+  // jednoduchá kolize hvězda–hvězda (repel + prohození rychlostí)
+  for (let i=0;i<msStars.length;i++){
+    for (let j=i+1;j<msStars.length;j++){
+      const a = msStars[i], b = msStars[j];
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const dist = Math.hypot(dx,dy);
+      const minDist = a.curR + b.curR + 4;
+      if (dist < minDist && dist > 0){
+        const push = (minDist - dist) / 2;
+        const nx = dx / dist, ny = dy / dist;
+        a.x -= nx * push; a.y -= ny * push;
+        b.x += nx * push; b.y += ny * push;
+        // fake bounce: prohoď rychlosti
+        [a.vx, b.vx] = [b.vx, a.vx];
+        [a.vy, b.vy] = [b.vy, a.vy];
+      }
+    }
   }
 }
+
 
 function drawMultiStars(){
   // decoy hvězdy
   for (let i = 0; i < msStars.length; i++){
     const s = msStars[i];
-    drawShape(currentShape, s.x, s.y, s.curR, 0, currentColorShift + hue, lineWidth);
+    drawShape(
+      currentShape,
+      s.x,
+      s.y,
+      s.curR,
+      currentLevelSettings.rotationCheck ? rotation : 0,  // pokud je rotující level, toč i decoy
+      currentColorShift + hue,
+      lineWidth
+    );
   }
   // aktivní rozpínaná hvězda navrch (pokud existuje)
   if (msActiveIndex != null){
     const s = msStars[msActiveIndex];
-    drawShape(currentShape, s.x, s.y, s.growRadius, 0, holdHue + hue, Math.max(5, lineWidth));
+    drawShape(
+      currentShape,
+      s.x,
+      s.y,
+      s.growRadius,
+      currentLevelSettings.rotationCheck ? rotation : 0,  // hráčova taky synchronní
+      holdHue + hue,
+      Math.max(5, lineWidth)
+    );
   }
 }
 
@@ -804,8 +847,8 @@ function drawLevelAnnounce(now){
 
 function startLevel() {
   document.getElementById("gameOverPopup").classList.add("hidden");
-    // Nikdy nepřekroč level 16 (kvůli zobrazování LEVEL 17+)
-  if (level > 16) level = 16;
+    // Nikdy nepřekroč level 18 (kvůli zobrazování LEVEL 19+)
+  if (level > 18) level = 18;
 
 
   // 1) Nastavení levelu
@@ -904,8 +947,8 @@ if (CHECKPOINT_LEVELS.has(level)) {
 function nextShape() {
   // Když dojdou tvary v levelu…
   if (remainingShapes.length === 0) {
-    if (level < 16) {
-      // …do levelu 15 přecházíme normálně do dalšího levelu
+    if (level < 18) {
+      // …do levelu 17 přecházíme normálně do dalšího levelu
       level++;
       startLevel();
       return;
@@ -913,7 +956,7 @@ function nextShape() {
       // ★ Jsme v posledním levelu (16): NEZVYŠUJ level,
       // jen znovu naplň sadu tvarů a pokračuj dál bez změny obtížnosti.
       remainingShapes = [...allStarShapes].sort(() => Math.random() - 0.5);
-      // nevoláme startLevel(), zůstáváme v 16 a jedeme dál
+      // nevoláme startLevel(), zůstáváme v 18 a jedeme dál
     }
   }
 
@@ -1406,15 +1449,15 @@ if (!bonus.pauseMainScene) {
   if (isHolding && radius < targetRadius + 1000) radius += holdGrowth;
 
   if (isHolding) {
-    ctx.save();
-    ctx.translate(shapeX, shapeY);
-    ctx.rotate(0);
-    drawStarShape(currentShape, radius);
-    ctx.fill();
-    ctx.restore();
+  ctx.save();
+  ctx.translate(shapeX, shapeY);
+  ctx.rotate(rotation);
+  drawStarShape(currentShape, radius);
+  ctx.fill();
+  ctx.restore();
 
-    drawShape(currentShape, shapeX, shapeY, radius, 0, holdHue + hue, 5);
-  }
+  drawShape(currentShape, shapeX, shapeY, radius, rotation, holdHue + hue, 5);
+}
 }
 }
 
@@ -1531,22 +1574,29 @@ if (multiStarMode) {
 
 
   const isMoving = enableMove;
-  const maxSizeDiff = isMoving ? 40 : 30;
-  const baseAngleTolerance = Math.PI / 6;
+const maxSizeDiff = isMoving ? 40 : 30;
+const baseAngleTolerance = Math.PI / 6;
 
-  const spikes = { star4: 4, star5: 5, star6: 6, star7: 7, star8: 8, star9: 9, star10: 10, star11: 11, star12: 12 }[currentShape] || 5;
+const spikes = { star4: 4, star5: 5, star6: 6, star7: 7, star8: 8, star9: 9, star10: 10, star11: 11, star12: 12 }[currentShape] || 5;
 
+const sizeDiff = Math.abs(radius - targetRadius);
+let sizeRatio = radius > targetRadius + maxSizeDiff ? 0 : 1 - sizeDiff / maxSizeDiff;
+
+// 🔑 Pokud je potřeba kontrolovat rotaci → započti úhel
+// Jinak (rotující hvězdy) úhel ignorujeme
+let angleRatio = 1;
+if (!needsRotationCheck) {
   const snapAngle = (2 * Math.PI) / spikes;
   const maxAngleDiff = isMoving ? baseAngleTolerance + snapAngle * 0.3 : baseAngleTolerance;
 
-  const sizeDiff = Math.abs(radius - targetRadius);
-  let sizeRatio = radius > targetRadius + maxSizeDiff ? 0 : 1 - sizeDiff / maxSizeDiff;
-
   const angleOffset = rotation % snapAngle;
   const angleDiff = Math.min(angleOffset, snapAngle - angleOffset);
-  const angleRatio = Math.max(0, 1 - angleDiff / maxAngleDiff);
+  angleRatio = Math.max(0, 1 - angleDiff / maxAngleDiff);
+}
 
-  const match = Math.round(Math.max(0, sizeRatio * angleRatio * 100));
+// finální procenta
+const match = Math.round(Math.max(0, sizeRatio * angleRatio * 100));
+
   updateMatchLabel(match);
   // Pokus o zásah bonusové hvězdy (nezávislé na běžném hitu/missu)
   bonusTryHitOnRelease();
@@ -1817,7 +1867,7 @@ document.addEventListener('visibilitychange', () => {
 // Klávesa L (bonus level skip)
 window.addEventListener("keydown", (e) => { 
   if (e.key === "L") {
-    level = Math.min(16, level + 1); // ★ strop
+    level = Math.min(18, level + 1); // ★ strop
     startLevel();
   }
 });
