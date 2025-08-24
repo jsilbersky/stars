@@ -17,7 +17,7 @@ body {
   top: 0; left: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 0;
+  z-index: -1;
 }
 
 .menu {
@@ -48,6 +48,6 @@ button {
 
 button:hover {
   background: rgba(0, 255, 255, 0.25); /* při hoveru silnější cyan */
-  color: black;
+  color: rgb(9, 219, 234);
   text-shadow: none;
 }
