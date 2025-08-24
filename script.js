@@ -275,11 +275,11 @@ function triggerGameOver() {
 const modeTextEl = document.getElementById("modeText");
 if (modeTextEl) {
   if (mode === "arcade") {
-  modeTextEl.textContent = "• ⏳ Arcade: 60s timer, lives stay full";
+  modeTextEl.textContent = "• ⏳ Arcade: 60 sec timer, lives stay full";
 } else if (mode === "survival") {
   modeTextEl.textContent = "• ❤️ Survival: 5 lives, no timer";
 } else {
-  modeTextEl.textContent = "• 🔥 Challenge: 60s + 5 lives";
+  modeTextEl.textContent = "• 🔥 Challenge: 60 sec + 5 lives";
 }
 }
 

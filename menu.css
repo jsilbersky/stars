@@ -1,7 +1,7 @@
 body {
-  background: black;
+  background: radial-gradient(circle at center, #000 60%, #020617 100%);
   color: cyan;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Orbitron', sans-serif;
   text-align: center;
   margin: 0;
   padding: 0;
@@ -10,22 +10,36 @@ body {
   justify-content: center;
   align-items: center;
 }
+
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 18px;
 }
+
+h1 {
+  font-size: 38px;
+  margin-bottom: 30px;
+}
+
 button {
-  font-size: 20px;
-  padding: 12px 24px;
+  font-size: 18px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  padding: 14px 28px;
   border: 2px solid cyan;
   background: black;
   color: cyan;
-  border-radius: 10px;
+  border-radius: 14px;
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.25s ease;
+  text-shadow: 0 0 2px cyan;
+  box-shadow: 0 0 12px rgba(0,255,255,0.3) inset;
 }
+
 button:hover {
   background: cyan;
   color: black;
+  box-shadow: 0 0 15px cyan, 0 0 30px cyan;
+  transform: scale(1.06);
 }
