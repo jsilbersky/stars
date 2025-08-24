@@ -220,7 +220,7 @@ if (newGameBtn) {
 const menuBtn = document.getElementById("menuButton");
 if (menuBtn) {
   menuBtn.addEventListener("click", () => {
-    window.location.href = "menu.html"; // návrat na hlavní menu
+    window.location.href = "index.html"; // návrat na hlavní menu
   });
 }
 

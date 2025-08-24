@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Evolve Dot – Mobile</title>
+  <link rel="stylesheet" href="game.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- 🔹 NOVÝ HORNÍ HUD: timer + score -->
+  <div id="hudTop">
+    <div id="timerWrap" aria-label="time remaining">
+      <div id="timerBar"></div>
+    </div>
+    <div id="scoreLabel" aria-label="score">SCORE: 0</div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+  <!-- Oznámení bonusu (krátce problikne, když se hvězda objeví) -->
+<div id="bonus-announcer" aria-live="polite"></div>
+
+
+  <!-- Obrázek pozadí panelu -->
+  <img id="panelBg" src="images/control-panel.webp" alt="panel background" />
+
+  <div id="controlPanel">
+    <div id="leftPanel">
+      <div id="lives">
+        <img class="heart" src="images/heart.svg" alt="heart life">
+        <img class="heart" src="images/heart.svg" alt="heart life">
+        <img class="heart" src="images/heart.svg" alt="heart life">
+        <img class="heart" src="images/heart.svg" alt="heart life">
+        <img class="heart" src="images/heart.svg" alt="heart life">
+      </div>
+
+      <div id="levelLabel">LEVEL 1</div>
+      <div id="matchLabel">MATCH: 0 %</div>
+    </div>
+    <button id="holdButton" type="button">HOLD</button>
+  </div>
+
+    <!-- Pop-up okno pro Game Over -->
+  <div id="gameOverPopup" class="hidden">
+    <div class="popup-content">
+      <h2>GAME OVER</h2>
+      <button id="newGameButton">NEW GAME</button>
+      <button id="menuButton">MENU</button>
+    </div>
+  </div>
+
+  <!-- Help / Tutorial Popup -->
+  <div id="helpPopup" class="popup" style="display:flex">
+    <div class="popup-content" style="max-width:420px; text-align:center">
+      <h2 style="margin:0 0 8px">How to play</h2>
+
+      <!-- Ultra-simple bullets -->
+      <div style="font-size:13px; text-align:left; margin:0 auto 10px; max-width:360px; line-height:1.35">
+        <div>• 👆 Button Hold → ⭐ grows</div>
+        <div>• ✋ Release when ⭐ fits</div>
+        <div>• 🎯 Good = points (+time in some modes)</div>
+        <div>• ❌ Bad = penalty (depends on mode)</div>
+        <hr>
+      <div id="modeText"></div>
+      </div>
+
+      <!-- Canvas demo -->
+      <canvas id="helpDemo" width="360" height="260" style="width:360px;height:260px;border-radius:12px;display:block;margin:0 auto 10px;background:transparent"></canvas>
+
+      <!-- CTA -->
+      <button id="startGameBtn" style="padding:.6rem 1.2rem; border-radius:10px; font-weight:600">START</button>
+    </div>
+  </div>
+
+    <!-- 3-2-1 COUNTDOWN OVERLAY -->
+  <div id="countdownOverlay" class="hidden">
+    <div class="countdown-wrap">
+      <span id="countdownNum">3</span>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+
+</body>
+</html>

@@ -11,6 +11,15 @@ body {
   align-items: center;
 }
 
+/* Canvas zabere celé pozadí */
+#starCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+}
+
 .menu {
   display: flex;
   flex-direction: column;
@@ -28,18 +37,17 @@ button {
   font-weight: 800;
   padding: 14px 28px;
   border: 2px solid cyan;
-  background: black;
+  background: rgba(0, 255, 255, 0.184); /* ✨ lehce průhledná cyan */
   color: cyan;
   border-radius: 14px;
   cursor: pointer;
   transition: 0.25s ease;
-  text-shadow: 0 0 2px cyan;
-  box-shadow: 0 0 12px rgba(0,255,255,0.3) inset;
+  text-shadow: 0 0 1px cyan;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.3) inset;
 }
 
 button:hover {
-  background: cyan;
+  background: rgba(0, 255, 255, 0.25); /* při hoveru silnější cyan */
   color: black;
-  box-shadow: 0 0 15px cyan, 0 0 30px cyan;
-  transform: scale(1.06);
+  text-shadow: none;
 }
