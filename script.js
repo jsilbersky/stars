@@ -1,3 +1,6 @@
+// --- načtení módu z menu ---
+const mode = localStorage.getItem("mode") || "challenge"; 
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -137,6 +140,12 @@ function updateTimerPulseLast10s() {
 
 let lastTick = performance.now();
 function tickTimer(now) {
+  if (mode === "survival") {
+    // ⏳ V survivalu čas neubývá, jen zobrazujeme full bar
+    timeRemaining = TIMER_MAX;
+    updateTimerUI();
+    return;
+  }
   if (!lastTick) lastTick = now;
   const delta = (now - lastTick) / 1000;
   lastTick = now;
@@ -208,16 +217,43 @@ const newGameBtn = document.getElementById('newGameButton'); // FIX
 if (newGameBtn) {
   newGameBtn.addEventListener('click', () => beginNewGameFlow(false)); // FIX
 }
+const menuBtn = document.getElementById("menuButton");
+if (menuBtn) {
+  menuBtn.addEventListener("click", () => {
+    window.location.href = "menu.html"; // návrat na hlavní menu
+  });
+}
+
 
 function triggerGameOver() {
   if (gameOverShown) return;
-  gameOverShown = true;        // NEměň tady isGameOver
+  gameOverShown = true;
 
   const popup = document.getElementById("gameOverPopup");
   if (!popup) return;
 
   const content = popup.querySelector(".popup-content");
   const btn = document.getElementById("newGameButton");
+
+  // 🆕 Přidáme nadpis s názvem módu
+  let modeTitle = document.getElementById("gameOverMode");
+  if (!modeTitle) {
+    modeTitle = document.createElement("h2");
+    modeTitle.id = "gameOverMode";
+    modeTitle.style.marginBottom = "8px";
+    modeTitle.style.fontSize = "20px";
+    modeTitle.style.color = "#00ffff";
+    modeTitle.style.textAlign = "center";
+    content.insertBefore(modeTitle, content.firstChild);
+  }
+
+  // Překlad názvu módu
+  const modeName = 
+    mode === "arcade" ? "Arcade" :
+    mode === "survival" ? "Survival" :
+    "Challenge";
+
+  modeTitle.textContent = `${modeName}`;
 
   let statsEl = document.getElementById("gameOverStats");
   if (!statsEl) {
@@ -234,6 +270,19 @@ function triggerGameOver() {
 
   popup.classList.remove("hidden");
 }
+
+// Dynamicky doplníme text podle zvoleného režimu
+const modeTextEl = document.getElementById("modeText");
+if (modeTextEl) {
+  if (mode === "arcade") {
+  modeTextEl.textContent = "• ⏳ Arcade: 60s timer, lives stay full";
+} else if (mode === "survival") {
+  modeTextEl.textContent = "• ❤️ Survival: 5 lives, no timer";
+} else {
+  modeTextEl.textContent = "• 🔥 Challenge: 60s + 5 lives";
+}
+}
+
 
 // START z How to play → ukaž ruku po GO
 document.getElementById('startGameBtn')?.addEventListener('click', () => {
@@ -1272,48 +1321,55 @@ function bonusTryHitOnRelease(){
   updateMatchLabel(match);
 
   let success = false;
-
   if (match >= 80){
-    // ✅ úspěch – odměna
     if (bonus.type==='points'){
       score += 10; updateScoreUI(); pulseScore();
     } else if (bonus.type==='seconds'){
-      if (timeRemaining < TIMER_MAX){ timeRemaining = Math.min(TIMER_MAX, timeRemaining + 10); }
-      else { timeBank += 10; }
-      updateTimerUI(); blinkTimer();
-    } else if (bonus.type==='x2'){
+  if (mode === "challenge") {  // ⏳ čas navíc jen v challenge
+    if (timeRemaining < TIMER_MAX) timeRemaining = Math.min(TIMER_MAX, timeRemaining + 10);
+    else timeBank += 10;
+    updateTimerUI(); blinkTimer();
+  } else if (mode === "arcade") {
+    score += 10; updateScoreUI(); pulseScore(); // Arcade = jen body
+  }
+}
+ else if (bonus.type==='x2'){
       score = Math.floor(score * 2); updateScoreUI(); pulseScore();
     }
     createFragments(currentShape, bonus.x, bonus.y);
     explosionSound.currentTime = 0; explosionSound.play();
     success = true;
 
-        // floater u exploze bonusu (stejně jako body u běžných hvězd)
-    const label =
-      bonus.type==='points'  ? '+10 points' :
-      bonus.type==='seconds' ? '+10 seconds' :
-                               'Score ×2';
+    let label = '';
+if (bonus.type === 'points') {
+  label = '+10 points';
+} else if (bonus.type === 'seconds') {
+  if (mode === "challenge") {
+    label = '+10 seconds';
+  } else {
+    label = '+10 score'; // v Arcade / Survival místo času dostane body
+    score += 10;
+    updateScoreUI(); pulseScore();
+  }
+} else if (bonus.type === 'x2') {
+  label = 'Score ×2';
+}
 
-    const fxY = Math.max(20, bonus.y - (bonus.curR + 24)); // ať neleze nad horní okraj
-    addFloater(label, bonus.x, fxY, '#00ffff', 1700);
-
+const fxY = Math.max(20, bonus.y - (bonus.curR + 24));
+if (label) addFloater(label, bonus.x, fxY, '#00ffff', 1700);
 
   } else {
-    // ❌ neúspěch – ukaž křížek + zvuk „fail“
-    showWrong = true;
-    effectTimer = 30;                 // jak dlouho bude ✖ vidět (frame counter)
-    failSound.currentTime = 0;
-    failSound.play();
+    showWrong = true; effectTimer = 30;
+    failSound.currentTime = 0; failSound.play();
     addFloater('NO LIFE LOST', bonus.x, Math.max(20, bonus.y - (bonus.curR + 18)), '#FFD45A', 1700);
   }
 
-  // po release bonus vždy končí
   bonus.active = false;
   bonus.captureHold = false;
   bonus.pauseMainScene = false;
-
   return success;
 }
+
 
 function bonusMaybeSpawnAfterRelease(){
   if (bonus.active) return;
@@ -1517,197 +1573,167 @@ function handleRelease() {
   if (isGameOver || lives <= 0 || timeRemaining <= 0) return;
   isHolding = false;
 
-  // --- Multi-star MODE (žádná rotace, hodnotíme jen velikost) ---
-if (multiStarMode) {
-  // edge-case: pokud hráč pustil bez aktivace, náhodně jednu vyber
-  if (msActiveIndex == null && msStars.length > 0) {
-    msActiveIndex = Math.floor(Math.random() * msStars.length);
+  // --- Multi-star MODE ---
+  if (multiStarMode) {
+    if (msActiveIndex == null && msStars.length > 0) {
+      msActiveIndex = Math.floor(Math.random() * msStars.length);
+    }
+    if (msActiveIndex == null) return;
+
+    const s = msStars[msActiveIndex];
+    const maxSizeDiff = 30;
+    const sizeDiff = Math.abs(s.growRadius - s.curR);
+    const sizeRatio = s.growRadius > s.curR + maxSizeDiff ? 0 : 1 - sizeDiff / maxSizeDiff;
+    const match = Math.round(Math.max(0, sizeRatio * 100));
+    updateMatchLabel(match);
+
+    attempts++;
+    sumAccuracy += match;
+    if (match >= 80) successfulMatches++;
+
+    if (match >= 80) {
+      let add = 0; let infoText=''; let color='#9cd6ff';
+      if (match >= 96) {
+  add = 3;
+  if (mode === "challenge" || mode === "arcade") {
+    infoText = '+3 ★  +TIME';
+    color = '#00ffff';
+    if (timeRemaining < TIMER_MAX) timeRemaining = Math.min(TIMER_MAX, timeRemaining + 3);
+    else timeBank += 3;
+    updateTimerUI(); blinkTimer();
+  } else { // survival
+    infoText = '+3 ★';
+    color = '#00ffff';
   }
-  if (msActiveIndex == null) return;
+}
 
-  const s = msStars[msActiveIndex];
-  const maxSizeDiff = 30;
-  const sizeDiff = Math.abs(s.growRadius - s.curR);
-  const sizeRatio = s.growRadius > s.curR + maxSizeDiff ? 0 : 1 - sizeDiff / maxSizeDiff;
-  const match = Math.round(Math.max(0, sizeRatio * 100));
+ else if (match >= 90) { add = 2; infoText = '+2 ★'; color = '#00ffff'; }
+      else { add = 1; infoText = '+1 ★'; }
+
+      score += add; updateScoreUI(); pulseScore();
+      addFloater(infoText, s.x, Math.max(20, s.y - (s.curR + 18)), color, 1100);
+
+      createFragments(currentShape, s.x, s.y);
+      explosionSound.currentTime = 0; explosionSound.play();
+
+      nextShape();
+      spawnMultiStars(currentLevelSettings);
+    } else {
+      showWrong = true; effectTimer = 30;
+      if (mode !== "arcade") {   // Arcade = neodečítá životy
+        lives--;
+        updateLivesDisplay();
+      }
+      failSound.currentTime = 0; failSound.play();
+      if (lives <= 0) { lockGame(); triggerGameOver(); return; }
+      msActiveIndex = null;
+    }
+
+    bonusMaybeSpawnAfterRelease();
+    return;
+  }
+
+  // --- Single-star ---
+  const isMoving = enableMove;
+  const maxSizeDiff = isMoving ? 40 : 30;
+  const spikes = { star5: 5, star6: 6, star7: 7, star8: 8 }[currentShape] || 5;
+  const sizeDiff = Math.abs(radius - targetRadius);
+  let sizeRatio = radius > targetRadius + maxSizeDiff ? 0 : 1 - sizeDiff / maxSizeDiff;
+
+  let angleRatio = 1;
+  if (!needsRotationCheck) {
+    const snapAngle = (2 * Math.PI) / spikes;
+    const maxAngleDiff = Math.PI / 6 + (isMoving ? snapAngle * 0.3 : 0);
+    const angleOffset = rotation % snapAngle;
+    const angleDiff = Math.min(angleOffset, snapAngle - angleOffset);
+    angleRatio = Math.max(0, 1 - angleDiff / maxAngleDiff);
+  }
+
+  const match = Math.round(Math.max(0, sizeRatio * angleRatio * 100));
   updateMatchLabel(match);
+  bonusTryHitOnRelease();
 
-  // statistiky
   attempts++;
   sumAccuracy += match;
   if (match >= 80) successfulMatches++;
-
   if (match >= 80) {
-    let add = 0; let infoText=''; let color='#9cd6ff';
-    if (match >= 95) { 
-      add = 3; infoText = '+3 ★  +TIME'; color = '#00ffff';
-      if (timeRemaining < TIMER_MAX) { timeRemaining = Math.min(TIMER_MAX, timeRemaining + 3); } 
-      else { timeBank += 3; }
-      updateTimerUI(); blinkTimer();
-    } else if (match >= 90) { add = 2; infoText = '+2 ★'; color = '#00ffff'; }
-    else { add = 1; infoText = '+1 ★'; }
-
-    score += add; updateScoreUI(); pulseScore();
-    addFloater(infoText, s.x, Math.max(20, s.y - (s.curR + 18)), color, 1100);
-
-    createFragments(currentShape, s.x, s.y);
-    explosionSound.currentTime = 0; explosionSound.play();
-
-    // další tvar + nové rozložení návnad
-    nextShape();
-    spawnMultiStars(currentLevelSettings);
-
-  } else {
-    showWrong = true; effectTimer = 30; lives--; updateLivesDisplay();
-    failSound.currentTime = 0; failSound.play();
-    if (lives <= 0) { lockGame(); triggerGameOver(); return; }
-    // necháme stejné rozložení, ale další HOLD vybere novou aktivní
-    msActiveIndex = null;
+    let add = 0, infoText = '', color = '#9cd6ff';
+  if (match >= 96) {
+  add = 3;
+  if (mode === "challenge" || mode === "arcade") {
+    infoText = '+3 ★  +TIME';
+    color = '#00ffff';
+    if (timeRemaining < TIMER_MAX) timeRemaining = Math.min(TIMER_MAX, timeRemaining + 3);
+    else timeBank += 3;
+    updateTimerUI(); blinkTimer();
+  } else { // survival
+    infoText = '+3 ★';
+    color = '#00ffff';
   }
-
-  bonusMaybeSpawnAfterRelease();
-  return; // důležité – nezapojuj původní single-target logiku
 }
 
 
-  const isMoving = enableMove;
-const maxSizeDiff = isMoving ? 40 : 30;
-const baseAngleTolerance = Math.PI / 6;
-
-const spikes = { star4: 4, star5: 5, star6: 6, star7: 7, star8: 8, star9: 9, star10: 10, star11: 11, star12: 12 }[currentShape] || 5;
-
-const sizeDiff = Math.abs(radius - targetRadius);
-let sizeRatio = radius > targetRadius + maxSizeDiff ? 0 : 1 - sizeDiff / maxSizeDiff;
-
-// 🔑 Pokud je potřeba kontrolovat rotaci → započti úhel
-// Jinak (rotující hvězdy) úhel ignorujeme
-let angleRatio = 1;
-if (!needsRotationCheck) {
-  const snapAngle = (2 * Math.PI) / spikes;
-  const maxAngleDiff = isMoving ? baseAngleTolerance + snapAngle * 0.3 : baseAngleTolerance;
-
-  const angleOffset = rotation % snapAngle;
-  const angleDiff = Math.min(angleOffset, snapAngle - angleOffset);
-  angleRatio = Math.max(0, 1 - angleDiff / maxAngleDiff);
-}
-
-// finální procenta
-const match = Math.round(Math.max(0, sizeRatio * angleRatio * 100));
-
-  updateMatchLabel(match);
-  // Pokus o zásah bonusové hvězdy (nezávislé na běžném hitu/missu)
-  bonusTryHitOnRelease();
-
-  // <<< NOVÉ STATISTIKY >>>
-  attempts++;
-  sumAccuracy += match;
-  if (match >= 80) {
-    successfulMatches++;
-  }
-
-  if (match >= 80) {
-    let add = 0;
-    let infoText = '';
-    let color = '#9cd6ff';
-    if (match >= 95) { add = 3; infoText = '+3 ★  +TIME'; color = '#00ffff'; }
     else if (match >= 90) { add = 2; infoText = '+2 ★'; color = '#00ffff'; }
     else { add = 1; infoText = '+1 ★'; }
 
-    score += add;
-    updateScoreUI();
-    pulseScore();
-
-    if (match >= 95) {
-      if (timeRemaining < TIMER_MAX) {
-        timeRemaining = Math.min(TIMER_MAX, timeRemaining + 3);
-      } else {
-        timeBank += 3;
-      }
-      updateTimerUI();
-      blinkTimer();
-    }
+    score += add; updateScoreUI(); pulseScore();
 
     addFloater(infoText, shapeX, Math.max(20, shapeY - (targetRadius + 18)), color, 1100);
-
     createFragments(currentShape, shapeX, shapeY);
-    showExplosion = true;
-    effectTimer = 30;
-    createShards(shapeX, shapeY);
-    flashAlpha = 0.6;
-
-    explosionSound.currentTime = 0;
-    explosionSound.play();
+    showExplosion = true; effectTimer = 30;
+    createShards(shapeX, shapeY); flashAlpha = 0.6;
+    explosionSound.currentTime = 0; explosionSound.play();
   } else {
-    showWrong = true;
-    effectTimer = 30;
-    lives--;
-    updateLivesDisplay();
-
-    failSound.currentTime = 0;
-    failSound.play();
-
-    if (lives <= 0) {
-      lockGame();          // zamkni vstupy teď hned
-      triggerGameOver();   // a hned ukaž popup
-      return;
+    showWrong = true; effectTimer = 30;
+    if (mode !== "arcade") {
+      lives--;
+      updateLivesDisplay();
     }
+    failSound.currentTime = 0; failSound.play();
+    if (lives <= 0) { lockGame(); triggerGameOver(); return; }
   }
-  // Po každém release je šance náhodně spustit bonus (pokud není aktivní)
   bonusMaybeSpawnAfterRelease();
 }
+
 
 window.startNewGame = function () {
   document.getElementById("gameOverPopup").classList.add("hidden");
 
-  // <<< BONUS reset >>>
   bonus.active = false;
   bonus.captureHold = false;
   bonus.pauseMainScene = false;
   bonus.lastSpawnSec = performance.now()/1000;
+  gameOverShown = false;
 
-  gameOverShown = false; // reset pro další hru
+  showWrong = false; showExplosion = false; effectTimer = 0;
+  floaters = []; shards = []; fragments = []; flashAlpha = 0;
 
-  // 👉 vyčistit efekty z minulé hry (kříž, exploze, částice)
-  showWrong = false;
-  showExplosion = false;
-  effectTimer = 0;
-  floaters = [];
-  shards = [];
-  fragments = [];
-  flashAlpha = 0;
-
-  lives = 5;
-  level = 1;
-  firstStart = true;
-
-  timeRemaining = TIMER_MAX;
-  timeBank = 0;
-  lastTick = performance.now();
-  isGameOver = false;
-  isHolding = false;
-  score = 0;
+  level = 1; firstStart = true; isGameOver = false; isHolding = false;
+  score = 0; attempts = 0; successfulMatches = 0; sumAccuracy = 0;
 
   timerBar.classList.remove('timer-blink');
-
-  if (holdButton) {
-    holdButton.disabled = false;
-    holdButton.classList.remove('active');
-  }
-
-  attempts = 0;
-  successfulMatches = 0;
-  sumAccuracy = 0;
-
-  updateScoreUI();
+  if (holdButton) { holdButton.disabled = false; holdButton.classList.remove('active'); }
   if (timerWrap) timerWrap.classList.remove('timer-blink-10s');
-  updateTimerUI();
 
-  startLevel();
-  updateMatchLabel(0);
-
-  if (!loopRunning) {
-    requestAnimationFrame(draw); // znovu startni render smyčku
+  // 🎮 Režimy
+  if (mode === "arcade") {
+    lives = MAX_LIVES;
+    timeRemaining = TIMER_MAX;
+    timeBank = 0;
+  } else if (mode === "survival") {
+    lives = MAX_LIVES;
+    timeRemaining = TIMER_MAX; // bar zůstane plný, ale neubývá
+    timeBank = 0;
+  } else { // challenge
+    lives = MAX_LIVES;
+    timeRemaining = TIMER_MAX;
+    timeBank = 0;
   }
+
+  updateScoreUI(); updateTimerUI();
+  startLevel(); updateMatchLabel(0);
+
+  if (!loopRunning) requestAnimationFrame(draw);
 };
 
 

@@ -45,6 +45,7 @@
     <div class="popup-content">
       <h2>GAME OVER</h2>
       <button id="newGameButton">NEW GAME</button>
+      <button id="menuButton">MENU</button>
     </div>
   </div>
 
@@ -55,10 +56,12 @@
 
       <!-- Ultra-simple bullets -->
       <div style="font-size:13px; text-align:left; margin:0 auto 10px; max-width:360px; line-height:1.35">
-        <div>• 👆 Hold the big button → ⭐ gets bigger</div>
-        <div>• ✋ Stop when ⭐ fits</div>
-        <div>• 🎯 Good match = more points + more time</div>
-        <div>• 💔 Bad match under 80 % = lose 1 life</div>
+        <div>• 👆 Button Hold → ⭐ grows</div>
+        <div>• ✋ Release when ⭐ fits</div>
+        <div>• 🎯 Good = points (+time in some modes)</div>
+        <div>• ❌ Bad = penalty (depends on mode)</div>
+        <hr>
+      <div id="modeText"></div>
       </div>
 
       <!-- Canvas demo -->
