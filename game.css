@@ -209,16 +209,22 @@ body { position: relative; }
   z-index: 21;              /* nejvýš v panelu */
   touch-action: none;
   font-family: 'Audiowide', sans-serif;
-  transition: transform 0.5s ease, background-color 0.5s ease, box-shadow 0.6s ease;
+  transition: background-color 0.5s ease, box-shadow 0.6s ease; /* bez transformu */
+  -webkit-tap-highlight-color: transparent; /* méně blikání na mobilech */
 }
 
 #holdButton:active,
 #holdButton.active {
-  transform: translateX(-50%) translateY(-46%) scale(0.95);
   background-color: #002f2f;
   color: #0ff;
-  box-shadow: 0 0 10px rgba(0, 255, 255, 0.3), inset 0 0 5px rgba(0, 255, 255, 0.1);
+  animation: holdPulse 1s infinite alternate;
 }
+
+@keyframes holdPulse {
+  0%   { box-shadow: 0 0 8px rgba(0, 255, 255, 0.5); }
+  100% { box-shadow: 0 0 18px rgba(0, 255, 255, 0.9), inset 0 0 8px rgba(0, 255, 255, 0.4); }
+}
+
 
 /* =================== GAME OVER POPUP =================== */
 #gameOverPopup {
@@ -369,8 +375,12 @@ body { position: relative; }
     width: 83px; height: 83px; font-size: 17px;
     transform: translateX(-50%) translateY(-45%);
   }
-  #holdButton:active, #holdButton.active {
-    transform: translateX(-50%) translateY(-40%) scale(0.95);
+  #holdButton:active,
+  #holdButton.active {
+    /* žádný transform – jen barva/animace */
+    background-color: #002f2f;
+    color: #0ff;
+    animation: holdPulse 1s infinite alternate;
   }
   .heart { width: 18px; height: 18px; }
 }

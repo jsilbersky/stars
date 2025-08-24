@@ -47,7 +47,7 @@ button {
 }
 
 button:hover {
-  background: rgba(0, 255, 255, 0.25); /* při hoveru silnější cyan */
+  background: rgba(0, 255, 255, 0.616); /* při hoveru silnější cyan */
   color: rgb(9, 219, 234);
   text-shadow: none;
 }
