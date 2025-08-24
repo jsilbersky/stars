@@ -483,26 +483,25 @@ const allStarShapes = ["star5", "star6", "star7", "star8"];
 const levels = [
   // === 1 hvězda ===
   { lineWidth: 6, holdGrowth: 1.00 }, // statická
-  { lineWidth: 6, oscillate: true, scaleMin: 0.94, scaleMax: 1.06, scaleSpeed: 0.055, holdGrowth: 1.12 }, // pulzující
-  { lineWidth: 6, rotationSpeed: 0.002, rotationCheck: true, holdGrowth: 1.16 }, // rotující
-  { lineWidth: 6, move: true, bounce: true, rotationSpeed: 0.0022, rotationCheck: true, speed: 2.4, holdGrowth: 1.20, noOverlap: true }, // odrážející + rotující
-  { lineWidth: 6, rotationSpeed: 0.0025, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.070, speed: 2.8, holdGrowth: 1.28, noOverlap: true }, // 🔥 finále – odrážející + pulzující + rotující
+  { lineWidth: 6, oscillate: true, scaleMin: 0.95, scaleMax: 1.05, scaleSpeed: 0.060, holdGrowth: 1.12 }, // jemná pulzace (±5 %)
+  { lineWidth: 6, rotationSpeed: 0.010, rotationCheck: true, holdGrowth: 1.16 }, // rotující (rychlejší)
+  { lineWidth: 6, move: true, bounce: true, rotationSpeed: 0.008, rotationCheck: true, speed: 2.6, holdGrowth: 1.20, noOverlap: true }, 
+  { lineWidth: 6, rotationSpeed: 0.010, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.93, scaleMax: 1.07, scaleSpeed: 0.075, speed: 2.9, holdGrowth: 1.26, noOverlap: true }, // finále (±7 % pulzace)
 
   // === 2 hvězdy ===
-  { lineWidth: 6, multiStars: true, starsCount: 2, holdGrowth: 1.30 }, // statické
-  { lineWidth: 6, multiStars: true, starsCount: 2, oscillate: true, scaleMin: 0.93, scaleMax: 1.07, scaleSpeed: 0.065, holdGrowth: 1.34 }, // pulzující
-  { lineWidth: 6, multiStars: true, starsCount: 2, rotationSpeed: 0.003, rotationCheck: true, holdGrowth: 1.36 }, // rotující
-  { lineWidth: 6, multiStars: true, starsCount: 2, move: true, bounce: true, rotationSpeed: 0.0025, rotationCheck: true, speed: 2.8, holdGrowth: 1.38, noOverlap: true }, // odrážející + rotující
-  { lineWidth: 6, multiStars: true, starsCount: 2, rotationSpeed: 0.004, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.075, speed: 3.2, holdGrowth: 1.42, noOverlap: true }, // 🔥 finále – odrážející + pulzující + rotující
+  { lineWidth: 6, multiStars: true, starsCount: 2, holdGrowth: 1.30 }, 
+  { lineWidth: 6, multiStars: true, starsCount: 2, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.080, holdGrowth: 1.34 }, // mírně větší pulzace (±8 %)
+  { lineWidth: 6, multiStars: true, starsCount: 2, rotationSpeed: 0.012, rotationCheck: true, holdGrowth: 1.36 }, // rychlejší rotace
+  { lineWidth: 6, multiStars: true, starsCount: 2, move: true, bounce: true, rotationSpeed: 0.009, rotationCheck: true, speed: 3.0, holdGrowth: 1.38, noOverlap: true }, 
+  { lineWidth: 6, multiStars: true, starsCount: 2, rotationSpeed: 0.012, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.090, speed: 3.3, holdGrowth: 1.42, noOverlap: true }, // finále (±9 % pulzace)
 
   // === 3 hvězdy ===
-  { lineWidth: 6, multiStars: true, starsCount: 3, holdGrowth: 1.48 }, // statické
-  { lineWidth: 6, multiStars: true, starsCount: 3, oscillate: true, scaleMin: 0.92, scaleMax: 1.08, scaleSpeed: 0.070, holdGrowth: 1.52 }, // pulzující
-  { lineWidth: 6, multiStars: true, starsCount: 3, rotationSpeed: 0.0035, rotationCheck: true, holdGrowth: 1.54 }, // rotující
-  { lineWidth: 6, multiStars: true, starsCount: 3, move: true, bounce: true, rotationSpeed: 0.0027, rotationCheck: true, speed: 3.2, holdGrowth: 1.56, noOverlap: true }, // odrážející + rotující
-  { lineWidth: 6, multiStars: true, starsCount: 3, rotationSpeed: 0.004, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.88, scaleMax: 1.12, scaleSpeed: 0.090, speed: 3.6, holdGrowth: 1.60, noOverlap: true }, // 🔥 finále – odrážející + pulzující + rotující
+  { lineWidth: 6, multiStars: true, starsCount: 3, holdGrowth: 1.48 }, 
+  { lineWidth: 6, multiStars: true, starsCount: 3, oscillate: true, scaleMin: 0.91, scaleMax: 1.09, scaleSpeed: 0.090, holdGrowth: 1.52 }, // silnější pulzace (±9 %)
+  { lineWidth: 6, multiStars: true, starsCount: 3, rotationSpeed: 0.014, rotationCheck: true, holdGrowth: 1.54 }, // ještě rychlejší rotace
+  { lineWidth: 6, multiStars: true, starsCount: 3, move: true, bounce: true, rotationSpeed: 0.011, rotationCheck: true, speed: 3.4, holdGrowth: 1.56, noOverlap: true }, 
+  { lineWidth: 6, multiStars: true, starsCount: 3, rotationSpeed: 0.012, rotationCheck: true, move: true, bounce: true, oscillate: true, scaleMin: 0.90, scaleMax: 1.10, scaleSpeed: 0.100, speed: 3.7, holdGrowth: 1.60, noOverlap: true }, // finále (±10 % pulzace, rotace nechána)
 ];
-
 
 
 // ❤️ životy
@@ -510,7 +509,7 @@ let lives = 5;
 
 // DOPLNĚNÉ: strop a checkpoint levely
 const MAX_LIVES = 5;
-const CHECKPOINT_LEVELS = new Set([6, 8, 10, 12, 14]);
+const CHECKPOINT_LEVELS = new Set([10, 12, 14]);
 
 function updateLivesDisplay() {
   const hearts = document.querySelectorAll(".heart");
@@ -912,17 +911,27 @@ function startLevel() {
   enableBounce = settings.bounce || false;
 
   holdGrowth = settings.holdGrowth ?? 1;
-  if (settings.speed) {
-    const spd = settings.speed;
-    shapeVX = (Math.random() - 0.5) * spd;
-    shapeVY = (Math.random() - 0.5) * spd;
+  // 🎯 Fix: náhodná rychlost s minimem
+function randVelComp(spd, minFrac = 0.5) {
+  const min = spd * minFrac;
+  let v = (Math.random() - 0.5) * spd;
+  if (Math.abs(v) < min) {
+    v = Math.sign(v || 1) * min;  // nastav minimální rychlost správným směrem
   }
+  return v;
+}
 
-  oscillate   = settings.oscillate || false;
-  scaleMin    = settings.scaleMin ?? 1;
-  scaleMax    = settings.scaleMax ?? 1;
-  scaleSpeed  = settings.scaleSpeed ?? 0;
-  scalePhase  = 0;
+if (settings.speed) {
+  const spd = settings.speed;
+  shapeVX = randVelComp(spd, 0.3);
+  shapeVY = randVelComp(spd, 0.3);
+}
+
+oscillate   = settings.oscillate || false;
+scaleMin    = settings.scaleMin ?? 1;
+scaleMax    = settings.scaleMax ?? 1;
+scaleSpeed  = settings.scaleSpeed ?? 0;
+scalePhase  = 0;
 
  // ★ CHECKPOINT LIFE – na začátku vybraných levelů doplň +1 (max 5)
 //    + zároveň si připravíme text pro banner (vedle "LEVEL X")
