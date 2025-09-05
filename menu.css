@@ -27,8 +27,29 @@ body {
 }
 
 h1 {
-  font-size: 38px;
-  margin-bottom: 30px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 50px;
+  margin-bottom: 4px;
+  font-weight: 900;
+  color: #00ffff;
+  text-shadow: 0 0 2px #00baba, 0 0 2px #008888;
+  animation: pulse 4s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { text-shadow: 0 0 2px #00d0d0, 0 0 6px #00a0a0; }
+  50% { text-shadow: 0 0 4px #00ffff, 0 0 10px #00cccc; }
+}
+
+
+
+.slogan {
+  font-size: 20px;
+  margin: 0px 0 14px;
+  font-style: italic;
+  font-weight: 900;
+  color: #00ffff;
+  text-shadow: 0 0 6px #000;
 }
 
 button {
@@ -37,7 +58,7 @@ button {
   font-weight: 800;
   padding: 14px 28px;
   border: 2px solid cyan;
-  background: rgba(0, 255, 255, 0.184); /* ✨ lehce průhledná cyan */
+  background: rgba(0, 255, 255, 0.184);
   color: cyan;
   border-radius: 14px;
   cursor: pointer;
