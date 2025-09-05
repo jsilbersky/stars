@@ -212,6 +212,8 @@ body { position: relative; }
   transition: background-color 0.5s ease, box-shadow 0.6s ease;
   -webkit-tap-highlight-color: transparent; /* méně blikání na mobilech */
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 #holdButton:active,
@@ -494,7 +496,17 @@ body { position: relative; }
   100% { opacity: 0;   transform: translate(-50%, -50%) scale(0.8); }
 }
 
-
-
-
 #gameOverPopup, #helpPopup { user-select: none; }
+
+/* ===== Blokace označování textu u všech UI prvků ===== */
+#scoreLabel,
+#matchLabel,
+#levelLabel,
+#lives,
+#countdownNum,
+#gameOverStats,
+.popup-content {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
