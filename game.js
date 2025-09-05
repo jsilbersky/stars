@@ -1749,6 +1749,14 @@ window.startNewGame = function () {
 
 const holdButton = document.getElementById("holdButton");
 holdButton.style.touchAction = 'none';
+// Blokace označení textu a kontextového menu
+holdButton.style.userSelect = 'none';
+holdButton.style.webkitUserSelect = 'none';    // Safari, iOS
+holdButton.style.webkitTouchCallout = 'none';  // zruší kopírovací menu na iOS
+
+holdButton.addEventListener('selectstart', e => e.preventDefault());
+holdButton.addEventListener('contextmenu', e => e.preventDefault());
+
 const holdSound = new Audio('sounds/hold.mp3'); holdSound.preload = 'auto'; holdSound.volume = 0.4;
 const explosionSound = new Audio('sounds/explosion.mp3'); explosionSound.preload = 'auto'; explosionSound.volume = 0.6;
 const failSound = new Audio('sounds/fail.mp3'); failSound.preload = 'auto'; failSound.volume = 1.0;

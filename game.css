@@ -206,11 +206,12 @@ body { position: relative; }
   border: 2px solid #0ff;
   box-shadow: 0 0 15px #0ff;
   box-sizing: border-box;
-  z-index: 21;              /* nejvýš v panelu */
+  z-index: 21;             
   touch-action: none;
   font-family: 'Audiowide', sans-serif;
-  transition: background-color 0.5s ease, box-shadow 0.6s ease; /* bez transformu */
+  transition: background-color 0.5s ease, box-shadow 0.6s ease;
   -webkit-tap-highlight-color: transparent; /* méně blikání na mobilech */
+  user-select: none;
 }
 
 #holdButton:active,
