@@ -510,3 +510,34 @@ body { position: relative; }
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
+
+@keyframes panelBlink {
+  0%, 100% { filter: none; }
+  50% { filter: brightness(1.3) drop-shadow(0 0 20px red); }
+}
+
+.panel-blink {
+  animation: panelBlink 0.6s ease-in-out 4; /* blikne 4× */
+}
+
+@keyframes holdBlinkFlash {
+  0%, 100% {
+    background-color: #000;
+    border-color: #0ff;
+    box-shadow: 0 0 12px #0ff;
+  }
+  50% {
+    background-color: #800000;   /* tmavě červená místo jasné */
+    border-color: #ff4444;
+    box-shadow: 0 0 22px #ff4444;
+  }
+}
+
+#holdButton.blink {
+  animation: holdBlinkFlash 0.8s ease-in-out 4; /* 4 pomalá bliknutí */
+}
+
+
+
+
+

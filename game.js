@@ -87,6 +87,21 @@ function runCountdown(thenStartFn) {
         // 1) spusť hru (např. startLevel)
         thenStartFn?.();
 
+        // Po "GO!" rozblikáme panel i tlačítko
+const panel = document.getElementById('panelBg');
+const holdBtn = document.getElementById('holdButton');
+
+if (holdBtn) {
+  holdBtn.classList.add('blink');
+  setTimeout(() => holdBtn.classList.remove('blink'), 2200);
+}
+
+if (panel) {
+  panel.classList.add('panel-blink');
+  setTimeout(() => panel.classList.remove('panel-blink'), 2200);
+}
+
+
         // 2) AŽ po skrytí overlaye + spuštění levelu ukaž ruku
         //    requestAnimationFrame zajistí vykreslení na čisté scéně
         requestAnimationFrame(() => {
@@ -172,13 +187,14 @@ function tickTimer(now) {
 /* === Hand cue (naváděcí ruka po GO) ==================================== */
 let showHandCueNextStart = false; // nastaví se při START z help okna
 
-function showHandCueAtElement(el, emoji = '👆') {
+function showHandCueAtElement(el, emoji = '🖐️') {
   if (!el) return;
   const rect = el.getBoundingClientRect();
 
-  // Pozice ruky: lehce nad pravým horním kvadrantem tlačítka
-  const px = rect.left + rect.width * 0.70;
+    // Pozice ruky: LEVÝ spodní kvadrant tlačítka
+  const px = rect.left + rect.width * 0.25;
   const py = rect.top  + rect.height * 0.85;
+
 
   const cue = document.createElement('div');
   cue.id = 'handCue';
@@ -193,7 +209,7 @@ function showHandCueAtElement(el, emoji = '👆') {
 function showHandCueIfNeeded() {
   if (!showHandCueNextStart) return;
   const holdBtn = document.getElementById('holdButton');
-  showHandCueAtElement(holdBtn, '👆');
+  showHandCueAtElement(holdBtn, '🖐️');
   showHandCueNextStart = false;
 }
 
@@ -1966,7 +1982,7 @@ drawInit();
     ctx.font = '28px system-ui, Apple Color Emoji, Segoe UI Emoji';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('👆', 0, 0);
+    ctx.fillText('🖐️', 0, 0);
     ctx.restore();
   }
 
