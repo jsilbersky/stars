@@ -33,14 +33,7 @@ h1 {
   font-weight: 900;
   color: #00ffff;
   text-shadow: 0 0 2px #00baba, 0 0 2px #008888;
-  animation: pulse 4s infinite;
 }
-
-@keyframes pulse {
-  0%, 100% { text-shadow: 0 0 2px #00d0d0, 0 0 6px #00a0a0; }
-  50% { text-shadow: 0 0 4px #00ffff, 0 0 10px #00cccc; }
-}
-
 
 
 .slogan {
