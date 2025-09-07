@@ -1,0 +1,17 @@
+# Node modules (lokální knihovny, nepotřebné na GitHubu)
+node_modules/
+
+# Android projekt (generuje se lokálně, nepatří na GitHub)
+android/
+
+# Build výstupy Capacitoru
+www/dist/
+www/build/
+
+# Logy a cache
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.idea/
+.vscode/
+.DS_Store
