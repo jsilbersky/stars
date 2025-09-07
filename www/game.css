@@ -3,6 +3,7 @@
   --hudTopH: 38px;   /* výška horního HUDu */
   --panelH: 150px;   /* výška spodního panelu */
   --scoreMinW: 96px; /* MIN šířka pro text 'SCORE: 9999' na desktopu */
+  --safe-top: env(safe-area-inset-top, 20px); /* adaptivní mezera pro notch */
 }
 
 html, body {
@@ -22,7 +23,7 @@ body { position: relative; }
 /* =================== HORNÍ HUD =================== */
 #hudTop {
   position: absolute;
-  top: 0;
+  top: var(--safe-top);  /* adaptivní mezera */
   left: 0;
   width: 100vw;
   height: var(--hudTopH);
@@ -30,12 +31,22 @@ body { position: relative; }
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 4px 10px; /* mírně zmenšené odsazení */
+  padding: 4px 10px;
   box-sizing: border-box;
   z-index: 30;
   background: transparent;
   backdrop-filter: none;
 }
+
+#topFade {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 40px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0,0,0,.4), rgba(0,0,0,0));
+  z-index: 1;
+}
+
 
 #timerWrap {
   position: relative;
