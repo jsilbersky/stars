@@ -23,7 +23,7 @@ body { position: relative; }
 /* =================== HORNÍ HUD =================== */
 #hudTop {
   position: absolute;
-  top: var(--safe-top);  /* adaptivní mezera */
+  top: calc(var(--safe-top) + 10px);  /* +8px dolů od horní hrany */
   left: 0;
   width: 100vw;
   height: var(--hudTopH);
@@ -37,6 +37,7 @@ body { position: relative; }
   background: transparent;
   backdrop-filter: none;
 }
+
 
 #topFade {
   position: fixed;
@@ -110,16 +111,16 @@ body { position: relative; }
 /* Canvas je pozadí: mezi horním HUDem a panelem dole */
 #gameCanvas {
   position: relative;
-  top: var(--hudTopH);
+  top: var(--safe-top); /* místo var(--hudTopH) */
   left: 0;
   right: 0;
   bottom: var(--panelH);
   width: 100vw;
-  height: calc(100vh - var(--panelH));
+  height: calc(100vh - var(--panelH) - var(--safe-top));
   display: block;
   background: transparent;
-  z-index: 0;               /* úplně dole */
-  pointer-events: none;     /* neblokuje tapy */
+  z-index: 0;
+  pointer-events: none;
 }
 
 /* =================== SPODNÍ PANEL =================== */
@@ -548,6 +549,45 @@ body { position: relative; }
   animation: holdBlinkFlash 0.8s ease-in-out 4; /* 4 pomalá bliknutí */
 }
 
+/* ===== Horní futuristické ladění ===== */
+
+/* jemná neonová linka nad HUD */
+#hudTop::before {
+  content: "";
+  position: absolute;
+  top: -6px; left: 0; right: 0;
+  height: 6px;
+  background: linear-gradient(90deg, transparent, cyan, transparent);
+  opacity: 0.25;
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+/* záře směrem dolů od horní hrany */
+#topGlow {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  background: radial-gradient(ellipse at top, rgba(0,255,255,0.12), transparent 70%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* jemný šikmý vzorek přes HUD background */
+#hudTop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(0,255,255,0.04) 0px,
+    rgba(0,255,255,0.04) 2px,
+    transparent 2px,
+    transparent 6px
+  );
+  pointer-events: none;
+  z-index: -1;
+}
 
 
 
