@@ -22,7 +22,7 @@ body { position: relative; }
 /* =================== HORNÍ HUD =================== */
 #hudTop {
   position: absolute;
-  top: 0;  
+  top: 10px;  
   width: 100vw;
   height: var(--hudTopH);
   display: flex;
