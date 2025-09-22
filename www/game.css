@@ -116,7 +116,7 @@ body { position: relative; }
   right: 0;
   bottom: var(--panelH);
   width: 100vw;
-  height: calc(100vh - var(--panelH) - var(--safe-top));
+  height: calc(100vh - var(--panelH) - (var(--safe-top) + 10px));
   display: block;
   background: transparent;
   z-index: 0;
