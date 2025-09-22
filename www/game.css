@@ -3,7 +3,7 @@
   --hudTopH: 38px;   /* výška horního HUDu */
   --panelH: 150px;   /* výška spodního panelu */
   --scoreMinW: 96px; /* MIN šířka pro text 'SCORE: 9999' na desktopu */
-  --safe-top: env(safe-area-inset-top, 20px); /* adaptivní mezera pro notch */
+  --safe-top: env(safe-area-inset-top, 0px); /* adaptivní mezera pro notch */
 }
 
 html, body {
@@ -23,7 +23,7 @@ body { position: relative; }
 /* =================== HORNÍ HUD =================== */
 #hudTop {
   position: absolute;
-  top: calc(var(--safe-top) + 5px);
+  top: var(--safe-top);
   left: 0;
   width: 100vw;
   height: var(--hudTopH);
@@ -111,12 +111,12 @@ body { position: relative; }
 /* Canvas je pozadí: mezi horním HUDem a panelem dole */
 #gameCanvas {
   position: relative;
-  top: var(--safe-top); /* místo var(--hudTopH) */
+  top: calc(var(--safe-top) + var(--hudTopH)); /* začíná až pod HUDem */
   left: 0;
   right: 0;
   bottom: var(--panelH);
   width: 100vw;
-  height: calc(100vh - var(--panelH) - var(--safe-top));
+  height: calc(100vh - var(--panelH) - var(--hudTopH) - var(--safe-top));
   display: block;
   background: transparent;
   z-index: 0;
@@ -568,7 +568,7 @@ body { position: relative; }
 #topGlow {
   position: fixed;
   top: 0; left: 0; right: 0;
-  height: 60px;
+  height: calc(var(--hudTopH) + 20px);
   background: radial-gradient(ellipse at top, rgba(0,255,255,0.12), transparent 70%);
   pointer-events: none;
   z-index: 5;
