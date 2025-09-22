@@ -23,7 +23,7 @@ body { position: relative; }
 /* =================== HORNÍ HUD =================== */
 #hudTop {
   position: absolute;
-  top: calc(var(--safe-top) + 10px);  /* +8px dolů od horní hrany */
+  top: calc(var(--safe-top) + 5px);
   left: 0;
   width: 100vw;
   height: var(--hudTopH);
@@ -116,7 +116,7 @@ body { position: relative; }
   right: 0;
   bottom: var(--panelH);
   width: 100vw;
-  height: calc(100vh - var(--panelH) - (var(--safe-top) + 10px));
+  height: calc(100vh - var(--panelH) - var(--safe-top));
   display: block;
   background: transparent;
   z-index: 0;
