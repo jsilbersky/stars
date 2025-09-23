@@ -22,6 +22,7 @@ function sizeGameCanvas() {
   canvas.width  = availW;
   canvas.height = availH;
 
+
   // umístění mezi HUD a panel (jen vizuální styl)
   canvas.style.position = "absolute";
   canvas.style.top = hudH + "px";
@@ -29,8 +30,8 @@ function sizeGameCanvas() {
   canvas.style.width = "100vw";
   canvas.style.height = availH + "px";
 
-  centerX = canvas.width / 2;
-  centerY = canvas.height / 2;
+  centerX = availW / 2;
+  centerY = availH / 2;
 
   generateStars();
 
@@ -344,7 +345,7 @@ function drawFloaters(now) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = f.color;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 5;
     ctx.fillText(f.text, f.x, f.y + f.vy * (ease * 65));
     ctx.restore();
 
@@ -1067,9 +1068,11 @@ function drawStarShape(shape, r) {
   ctx.beginPath();
   const spikes = { star5: 5, star6: 6, star7: 7, star8: 8 }[shape] || 5;
   const step = Math.PI / spikes;
+  const innerR = r * 0.5;
+
   for (let i = 0; i < 2 * spikes; i++) {
-    const radiusMod = i % 2 === 0 ? r : r * 0.5;
-    const angle = i * step;
+    const radiusMod = i % 2 === 0 ? r : innerR;
+    const angle = i * step - Math.PI / 2;
     const x = radiusMod * Math.cos(angle);
     const y = radiusMod * Math.sin(angle);
     i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
@@ -1077,24 +1080,28 @@ function drawStarShape(shape, r) {
   ctx.closePath();
 }
 
+
 function drawShape(shape, x, y, r, rotation, baseHue = 0, width = 4) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rotation);
 
-  const gradient = ctx.createLinearGradient(-r, -r, r, r);
-  gradient.addColorStop(0, `hsl(${(baseHue + 0) % 360}, 100%, 60%)`);
-  gradient.addColorStop(0.5, `hsl(${(baseHue + 60) % 360}, 100%, 60%)`);
-  gradient.addColorStop(1, `hsl(${(baseHue + 120) % 360}, 100%, 60%)`);
+  // Neonový radiální gradient – všechno plně neprůhledné
+  const gradient = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, r);
+  gradient.addColorStop(0, `hsl(${baseHue % 360}, 100%, 70%)`);
+  gradient.addColorStop(0.5, `hsl(${(baseHue + 40) % 360}, 100%, 65%)`);
+  gradient.addColorStop(1, `hsl(${(baseHue + 80) % 360}, 100%, 60%)`);
 
   ctx.strokeStyle = gradient;
   ctx.lineWidth = width;
-
-  ctx.shadowBlur = 0;
-  ctx.shadowColor = `hsl(${(baseHue + 60) % 360}, 100%, 80%)`;
+  ctx.lineJoin = "round";  
+  ctx.lineCap = "round";
+  ctx.shadowColor = `hsl(${(baseHue + 60) % 360}, 100%, 70%)`;
+  ctx.shadowBlur = 5;
 
   drawStarShape(shape, r);
   ctx.stroke();
+
   ctx.restore();
 }
 
@@ -1122,6 +1129,11 @@ function drawGoldStar(x, y, r, rotation = 0, width = 6) {
   g.addColorStop(1.00, '#E3A500'); // tmavší zlatá
   ctx.strokeStyle = g;
   ctx.lineWidth = Math.max(3, width);
+
+  // 🔑 Stejné zakulacení rohů jako ostatní hvězdy
+  ctx.lineJoin = "round";
+  ctx.lineCap  = "round";
+
   ctx.shadowColor = '#FFD45A';
   ctx.shadowBlur = Math.max(8, r * 0.25);
 
@@ -1129,6 +1141,7 @@ function drawGoldStar(x, y, r, rotation = 0, width = 6) {
   ctx.stroke();
   ctx.restore();
 }
+
 
 // Jedna zlatá jiskra (pro trail)
 function drawGoldSparkle(s) {
