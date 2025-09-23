@@ -33,6 +33,7 @@ function sizeGameCanvas() {
   centerY = canvas.height / 2;
 
   generateStars();
+
   // Při změně velikosti plátna přepočti multi-stars pozice
 if (multiStarMode && currentLevelSettings) {
   spawnMultiStars(currentLevelSettings);
@@ -641,12 +642,12 @@ if (N >= 5) base = Math.floor(base * 1.25);
         baseR, effR,
         curR: baseR,
         scaleMin: sMin, scaleMax: sMax,
-        scaleSpeed: isPulsing ? (settings.scaleSpeed ?? 0) : 0,
+        scaleSpeed: isPulsing ? ((settings.scaleSpeed ?? 0) * 60) : 0,
         scalePhase: Math.random() * Math.PI * 2,
         pulsing: isPulsing,
         growRadius: 0,
-        vx: (Math.random() - 0.5) * (settings.speed ?? 2.5),
-        vy: (Math.random() - 0.5) * (settings.speed ?? 2.5)
+        vx: (Math.random() - 0.5) * (settings.speed ?? 2.5) * 60,
+        vy: (Math.random() - 0.5) * (settings.speed ?? 2.5) * 60
       });
     }
 
@@ -734,7 +735,7 @@ function updateMultiStars(dt){
   for (const s of msStars){
     // pulzace
     if (s.pulsing){
-      s.scalePhase += s.scaleSpeed;
+      s.scalePhase += s.scaleSpeed * dt;
       const t = (Math.sin(s.scalePhase) + 1) / 2;
       const ratio = s.scaleMin + (s.scaleMax - s.scaleMin) * t;
       s.curR = s.baseR * ratio;
@@ -744,8 +745,9 @@ function updateMultiStars(dt){
 
     // pohyb + odrazy od stěn
     if (currentLevelSettings.move && currentLevelSettings.bounce){
-      s.x += s.vx * dt * 60; // 60 = korekce na framerate
-      s.y += s.vy * dt * 60;
+      s.x += s.vx * dt;
+      s.y += s.vy * dt;
+
 
       if (s.x - s.curR <= 0 && s.vx < 0) { s.vx *= -1; s.x = s.curR; }
       if (s.x + s.curR >= canvas.width && s.vx > 0) { s.vx *= -1; s.x = canvas.width - s.curR; }
@@ -921,21 +923,22 @@ function startLevel() {
 
   // 2) Základní parametry (single-target default)
   lineWidth = settings.lineWidth;
-  rotationSpeed = settings.rotationSpeed ?? 0;
+  rotationSpeed = (settings.rotationSpeed ?? 0) * 60; // rad/s
   needsRotationCheck = settings.rotationCheck;
   enableMove = settings.move || false;
   enableBounce = settings.bounce || false;
 
-  holdGrowth = settings.holdGrowth ?? 1;
+  holdGrowth = (settings.holdGrowth ?? 1) * 60; // px/s
   // 🎯 Fix: náhodná rychlost s minimem
 function randVelComp(spd, minFrac = 0.5) {
   const min = spd * minFrac;
   let v = (Math.random() - 0.5) * spd;
   if (Math.abs(v) < min) {
-    v = Math.sign(v || 1) * min;  // nastav minimální rychlost správným směrem
+    v = Math.sign(v || 1) * min;
   }
-  return v;
+  return v * 60; // px/s
 }
+
 
 if (settings.speed) {
   const spd = settings.speed;
@@ -946,7 +949,7 @@ if (settings.speed) {
 oscillate   = settings.oscillate || false;
 scaleMin    = settings.scaleMin ?? 1;
 scaleMax    = settings.scaleMax ?? 1;
-scaleSpeed  = settings.scaleSpeed ?? 0;
+scaleSpeed  = (settings.scaleSpeed ?? 0) * 60; // "fázová" rychlost za sekundu
 scalePhase  = 0;
 
  // ★ CHECKPOINT LIFE – na začátku vybraných levelů doplň +1 (max 5)
@@ -998,8 +1001,8 @@ if (CHECKPOINT_LEVELS.has(level)) {
   remainingShapes = [...allStarShapes].sort(() => Math.random() - 0.5);
   shapeX = centerX;
   shapeY = centerY;
-  shapeVX = (Math.random() - 0.5) * 4;
-  shapeVY = (Math.random() - 0.5) * 4;
+  shapeVX = (Math.random() - 0.5) * 4 * 60;
+  shapeVY = (Math.random() - 0.5) * 4 * 60;
 
   if (firstStart) {
     updateMatchLabel(0);
@@ -1413,8 +1416,8 @@ function draw() {
 
   // Při bonusu roste "bonus.holdRadius" místo běžného radiusu
   if (bonus.captureHold && isHolding){
-    bonus.holdRadius += holdGrowth;
-  }
+  bonus.holdRadius += holdGrowth * dtFrame;
+}
 
   // FIX: timer jen když neběží odpočet a hra není u konce
   if (!isCountdown && !isGameOver) tickTimer(now); // FIX
@@ -1477,12 +1480,12 @@ function draw() {
       if (shapeY - targetRadius <= 0 && shapeVY < 0) { shapeVY *= -1; shapeY = targetRadius; }
       else if (shapeY + targetRadius >= canvas.height && shapeVY > 0) { shapeVY *= -1; shapeY = canvas.height - targetRadius; }
     }
-    shapeX += shapeVX;
-    shapeY += shapeVY;
+    shapeX += shapeVX * dtFrame;
+    shapeY += shapeVY * dtFrame;
   }
 
   if (oscillate) {
-    scalePhase += scaleSpeed;
+    scalePhase += scaleSpeed * dtFrame;
     const t = (Math.sin(scalePhase) + 1) / 2;
     const ratio = scaleMin + (scaleMax - scaleMin) * t;
     targetRadius = baseTargetRadius * ratio;
@@ -1508,7 +1511,8 @@ if (!bonus.pauseMainScene) {
   // menší hvězda → pomalejší růst, větší hvězda → o trochu rychlejší
   const sizeFactor = Math.max(0.65, Math.min(1.15, s.curR / 90));
   const speedScale = 0.80; // globální zpomalení multi-stars
-  s.growRadius += holdGrowth * speedScale * sizeFactor;
+  s.growRadius += holdGrowth * speedScale * sizeFactor * dtFrame;
+
 }
 
   }
@@ -1524,7 +1528,7 @@ if (!bonus.pauseMainScene) {
   drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
   ctx.restore();
 
-  if (isHolding && radius < targetRadius + 1000) radius += holdGrowth;
+  if (isHolding && radius < targetRadius + 1000) radius += holdGrowth * dtFrame;
 
   if (isHolding) {
   ctx.save();
@@ -1570,7 +1574,7 @@ if (!bonus.pauseMainScene) {
    drawLevelAnnounce(now);
 
 
-  rotation += rotationSpeed;
+  rotation += rotationSpeed * dtFrame;
   hue = (hue + 1) % 360;
 
   if (!isGameOver) {
