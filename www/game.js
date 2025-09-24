@@ -71,6 +71,15 @@ function runCountdown(thenStartFn) {
   isCountdown = true;
   overlay.classList.remove('hidden');
 
+  // nahoře spolu s ostatními zvuky
+const countdownSound = new Audio('sounds/countdown.mp3');
+countdownSound.preload = 'auto';
+countdownSound.volume = 1.0; 
+
+// 🔊 Spusť celý zvuk rovnou na startu
+countdownSound.currentTime = 0;
+countdownSound.play();
+
   let n = 3;
   numEl.textContent = n;
 
@@ -95,18 +104,38 @@ const holdBtn = document.getElementById('holdButton');
 
 if (holdBtn) {
   holdBtn.classList.add('pulse-start');
-  setTimeout(() => holdBtn.classList.remove('pulse-start'), 4000);
+  setTimeout(() => holdBtn.classList.remove('pulse-start'), 3000);
 }
 
 if (panel) {
   panel.classList.add('pulse-start');
-  setTimeout(() => panel.classList.remove('pulse-start'), 4000);
+  setTimeout(() => panel.classList.remove('pulse-start'), 3000);
 }
 
-// 🔊 Spusť alarm zvuk
-const startAlarm = new Audio('sounds/start_alarm.mp3');
-startAlarm.volume = 0.8;   // hlasitost 0–1
-startAlarm.play().catch(e => console.log("Autoplay blokován:", e));
+const afterStartSound = new Audio('sounds/after_start.mp3');
+afterStartSound.preload = 'auto';
+afterStartSound.volume = 0.9;
+
+afterStartSound.currentTime = 0;
+afterStartSound.play();
+
+// Po 1s (konec zvuku) spustíme fade-out navíc
+setTimeout(() => {
+  let extraDuration = 3000; // o kolik prodloužit (ms)
+  let steps = 10;           // počet kroků fade-outu
+  let stepTime = extraDuration / steps;
+  let stepVol = afterStartSound.volume / steps;
+
+  let i = 0;
+  const fade = setInterval(() => {
+    i++;
+    afterStartSound.volume = Math.max(0, afterStartSound.volume - stepVol);
+    if (i >= steps) {
+      clearInterval(fade);
+    }
+  }, stepTime);
+}, 3000); // čekej dokud zvuk nehraje (~1s)
+
 
 // 2) AŽ po skrytí overlaye + spuštění levelu ukaž ruku
 //    requestAnimationFrame zajistí vykreslení na čisté scéně
