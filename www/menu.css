@@ -1,17 +1,18 @@
 body {
   background: radial-gradient(circle at center, #000 60%, #020617 100%);
   color: cyan;
-  font-family: 'Orbitron', sans-serif;
-  text-align: center;
+  font-family: 'Oxanium', sans-serif;
   margin: 0;
   padding: 0;
   display: flex;
   height: 100vh;
   justify-content: center;
   align-items: center;
+  text-align: center;
+  overflow: hidden;
 }
 
-/* Canvas zabere celé pozadí */
+/* Canvas pozadí */
 #starCanvas {
   position: fixed;
   top: 0; left: 0;
@@ -20,47 +21,78 @@ body {
   z-index: -1;
 }
 
+/* Blok menu */
 .menu {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Logo + název jako celek */
+.brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.main-logo {
+  width: 150px;
+  max-width: 60%;
+  height: auto;
+  margin-bottom: -4px; 
+  filter: drop-shadow(0 0 10px #00ffffaa);
 }
 
 h1 {
-  font-family: 'Oxanium', sans-serif;
-  font-size: 60px;
-  margin-bottom: 4px;
+  font-size: 56px;
   font-weight: 900;
+  margin: 0;
   color: #00ffff;
-  text-shadow: 0 0 4px #00baba, 0 0 8px #008888;
+  text-shadow: 0 0 4px #00e0e0, 0 0 10px #00bbbb;
 }
 
+/* Slogan */
 .slogan {
-  font-size: 18px;
-  margin: 0px 0 14px;
-  font-weight: 800;
-  color: #00ffff;
-  text-shadow: 0 0 6px #000;
+  font-size: 20px;
+  font-weight: 900;
+  margin: 8px 0 20px;
+  color: #00ffff;              /* cyan */
+  text-shadow: 0 0 3px #00aaaa;
+}
+
+.slogan .highlight {
+  color: #d78c1f;              /* přesná barva z loga */
+  text-shadow: 0 0 3px #d78c1f; /* glow ve stejné barvě */
+}
+
+
+/* Tlačítka */
+.buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  max-width: 320px;
 }
 
 button {
   font-size: 18px;
   font-family: 'Oxanium', sans-serif;
   font-weight: 800;
-  padding: 14px 28px;
-  border: 2px solid cyan;
-  background: rgba(0, 255, 255, 0.184);
-  color: cyan;
-  border-radius: 14px;
+  padding: 14px 24px;
+  border: 2px solid #00ffff;
+  background: rgba(0, 255, 255, 0.12);
+  color: #00ffff;
+  border-radius: 12px;
   cursor: pointer;
-  transition: 0.25s ease;
-  text-shadow: 0 0 1px cyan;
-  box-shadow: 0 0 12px rgba(0, 255, 255, 0.3) inset;
+  transition: all 0.25s ease;
+  text-shadow: 0 0 1px #00ffff;
+  box-shadow: 0 0 14px rgba(0, 255, 255, 0.35) inset;
 }
 
 button:hover {
-  background: rgba(0, 255, 255, 0.616); /* při hoveru silnější cyan */
-  color: rgb(9, 219, 234);
-  text-shadow: none;
+  background: rgba(0, 255, 255, 0.3);
+  transform: scale(1.05);
+  box-shadow: 0 0 18px rgba(0, 255, 255, 0.6);
 }
-
