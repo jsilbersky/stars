@@ -114,28 +114,10 @@ if (panel) {
 
 const afterStartSound = new Audio('sounds/after_start.mp3');
 afterStartSound.preload = 'auto';
-afterStartSound.volume = 0.9;
-
+afterStartSound.volume = 0.8;
+// 🔊 Spusť after_start zvuk
 afterStartSound.currentTime = 0;
 afterStartSound.play();
-
-// Po 1s (konec zvuku) spustíme fade-out navíc
-setTimeout(() => {
-  let extraDuration = 3000; // o kolik prodloužit (ms)
-  let steps = 10;           // počet kroků fade-outu
-  let stepTime = extraDuration / steps;
-  let stepVol = afterStartSound.volume / steps;
-
-  let i = 0;
-  const fade = setInterval(() => {
-    i++;
-    afterStartSound.volume = Math.max(0, afterStartSound.volume - stepVol);
-    if (i >= steps) {
-      clearInterval(fade);
-    }
-  }, stepTime);
-}, 3000); // čekej dokud zvuk nehraje (~1s)
-
 
 // 2) AŽ po skrytí overlaye + spuštění levelu ukaž ruku
 //    requestAnimationFrame zajistí vykreslení na čisté scéně
