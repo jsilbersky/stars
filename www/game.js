@@ -94,13 +94,13 @@ const panel = document.getElementById('panelBg');
 const holdBtn = document.getElementById('holdButton');
 
 if (holdBtn) {
-  holdBtn.classList.add('blink');
-  setTimeout(() => holdBtn.classList.remove('blink'), 2200);
+  holdBtn.classList.add('pulse-start');
+  setTimeout(() => holdBtn.classList.remove('pulse-start'), 4000);
 }
 
 if (panel) {
-  panel.classList.add('panel-blink');
-  setTimeout(() => panel.classList.remove('panel-blink'), 2200);
+  panel.classList.add('pulse-start');
+  setTimeout(() => panel.classList.remove('pulse-start'), 4000);
 }
 
 
