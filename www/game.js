@@ -114,7 +114,7 @@ if (panel) {
 
 const afterStartSound = new Audio('sounds/after_start.mp3');
 afterStartSound.preload = 'auto';
-afterStartSound.volume = 0.5;
+afterStartSound.volume = 0.3;
 // 🔊 Spusť after_start zvuk
 afterStartSound.currentTime = 0;
 afterStartSound.play();
