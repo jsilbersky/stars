@@ -27,13 +27,14 @@ body {
 }
 
 h1 {
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Oxanium', sans-serif;
   font-size: 50px;
   margin-bottom: 4px;
   font-weight: 900;
   color: #00ffff;
-  text-shadow: 0 0 2px #00baba, 0 0 2px #008888;
+  text-shadow: 0 0 4px #00baba, 0 0 8px #008888;
 }
+
 
 
 .slogan {
@@ -47,7 +48,7 @@ h1 {
 
 button {
   font-size: 18px;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Oxanium', sans-serif;
   font-weight: 800;
   padding: 14px 28px;
   border: 2px solid cyan;
@@ -65,3 +66,4 @@ button:hover {
   color: rgb(9, 219, 234);
   text-shadow: none;
 }
+

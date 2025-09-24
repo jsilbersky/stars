@@ -330,7 +330,7 @@ function drawFloaters(now) {
     ctx.save();
     ctx.globalAlpha = Math.max(0, alpha);
     ctx.fillStyle = f.color;
-    ctx.font = 'bold 22px Audiowide, sans-serif';
+    ctx.font = 'bold 22px Oxanium, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.shadowColor = f.color;
@@ -836,7 +836,7 @@ function drawLevelAnnounce(now){
   ctx.translate(canvas.width / 2, posY);
   ctx.scale(scale, scale);
 
-  ctx.font = `bold ${fs}px Audiowide, system-ui, sans-serif`;
+  ctx.font = `bold ${fs}px Oxanium, system-ui, sans-serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
@@ -858,7 +858,7 @@ function drawLevelAnnounce(now){
 
     // volitelný "pill" podklad pro čitelnost
     const extraText = levelAnnounce.extra;
-    ctx.font = `bold ${Math.round(fs * 0.78)}px Audiowide, system-ui, sans-serif`;
+    ctx.font = `bold ${Math.round(fs * 0.78)}px Oxanium, system-ui, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -1963,20 +1963,21 @@ drawInit();
     beginNewGameFlow(true);
   });
 
-  // canvas size je fixní (360×260), ale vše zarovnáváme na START
+  // canvas size je fixní, vše na střed
   let W = canvas.width, H = canvas.height;
   const LIFT = 20;
-  let cx = W/2, cy = Math.round(H * 0.45) - LIFT;
+  let cx = W/2, cy = Math.round(H * 0.47) - LIFT;
 
   const COLOR_TARGET = '#00ffff';
-  const COLOR_PLAYER = '#a066ff';
+  const COLOR_PLAYER = '#bdd104ff';
   const LW_TARGET = 3;
   const LW_PLAYER = 3.5;
 
-  const target = { points: 7, scale: 48, angle: Math.PI * 0.18 };
-  let star = { scale: 10, angle: target.angle };
+  const target = { points: 5, scale: 48, angle: -Math.PI / 2 };
+  let star   = { scale: 10, angle: -Math.PI / 2 };
 
-  const btn = { x: cx, y: H - 40 - LIFT, r: 24 };
+  const btn = { x: cx, y: H - 40 - LIFT, r: 30 };
+
   let pressed = false;
   let pressRipple = 0;
 
@@ -2029,9 +2030,9 @@ drawInit();
   }
   function drawBadge(text, ok){
     ctx.save();
-    ctx.font='bold 15px system-ui, -apple-system, Segoe UI, Roboto, Arial';
-    ctx.textAlign='center'; ctx.fillStyle = ok ? '#1fbf75' : '#e5484d';
-    const yTop = cy - (target.scale + 24);
+    ctx.font = 'bold 16px Oxanium, system-ui, sans-serif';
+    ctx.textAlign='center'; ctx.fillStyle = ok ? '#00ff9d' : '#ff3b3b';
+    const yTop = cy - (target.scale + 28);
     ctx.fillText(text, cx, yTop);
     ctx.restore();
   }
@@ -2043,7 +2044,7 @@ drawInit();
   // pokud je tlačítko stisknuté → cyan stín
   if (pressed) {
     ctx.shadowColor = '#00ffff';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 15;
   }
 
   // černý základ tlačítka
@@ -2061,10 +2062,10 @@ drawInit();
 
   // text HOLD uprostřed
   ctx.fillStyle = '#00ffff';
-  ctx.font = 'bold 11px Audiowide, system-ui, -apple-system, Segoe UI, Roboto, Arial';
+  ctx.font = 'bold 13px Oxanium, system-ui, -apple-system, Segoe UI, Roboto, Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('HOLD', 0, 0);
+  ctx.fillText('BOOST', 0, 0);
 
   ctx.restore();
 }
@@ -2097,7 +2098,7 @@ drawInit();
 
     case P.HOLD_GOOD:
       // jen rozpínání (žádná rotace)
-      star.scale = approachLinear(star.scale, target.scale, 30, dt);
+      star.scale = approachLinear(star.scale, target.scale, 32, dt);
       star.angle = target.angle; // držíme zamknuté na target
 
       if (Math.abs(star.scale - target.scale) < 0.9){

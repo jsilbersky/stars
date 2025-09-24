@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Evolve Dot – Mobile</title>
   <link rel="stylesheet" href="game.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
    <div id="topFade"></div>
@@ -20,8 +20,7 @@
 
   <canvas id="gameCanvas"></canvas>
   <!-- Oznámení bonusu (krátce problikne, když se hvězda objeví) -->
-<div id="bonus-announcer" aria-live="polite"></div>
-
+  <div id="bonus-announcer" aria-live="polite"></div>
 
   <!-- Obrázek pozadí panelu -->
   <img id="panelBg" src="images/control-panel.webp" alt="panel background" />
@@ -39,10 +38,10 @@
       <div id="levelLabel">LEVEL 1</div>
       <div id="matchLabel">MATCH: 0 %</div>
     </div>
-    <button id="holdButton" type="button">HOLD</button>
+    <button id="holdButton" type="button">BOOST</button>
   </div>
 
-    <!-- Pop-up okno pro Game Over -->
+  <!-- Pop-up okno pro Game Over -->
   <div id="gameOverPopup" class="hidden">
     <div class="popup-content">
       <h2>GAME OVER</h2>
@@ -58,7 +57,7 @@
 
       <!-- Ultra-simple how to play -->
       <div style="font-size:17px; text-align:center; margin:0 auto 10px; max-width:360px; line-height:1.35">
-        <div>Just hold button.</div>
+        <div>Just hold button BOOST.</div>
         <div>Stop when stars match.</div>
         <hr>
       </div>
@@ -71,7 +70,7 @@
     </div>
   </div>
 
-    <!-- 3-2-1 COUNTDOWN OVERLAY -->
+  <!-- 3-2-1 COUNTDOWN OVERLAY -->
   <div id="countdownOverlay" class="hidden">
     <div class="countdown-wrap">
       <span id="countdownNum">3</span>

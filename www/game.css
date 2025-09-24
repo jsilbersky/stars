@@ -11,7 +11,7 @@ html, body {
   height: 100%;
   background-color: #000;
   overflow: hidden;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Oxanium', sans-serif;
   color: #ffffff;
   text-shadow: 0 0 2px #00ffff;
   touch-action: none;
@@ -36,7 +36,6 @@ body { position: relative; }
   backdrop-filter: none;
 }
 
-
 #topFade {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -46,12 +45,11 @@ body { position: relative; }
   z-index: 1;
 }
 
-
 #timerWrap {
   position: relative;
   flex: 1 1 auto; /* vyplní zbytek řádku */
   max-width: calc(100% - var(--scoreMinW) - 16px); /* minus šířka score a gap */
-  height: 8px; /* bylo 12px – menší výška */
+  height: 8px;
   border: 2px solid cyan;
   border-radius: 999px;
   box-shadow: 0 0 8px rgba(0,255,255,0.6), inset 0 0 4px rgba(0,255,255,0.2);
@@ -68,13 +66,13 @@ body { position: relative; }
 }
 
 #scoreLabel {
-  min-width: var(--scoreMinW); /* bylo 90/110px – nyní z proměnné */
-  flex: 0 0 var(--scoreMinW);  /* pevné místo pro score */
-  white-space: nowrap;         /* zabrání zalomení */
+  min-width: var(--scoreMinW);
+  flex: 0 0 var(--scoreMinW);
+  white-space: nowrap;
   text-align: right;
   color: #00ffff;
   font-weight: bold;
-  font-size: 12px; /* bylo 14px */
+  font-size: 12px;
 }
 
 @keyframes scorePulse {
@@ -91,9 +89,8 @@ body { position: relative; }
 }
 .timer-blink { animation: timerBlink 0.3s ease; }
 
-/* trvalé pulzování pro posledních 10 s – červený neon */
 #timerWrap.timer-blink-10s {
-  animation: timerBlinkRed 0.6s ease-in-out infinite; /* ← změna */
+  animation: timerBlinkRed 0.6s ease-in-out infinite;
   border-color: #ff003c;
   background-color: rgba(255,0,0,0.18);
 }
@@ -104,12 +101,10 @@ body { position: relative; }
   100% { box-shadow: 0 0 12px rgba(255,0,60,0.6), inset 0 0 6px rgba(255,0,60,0.2); }
 }
 
-
 /* =================== CANVAS (hvězdy) =================== */
-/* Canvas je pozadí: mezi horním HUDem a panelem dole */
 #gameCanvas {
   position: relative;
-  top: 0; /* už ne safe-top */
+  top: 0;
   left: 0;
   right: 0;
   bottom: var(--panelH);
@@ -128,7 +123,7 @@ body { position: relative; }
   width: 100%;
   height: var(--panelH);
   object-fit: cover;
-  z-index: 10;              /* nad canvasem */
+  z-index: 10;
   pointer-events: none;
 }
 
@@ -143,7 +138,7 @@ body { position: relative; }
   padding: 20px 28px;
   box-sizing: border-box;
   background: transparent;
-  z-index: 20;              /* nad pozadím panelu */
+  z-index: 20;
 }
 
 #leftPanel {
@@ -181,14 +176,14 @@ body { position: relative; }
 }
 
 #levelLabel {
-  font-size: 14px;
+  font-size: 16px;
   color: cyan;
   font-weight: bold;
   text-shadow: none;
 }
 
 #matchLabel {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: bold;
   color: red;
   text-shadow: 0 0 2px #ff0000ec;
@@ -211,20 +206,24 @@ body { position: relative; }
   border-radius: 50%;
   background-color: #000000;
   color: #0ff;
-  font-size: 20px;
-  font-weight: bold;
-  border: 2px solid #0ff;
+
+  font-family: 'Oxanium', sans-serif;
+  font-size: 20px;      
+  font-weight: 900;        
+  letter-spacing: 1.5px;   
+
+  border: 2px solid rgb(0, 255, 255);
   box-shadow: 0 0 15px #0ff;
   box-sizing: border-box;
-  z-index: 21;             
+  z-index: 21;
   touch-action: none;
-  font-family: 'Audiowide', sans-serif;
   transition: background-color 0.5s ease, box-shadow 0.6s ease;
-  -webkit-tap-highlight-color: transparent; /* méně blikání na mobilech */
+  -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
 }
+
 
 #holdButton:active,
 #holdButton.active {
@@ -237,7 +236,6 @@ body { position: relative; }
   0%   { box-shadow: 0 0 8px rgba(0, 255, 255, 0.5); }
   100% { box-shadow: 0 0 18px rgba(0, 255, 255, 0.9), inset 0 0 8px rgba(0, 255, 255, 0.4); }
 }
-
 
 /* =================== GAME OVER POPUP =================== */
 #gameOverPopup {
@@ -261,25 +259,24 @@ body { position: relative; }
   pointer-events: none;
 }
 
-/* Seznam statistik – full width + oddělovače */
 #gameOverStats {
   list-style: none;
   padding: 10px 0 12px;
-  margin: 4px 0 8px;        /* menší mezera, protože panel má už gap */
+  margin: 4px 0 8px;
   text-align: left;
-  display: block;           /* už ne inline-block, ať na něj nic neleze */
+  display: block;
   width: 100%;
-  max-width: 360px;         /* hezká čitelná šířka pro text */
+  max-width: 360px;
   border-top: 1px solid rgba(0,255,255,0.15);
   border-bottom: 1px solid rgba(0,255,255,0.15);
-  font-variant-numeric: tabular-nums; /* zarovnané číslice */
+  font-variant-numeric: tabular-nums;
 }
 #gameOverStats li {
   margin: 8px 0;
   font-size: 0.98rem;
   line-height: 1.35;
   display: flex;
-  justify-content: space-between;   /* label vlevo, hodnota vpravo */
+  justify-content: space-between;
   gap: 16px;
 }
 #gameOverStats strong {
@@ -291,23 +288,19 @@ body { position: relative; }
 .popup {
   position: fixed;
   inset: 0;
-  display: flex; /* budeš skriptem měnit na none/flex */
+  display: flex;
   justify-content: center;
   align-items: center;
   background: rgba(0,0,0,.75);
   z-index: 9999;
 }
 
-
-/* Panel – čistší glow, lepší layout */
 .popup-content {
-  max-width: 360px;                  /* menší maximální šířka */
-  width: calc(100vw - 80px);          /* větší mezera od okrajů */
-  padding: 28px 22px 30px;            /* menší vnitřní odsazení */
+  max-width: 360px;
+  width: calc(100vw - 80px);
+  padding: 28px 22px 30px;
   text-align: center;
   gap: 14px;
-
-  /* styl */
   backdrop-filter: blur(6px) saturate(120%);
   background: radial-gradient(120% 120% at 50% 0%, #14142b 0%, #0b0b1c 60%);
   border: 3px solid cyan;
@@ -317,19 +310,15 @@ body { position: relative; }
     inset 0 0 10px rgba(0,255,255,0.06);
 }
 
-/* Nadpis – stabilnější neon a hierarchie */
 .popup-content h2 {
   color: cyan;
-  font-family: 'Orbitron', sans-serif;
+  font-family: 'Oxanium', sans-serif;
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: 1px;
   margin: 0 0 18px;
- 
 }
 
-
-/* Tlačítko – interakce a focus */
 .popup-content button {
   background-color: cyan;
   color: #000;
@@ -358,60 +347,40 @@ body { position: relative; }
   outline-offset: 3px;
 }
 
-
 .hidden { display: none; }
 
 /* =================== RESPONSIVE =================== */
 @media (max-width: 600px) {
   :root {
-    --hudTopH: 34px;     /* menší horní lišta na mobilech */
+    --hudTopH: 34px;
     --panelH: 150px;
-    --scoreMinW: 90px;   /* trochu menší rezervy pro mobil */
+    --scoreMinW: 90px;
   }
 
-  #hudTop {
-    padding: 8px 10px;
-    gap: 10px;
-  }
-
-  #scoreLabel {
-    min-width: var(--scoreMinW);
-    flex: 0 0 var(--scoreMinW);
-    font-size: 13px;
-  }
-
+  #hudTop { padding: 8px 10px; gap: 10px; }
+  #scoreLabel { min-width: var(--scoreMinW); flex: 0 0 var(--scoreMinW); font-size: 13px; }
   #controlPanel { padding: 20px 26px 14px 30px; }
   #lives { font-size: 13px; }
   #levelLabel, #matchLabel { font-size: 13px; }
-  #leftPanel { padding-bottom: 16px; gap: 6px; } /* oprava: 6px */
+  #leftPanel { padding-bottom: 16px; gap: 6px; }
   #holdButton {
     width: 83px; height: 83px; font-size: 17px;
     transform: translateX(-50%) translateY(-45%);
   }
-  #holdButton:active,
-  #holdButton.active {
-    /* žádný transform – jen barva/animace */
-    background-color: #002f2f;
-    color: #0ff;
-    animation: holdPulse 1s infinite alternate;
-  }
   .heart { width: 18px; height: 18px; }
 }
 
-/* Menší obrazovky – pevnější typografie a sloupec labelů */
 @media (max-width: 420px) {
   .popup-content { padding: 28px 20px 30px; }
   .popup-content h2 { font-size: 1.8rem; margin-bottom: 14px; }
   #gameOverStats strong { min-width: 128px; }
   #gameOverStats li { margin: 6px 0; font-size: 0.95rem; }
   #gameOverStats { max-width: 320px; }
-
 }
 
 @media (prefers-reduced-motion: reduce) {
   .popup-content button { transition: none; }
 }
-
 
 /* ====== 3-2-1 COUNTDOWN OVERLAY ====== */
 #countdownOverlay {
@@ -422,9 +391,8 @@ body { position: relative; }
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: auto; /* blokuje kliknutí na HOLD */
+  pointer-events: auto;
 }
-
 #countdownOverlay.hidden { display: none; }
 
 .countdown-wrap {
@@ -435,7 +403,7 @@ body { position: relative; }
 }
 
 #countdownNum {
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Oxanium', sans-serif;
   font-size: clamp(72px, 18vw, 220px);
   color: #00ffff;
   text-shadow: 0 0 30px rgba(0,255,255,.8), 0 0 6px #00ffff;
@@ -449,11 +417,11 @@ body { position: relative; }
   100% { transform: scale(0.85); opacity: .6; }
 }
 
-/* ===== BONUS MESSAGE (spodek nad panelem) ===== */
+/* ===== BONUS MESSAGE ===== */
 #bonusMessage{
   position: fixed;
   left: 0; right: 0;
-  bottom: calc(var(--panelH) + 12px); /* nad ovládacím panelem */
+  bottom: calc(var(--panelH) + 12px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -462,29 +430,21 @@ body { position: relative; }
   opacity: 0;
   transform: translateY(6px) scale(0.98);
   transition: opacity .18s ease, transform .18s ease;
-  font-family: 'Audiowide', sans-serif;
+  font-family: 'Oxanium', sans-serif;
   font-weight: 800;
   letter-spacing: .5px;
-  text-transform: none; /* necháme původní zápis (+10 seconds...) */
+  text-transform: none;
   text-shadow: 0 0 10px rgba(0,255,255,.35), 0 0 2px rgba(0,255,255,.2);
   font-size: clamp(14px, 3.8vw, 22px);
 }
-#bonusMessage.show{
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
+#bonusMessage.show { opacity: 1; transform: translateY(0) scale(1); }
 
-/* Barevné varianty jako ve hře (body/čas/x2) */
 .bm-points  { color:#ffb300; text-shadow: 0 0 14px rgba(255,179,0,.35), 0 0 2px rgba(255,179,0,.25); }
 .bm-seconds { color:#3aa2ff; text-shadow: 0 0 14px rgba(58,162,255,.35), 0 0 2px rgba(58,162,255,.25); }
 .bm-x2      { color:#ff4d4d; text-shadow: 0 0 14px rgba(255,77,77,.35), 0 0 2px rgba(255,77,77,.25); }
 
-/* Na menších displejích o chlup výš */
-@media (max-width: 420px){
-  #bonusMessage{ bottom: calc(var(--panelH) + 16px); }
-}
+@media (max-width: 420px){ #bonusMessage{ bottom: calc(var(--panelH) + 16px); } }
 
-/* === Hand cue (naváděcí ruka) ========================================== */
 #handCue {
   position: fixed;
   transform: translate(-50%, -50%);
@@ -508,7 +468,6 @@ body { position: relative; }
 
 #gameOverPopup, #helpPopup { user-select: none; }
 
-/* ===== Blokace označování textu u všech UI prvků ===== */
 #scoreLabel,
 #matchLabel,
 #levelLabel,
@@ -525,10 +484,7 @@ body { position: relative; }
   0%, 100% { filter: none; }
   50% { filter: brightness(1.3) drop-shadow(0 0 20px red); }
 }
-
-.panel-blink {
-  animation: panelBlink 0.6s ease-in-out 4; /* blikne 4× */
-}
+.panel-blink { animation: panelBlink 0.6s ease-in-out 4; }
 
 @keyframes holdBlinkFlash {
   0%, 100% {
@@ -537,19 +493,13 @@ body { position: relative; }
     box-shadow: 0 0 12px #0ff;
   }
   50% {
-    background-color: #800000;   /* tmavě červená místo jasné */
+    background-color: #800000;
     border-color: #ff4444;
     box-shadow: 0 0 22px #ff4444;
   }
 }
+#holdButton.blink { animation: holdBlinkFlash 0.8s ease-in-out 4; }
 
-#holdButton.blink {
-  animation: holdBlinkFlash 0.8s ease-in-out 4; /* 4 pomalá bliknutí */
-}
-
-/* ===== Horní futuristické ladění ===== */
-
-/* jemná neonová linka nad HUD */
 #hudTop::before {
   content: "";
   position: absolute;
@@ -562,7 +512,6 @@ body { position: relative; }
   z-index: 31;
 }
 
-/* záře směrem dolů od horní hrany */
 #topGlow {
   position: fixed;
   top: 0; left: 0; right: 0;
@@ -572,7 +521,6 @@ body { position: relative; }
   z-index: 5;
 }
 
-/* jemný šikmý vzorek přes HUD background */
 #hudTop::after {
   content: "";
   position: absolute;
@@ -587,7 +535,3 @@ body { position: relative; }
   pointer-events: none;
   z-index: 29;
 }
-
-
-
-
