@@ -189,7 +189,7 @@ function tickTimer(now) {
 /* === Hand cue (naváděcí ruka po GO) ==================================== */
 let showHandCueNextStart = false; // nastaví se při START z help okna
 
-function showHandCueAtElement(el, emoji = '🖐️') {
+function showHandCueAtElement(el, emoji = '🤚') {
   if (!el) return;
   const rect = el.getBoundingClientRect();
 
@@ -211,7 +211,7 @@ function showHandCueAtElement(el, emoji = '🖐️') {
 function showHandCueIfNeeded() {
   if (!showHandCueNextStart) return;
   const holdBtn = document.getElementById('holdButton');
-  showHandCueAtElement(holdBtn, '🖐️');
+  showHandCueAtElement(holdBtn, '🤚');
   showHandCueNextStart = false;
 }
 
@@ -289,17 +289,6 @@ function triggerGameOver() {
   popup.classList.remove("hidden");
 }
 
-// Dynamicky doplníme text podle zvoleného režimu
-const modeTextEl = document.getElementById("modeText");
-if (modeTextEl) {
-  if (mode === "arcade") {
-  modeTextEl.textContent = "• ⏳ Arcade: 60 sec timer, lives stay full";
-} else if (mode === "survival") {
-  modeTextEl.textContent = "• ❤️ Survival: 5 lives, no timer";
-} else {
-  modeTextEl.textContent = "• 🔥 Challenge: 60 sec + 5 lives";
-}
-}
 
 
 // START z How to play → ukaž ruku po GO
@@ -1999,7 +1988,7 @@ drawInit();
     ctx.font = '28px system-ui, Apple Color Emoji, Segoe UI Emoji';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🖐️', 0, 0);
+    ctx.fillText('🤚', 0, 0);
     ctx.restore();
   }
 
@@ -2079,8 +2068,6 @@ drawInit();
 
   ctx.restore();
 }
-
-
 
 
   function render(){
