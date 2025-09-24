@@ -505,7 +505,7 @@ body { position: relative; }
 
 /* Společná classa – použij pro panel i tlačítko */
 .pulse-start {
-  animation: startPulse 1.2s ease-in-out 3;
+  animation: startPulse 0.5s ease-in-out 3;
 }
 
 

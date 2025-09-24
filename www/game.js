@@ -103,19 +103,21 @@ if (panel) {
   setTimeout(() => panel.classList.remove('pulse-start'), 4000);
 }
 
+// 🔊 Spusť alarm zvuk
+const startAlarm = new Audio('sounds/start_alarm.mp3');
+startAlarm.volume = 0.8;   // hlasitost 0–1
+startAlarm.play().catch(e => console.log("Autoplay blokován:", e));
 
-        // 2) AŽ po skrytí overlaye + spuštění levelu ukaž ruku
-        //    requestAnimationFrame zajistí vykreslení na čisté scéně
-        requestAnimationFrame(() => {
-          showHandCueIfNeeded();
-        });
-
-      }, 600);
-    }
-  };
-  setTimeout(tick, 1000);
+// 2) AŽ po skrytí overlaye + spuštění levelu ukaž ruku
+//    requestAnimationFrame zajistí vykreslení na čisté scéně
+requestAnimationFrame(() => {
+showHandCueIfNeeded();
+});
+}, 600);
 }
-
+};
+setTimeout(tick, 1000);
+}
 
 
 // <<< NOVÉ STATISTIKY >>>
