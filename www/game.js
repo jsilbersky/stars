@@ -74,7 +74,7 @@ function runCountdown(thenStartFn) {
   // nahoře spolu s ostatními zvuky
 const countdownSound = new Audio('sounds/countdown.mp3');
 countdownSound.preload = 'auto';
-countdownSound.volume = 1.0; 
+countdownSound.volume = 0.8; 
 
 // 🔊 Spusť celý zvuk rovnou na startu
 countdownSound.currentTime = 0;
@@ -114,7 +114,7 @@ if (panel) {
 
 const afterStartSound = new Audio('sounds/after_start.mp3');
 afterStartSound.preload = 'auto';
-afterStartSound.volume = 0.8;
+afterStartSound.volume = 0.5;
 // 🔊 Spusť after_start zvuk
 afterStartSound.currentTime = 0;
 afterStartSound.play();
