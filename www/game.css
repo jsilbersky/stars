@@ -448,7 +448,7 @@ body { position: relative; }
 #handCue {
   position: fixed;
   transform: translate(-50%, -50%);
-  font-size: 32px;
+  font-size: 42px;
   line-height: 1;
   pointer-events: none;
   user-select: none;
