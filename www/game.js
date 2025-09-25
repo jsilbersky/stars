@@ -60,7 +60,12 @@ let timeRemaining = TIMER_MAX;
 let score = 0;
 // 🎯 Statistika času a nejlepšího skóre
 let gameStartTime = 0;
-let bestScore = parseInt(localStorage.getItem("bestScore")) || 0;
+// 🎯 Rekordy podle módu (arcade / survival / challenge)
+function getBestScoreKey() {
+  return "bestScore_" + mode; // např. bestScore_arcade
+}
+let bestScore = parseInt(localStorage.getItem(getBestScoreKey())) || 0;
+
 let isGameOver = false;
 
 // FIX: blokuj časovač už od začátku (pomáhá, když je otevřený help popup)
@@ -300,17 +305,21 @@ function triggerGameOver() {
 const elapsedSec = Math.floor((performance.now() - gameStartTime) / 1000);
 const mins = Math.floor(elapsedSec / 60);
 const secs = elapsedSec % 60;
-const gameTimeStr = `${mins}m ${secs}s`;
+const gameTimeStr = `${mins} m ${secs} s`;
 
-// Aktualizace nejlepšího skóre
-if (score > bestScore) {
-  bestScore = score;
-  localStorage.setItem("bestScore", bestScore);
+// Aktualizace nejlepšího skóre pro aktuální mód
+const bestKey = getBestScoreKey();
+let savedBest = parseInt(localStorage.getItem(bestKey)) || 0;
+if (score > savedBest) {
+  savedBest = score;
+  localStorage.setItem(bestKey, savedBest);
 }
+bestScore = savedBest;
+
 
 statsEl.innerHTML = `
   <li><strong>Score:</strong> ${score}</li>
-  <li><strong>Your Record:</strong> ${bestScore}</li>
+  <li><strong>High Score:</strong> ${bestScore}</li>
   <hr style="border:1px solid rgba(0,255,255,0.15); margin:6px 0;">
   <li><strong>Stars hit:</strong> ${successfulMatches}</li>
   <li><strong>Average accuracy:</strong> ${averageAccuracy()} %</li>
