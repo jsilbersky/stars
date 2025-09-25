@@ -98,41 +98,43 @@ countdownSound.play();
       setTimeout(tick, 1000);
     } else {
       numEl.textContent = 'GO';
-      setTimeout(() => {
-        overlay.classList.add('hidden');
-        isCountdown = false;
-        lastTick = performance.now(); // FIX: reset proti velké deltě
 
-        // 1) spusť hru (např. startLevel)
-        thenStartFn?.();
+  setTimeout(() => {
+  overlay.classList.add('hidden');
+  isCountdown = false;
+  lastTick = performance.now();
 
-        // Po "GO!" rozblikáme panel i tlačítko
-const panel = document.getElementById('panelBg');
-const holdBtn = document.getElementById('holdButton');
+  // 1) spusť hru
+  thenStartFn?.();
 
-if (holdBtn) {
-  holdBtn.classList.add('pulse-start');
-  setTimeout(() => holdBtn.classList.remove('pulse-start'), 3000);
-}
+  // --- 2) Rozblikání panelu a tlačítka (jen 2 sekundy) ---
+  const panel = document.getElementById('panelBg');
+  const holdBtn = document.getElementById('holdButton');
 
-if (panel) {
-  panel.classList.add('pulse-start');
-  setTimeout(() => panel.classList.remove('pulse-start'), 3000);
-}
+  if (holdBtn) {
+    holdBtn.classList.add('pulse-start');
+    setTimeout(() => holdBtn.classList.remove('pulse-start'), 2000);
+  }
+  if (panel) {
+    panel.classList.add('pulse-start');
+    setTimeout(() => panel.classList.remove('pulse-start'), 2000);
+  }
 
-const afterStartSound = new Audio('sounds/after_start.mp3');
-afterStartSound.preload = 'auto';
-afterStartSound.volume = 0.3;
-// 🔊 Spusť after_start zvuk
-afterStartSound.currentTime = 0;
-afterStartSound.play();
+  // Zvuk
+  const afterStartSound = new Audio('sounds/after_start.mp3');
+  afterStartSound.preload = 'auto';
+  afterStartSound.volume = 0.3;
+  afterStartSound.currentTime = 0;
+  afterStartSound.play();
 
-// 2) AŽ po skrytí overlaye + spuštění levelu ukaž ruku
-//    requestAnimationFrame zajistí vykreslení na čisté scéně
-requestAnimationFrame(() => {
-showHandCueIfNeeded();
-});
+  // 3) Po GO ukaž ruku (jen na 2 s)
+  requestAnimationFrame(() => {
+    const hand = showHandCueAtElement(document.getElementById('holdButton'), '🤚');
+    if (hand) setTimeout(() => hand.remove(), 2000);
+  });
+
 }, 600);
+
 }
 };
 setTimeout(tick, 1000);
