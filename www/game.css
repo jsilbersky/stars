@@ -479,7 +479,7 @@ body { position: relative; }
   -webkit-touch-callout: none;
 }
 
-/* === Jemnější blikání panelu i tlačítka === */
+/* === Upravené upozornění panelu i tlačítka === */
 @keyframes startPulse {
   0%, 100% {
     filter: none;
@@ -488,28 +488,47 @@ body { position: relative; }
     box-shadow: 0 0 10px #0ff, inset 0 0 4px rgba(0,255,255,0.4);
   }
   40% {
-    filter: brightness(1.25) drop-shadow(0 0 15px red);
-    background-color: #111;
-    border-color: #ff5555;
-    box-shadow: 0 0 18px #ff4444, inset 0 0 6px rgba(255,100,100,0.5);
+    filter: brightness(1.15);
+    background-color: #021010;
+    border-color: #33ffff;
+    box-shadow: 
+      0 0 18px rgba(0,255,255,0.8),
+      0 0 28px rgba(0,255,255,0.5),
+      inset 0 0 6px rgba(0,255,255,0.5);
   }
   60% {
-    filter: brightness(1.4) drop-shadow(0 0 22px #ff2b2b);
-    background-color: #180000;
-    border-color: #ff0000;
-    box-shadow: 0 0 22px #ff0000, inset 0 0 8px rgba(255,0,0,0.7);
+    filter: brightness(1.25);
+    background-color: #041a1a;
+    border-color: #66ffff;
+    box-shadow: 
+      0 0 22px rgba(0,255,255,1),
+      0 0 36px rgba(0,255,255,0.7),
+      inset 0 0 8px rgba(0,255,255,0.6);
   }
 }
-
-/* Společná classa – použij pro panel i tlačítko */
-.pulse-start {
-  animation: startPulse 0.5s ease-in-out 3;
-}
-
 
 /* Společná classa – použij pro panel i tlačítko */
 .pulse-start {
   animation: startPulse 1.2s ease-in-out 3;
+  position: relative; /* aby fungoval ::after */
+}
+
+/* Extra prstenec okolo */
+.pulse-start::after {
+  content: "";
+  position: absolute;
+  top: -22px; left: -22px; right: -22px; bottom: -22px;
+  border-radius: 50%;
+  border: 7px solid rgba(0, 255, 255, 0.322);
+  animation: pulseRing 1.2s ease-out 3;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes pulseRing {
+  0%   { transform: scale(0.8); opacity: 0.5; }
+  50%  { transform: scale(1.4); opacity: 0.25; }
+  100% { transform: scale(1.8); opacity: 0; }
 }
 
 
