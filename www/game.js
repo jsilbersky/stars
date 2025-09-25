@@ -1792,7 +1792,10 @@ holdButton.style.webkitTouchCallout = 'none';  // zruší kopírovací menu na i
 holdButton.addEventListener('selectstart', e => e.preventDefault());
 holdButton.addEventListener('contextmenu', e => e.preventDefault());
 
-const holdSound = new Audio('sounds/hold.mp3'); holdSound.preload = 'auto'; holdSound.volume = 0.4;
+const holdSound = new Audio('sounds/hold.mp3');
+holdSound.preload = 'auto';
+holdSound.volume = 0.4;
+
 const explosionSound = new Audio('sounds/explosion.mp3'); explosionSound.preload = 'auto'; explosionSound.volume = 0.6;
 const failSound = new Audio('sounds/fail.mp3'); failSound.preload = 'auto'; failSound.volume = 1.0;
 const bonusAppearSound = new Audio('sounds/bonus.mp3'); bonusAppearSound.preload = 'auto'; bonusAppearSound.volume = 0.9; 
@@ -1805,7 +1808,7 @@ function startHold() {
   radius = 0;
   holdStartTime = performance.now();
   holdHue = Math.random() * 360;
-  holdSound.currentTime = 0.5;
+  holdSound.currentTime = 0;
   holdSound.play();
 }
 function endHold() {
@@ -1816,6 +1819,9 @@ function endHold() {
 
   if (isGameOver || isCountdown) return;
   isHolding = false;
+  holdSound.pause();
+  holdSound.currentTime = 0; // reset, aby příště začal od začátku
+
   handleRelease();
 }
 
@@ -1863,7 +1869,7 @@ if (multiStarMode){
 
   holdStartTime = performance.now();
   holdHue = Math.random() * 360;
-  holdSound.currentTime = 0.5;
+  holdSound.currentTime = 0;
   holdSound.play();
 }
 
@@ -1875,6 +1881,9 @@ function endHold() {
   if (isGameOver || isCountdown) return;
   if (!isHolding) return;
   isHolding = false;
+  holdSound.pause();
+  holdSound.currentTime = 0; // reset, aby příště začal od začátku
+
 
   // když běží bonus, řešíme jen bonus a NEvoláme handleRelease()
   if (bonus.captureHold) {
