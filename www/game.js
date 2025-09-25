@@ -58,6 +58,9 @@ const scoreLabel = document.getElementById("scoreLabel");
 const TIMER_MAX = 60;
 let timeRemaining = TIMER_MAX;
 let score = 0;
+// 🎯 Statistika času a nejlepšího skóre
+let gameStartTime = 0;
+let bestScore = parseInt(localStorage.getItem("bestScore")) || 0;
 let isGameOver = false;
 
 // FIX: blokuj časovač už od začátku (pomáhá, když je otevřený help popup)
@@ -293,15 +296,30 @@ function triggerGameOver() {
     content.insertBefore(statsEl, btn);
   }
 
-  statsEl.innerHTML = `
-    <li><strong>Score:</strong> ${score}</li>
-    <li><strong>Stars hit:</strong> ${successfulMatches}</li>
-    <li><strong>Average accuracy:</strong> ${averageAccuracy()} %</li>
-  `;
+  // Výpočet délky hry
+const elapsedSec = Math.floor((performance.now() - gameStartTime) / 1000);
+const mins = Math.floor(elapsedSec / 60);
+const secs = elapsedSec % 60;
+const gameTimeStr = `${mins}m ${secs}s`;
+
+// Aktualizace nejlepšího skóre
+if (score > bestScore) {
+  bestScore = score;
+  localStorage.setItem("bestScore", bestScore);
+}
+
+statsEl.innerHTML = `
+  <li><strong>Score:</strong> ${score}</li>
+  <li><strong>Your Record:</strong> ${bestScore}</li>
+  <hr style="border:1px solid rgba(0,255,255,0.15); margin:6px 0;">
+  <li><strong>Stars hit:</strong> ${successfulMatches}</li>
+  <li><strong>Average accuracy:</strong> ${averageAccuracy()} %</li>
+  <li><strong>Game time:</strong> ${gameTimeStr}</li>
+`;
+
 
   popup.classList.remove("hidden");
 }
-
 
 
 // START z How to play → ukaž ruku po GO
@@ -1741,6 +1759,7 @@ function handleRelease() {
 
 
 window.startNewGame = function () {
+    gameStartTime = performance.now(); // ulož čas začátku hry
   document.getElementById("gameOverPopup").classList.add("hidden");
 
   bonus.active = false;
