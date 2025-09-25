@@ -479,25 +479,25 @@ body { position: relative; }
   -webkit-touch-callout: none;
 }
 
-/* === Synchronizované blikání panelu i tlačítka === */
+/* === Jemnější blikání panelu i tlačítka === */
 @keyframes startPulse {
   0%, 100% {
     filter: none;
     background-color: #000;
     border-color: #0ff;
-    box-shadow: 0 0 14px #0ff, inset 0 0 6px rgba(0,255,255,0.4);
+    box-shadow: 0 0 10px #0ff, inset 0 0 4px rgba(0,255,255,0.4);
   }
   40% {
-    filter: brightness(1.4) drop-shadow(0 0 25px red);
+    filter: brightness(1.25) drop-shadow(0 0 15px red);
     background-color: #111;
     border-color: #ff5555;
-    box-shadow: 0 0 28px #ff4444, inset 0 0 10px rgba(255,100,100,0.6);
+    box-shadow: 0 0 18px #ff4444, inset 0 0 6px rgba(255,100,100,0.5);
   }
   60% {
-    filter: brightness(1.8) drop-shadow(0 0 40px #ff2b2b);
-    background-color: #200000;
+    filter: brightness(1.4) drop-shadow(0 0 22px #ff2b2b);
+    background-color: #180000;
     border-color: #ff0000;
-    box-shadow: 0 0 36px #ff0000, inset 0 0 14px rgba(255,0,0,0.8);
+    box-shadow: 0 0 22px #ff0000, inset 0 0 8px rgba(255,0,0,0.7);
   }
 }
 
