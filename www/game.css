@@ -479,33 +479,49 @@ body { position: relative; }
   -webkit-touch-callout: none;
 }
 
-/* === Upravené upozornění panelu i tlačítka === */
+/* === Blikání panelu i tlačítka === */
 @keyframes startPulse {
-  0%, 100% {
+  0% {
     filter: none;
     background-color: #000;
     border-color: #0ff;
     box-shadow: 0 0 10px #0ff, inset 0 0 4px rgba(0,255,255,0.4);
   }
-  40% {
-    filter: brightness(1.15);
-    background-color: #021010;
-    border-color: #33ffff;
+  25% {
+    filter: brightness(1.1);
+    background-color: #011010;
+    border-color: #22eeee;
     box-shadow: 
-      0 0 18px rgba(0,255,255,0.8),
-      0 0 28px rgba(0,255,255,0.5),
-      inset 0 0 6px rgba(0,255,255,0.5);
+      0 0 14px rgba(0,255,255,0.7),
+      0 0 22px rgba(0,255,255,0.4),
+      inset 0 0 5px rgba(0,255,255,0.4);
   }
-  60% {
-    filter: brightness(1.25);
-    background-color: #041a1a;
-    border-color: #66ffff;
+  50% {
+    filter: brightness(1.2);
+    background-color: #021818;
+    border-color: #44ffff;
     box-shadow: 
-      0 0 22px rgba(0,255,255,1),
-      0 0 36px rgba(0,255,255,0.7),
-      inset 0 0 8px rgba(0,255,255,0.6);
+      0 0 20px rgba(0,255,255,0.9),
+      0 0 30px rgba(0,255,255,0.6),
+      inset 0 0 7px rgba(0,255,255,0.5);
+  }
+  75% {
+    filter: brightness(1.1);
+    background-color: #011010;
+    border-color: #22eeee;
+    box-shadow: 
+      0 0 14px rgba(0,255,255,0.7),
+      0 0 22px rgba(0,255,255,0.4),
+      inset 0 0 5px rgba(0,255,255,0.4);
+  }
+  100% {
+    filter: none;
+    background-color: #000;
+    border-color: #0ff;
+    box-shadow: 0 0 10px #0ff, inset 0 0 4px rgba(0,255,255,0.4);
   }
 }
+
 
 /* Společná classa – použij pro panel i tlačítko */
 .pulse-start {
