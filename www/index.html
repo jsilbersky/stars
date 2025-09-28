@@ -10,18 +10,20 @@
 <body>
   <!-- Canvas na pozadí -->
   <canvas id="starCanvas"></canvas>
+
   <div class="menu">
-  <div class="brand">
-    <img src="images/main_page.webp" alt="Logo" class="main-logo">
-    <p class="slogan">One Button. <span class="highlight">Big Bang!</span></p>
-    <h1>GALAXIKO</h1>
+    <div class="brand">
+      <img src="images/main_page.webp" alt="Logo" class="main-logo">
+      <p class="slogan">One Button. <span class="highlight">Big Bang!</span></p>
+      <h1>GALAXIKO</h1>
+    </div>
+
+    <div class="buttons">
+      <button onclick="chooseMode('arcade')">⏳ Arcade - 60 sec</button>
+      <button onclick="chooseMode('survival')">❤️ Survival - 5 lives</button>
+      <button onclick="chooseMode('challenge')">🔥 Challenge - 60 sec + 5 lives</button>
+    </div>
   </div>
-  <div class="buttons">
-    <button onclick="chooseMode('arcade')">⏳ Arcade - 60 sec</button>
-    <button onclick="chooseMode('survival')">❤️ Survival - 5 lives</button>
-    <button onclick="chooseMode('challenge')">🔥 Challenge - 60 sec + 5 lives</button>
-  </div>
-</div>
 
   <script src="menu.js"></script>
 </body>

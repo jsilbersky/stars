@@ -486,10 +486,8 @@ let targetRadius = 80;
 let currentColorShift = 0;
 
 let showWrong = false;
-let showExplosion = false;
 let effectTimer = 0;
 
-let shards = [];
 let flashAlpha = 0;
 
 let shapeX = 0;
@@ -574,11 +572,11 @@ function updateLevelDisplay() {
 }
 
 function createFragments(shape, x, y) {
-  const count = Math.floor(Math.random() * 30) + 90;
+  const count = Math.floor(Math.random() * 60) + 80; // 80–140 kusů
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * 2 * Math.PI;
-    const speed = Math.random() * 3 + 1;
-    const size = Math.random() * 15 + 10;
+    const speed = Math.random() * 3 + 1.5; // rychlejší odlet
+    const size = Math.random() * 15 + 10; // 
 
     fragments.push({
       shape, x, y,
@@ -587,11 +585,12 @@ function createFragments(shape, x, y) {
       rotation: Math.random() * Math.PI * 2,
       rotationSpeed: (Math.random() - 0.5) * 0.1,
       size,
-      alpha: 1
+      alpha: 1.0 // start o trochu jasnější
     });
   }
   if (fragments.length > 500) fragments.splice(0, fragments.length - 500);
 }
+
 
 /* OSCILACE */
 let oscillate = false;
@@ -1081,24 +1080,6 @@ function nextShape() {
 }
 
 
-function createShards(x, y, count = 20) {
-  shards = [];
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * 2 * Math.PI;
-    const speed = Math.random() * 2 + 1;
-    const size = Math.random() * 8 + 4;
-    shards.push({
-      x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed + 1,
-      size,
-      rotation: Math.random() * Math.PI,
-      rotationSpeed: (Math.random() - 0.5) * 0.1,
-      alpha: 1
-    });
-  }
-}
-
 function drawStarShape(shape, r) {
   ctx.beginPath();
   const spikes = { star5: 5, star6: 6, star7: 7, star8: 8 }[shape] || 5;
@@ -1228,25 +1209,13 @@ const bonus = {
 };
 let bonusPrevTs = performance.now();
 
-
-// původně: bonusInitDOM() + bonusAnnounce()
-// NOVĚ: nic v DOM, vykreslíme text do canvasu přes floaters
-
-function bonusInitDOM(){
-  /* už nic – necháváme prázdné kvůli kompatibilitě */
-  bonus.announceEl = null;
+// Bonus oznámení – už jen do canvasu
+function bonusInitDOM() {
+  // prázdné – dřív se tady připravoval DOM, teď už ne
 }
 
-function bonusAnnounce(){
-  // mapa tříd -> barvy ve stylu hry
-  const color =
-    cls === 'bm-points'  ? '#00ffff' :
-    cls === 'bm-seconds' ? '#00ffff' :
-    cls === 'bm-x2'      ? '#00ffff' :
-                           '#00ffff';
-
-  // zobraz ve spodní části canvasu (nad panelem)
-  // 24px od spodního okraje canvasu (můžeš doladit)
+function bonusAnnounce(txt) {
+  const color = '#00ffff'; // jednotná barva hry
   addFloater(txt, centerX, canvas.height - 24, color, 2000);
 }
 
@@ -1259,11 +1228,8 @@ function bonusPickType(){
 function bonusPrepareCleanScene(){
   // vyčisti efekty hlavní scény
   showWrong = false;
-  showExplosion = false;
   effectTimer = 0;
   floaters = [];
-  shards = [];
-  fragments = [];
   flashAlpha = 0;
 
   bonus.pauseMainScene = true;
@@ -1397,42 +1363,36 @@ function bonusTryHitOnRelease(){
   updateMatchLabel(match);
 
   let success = false;
-  if (match >= 80){
-    if (bonus.type==='points'){
-      score += 10; updateScoreUI(); pulseScore();
-    } else if (bonus.type==='seconds'){
-  if (mode === "challenge") {  // ⏳ čas navíc jen v challenge
-    if (timeRemaining < TIMER_MAX) timeRemaining = Math.min(TIMER_MAX, timeRemaining + 10);
-    else timeBank += 10;
-    updateTimerUI(); blinkTimer();
-  } else if (mode === "arcade") {
-    score += 10; updateScoreUI(); pulseScore(); // Arcade = jen body
-  }
-}
- else if (bonus.type==='x2'){
-      score = Math.floor(score * 2); updateScoreUI(); pulseScore();
+  if (match >= 80) {
+    if (bonus.type === 'points') {
+      score += 10; 
+      updateScoreUI(); 
+      pulseScore();
+      bonusAnnounce("+10 POINTS");
+    } else if (bonus.type === 'seconds') {
+      if (mode === "challenge") {
+        if (timeRemaining < TIMER_MAX) timeRemaining = Math.min(TIMER_MAX, timeRemaining + 10);
+        else timeBank += 10;
+        updateTimerUI(); 
+        blinkTimer();
+        bonusAnnounce("+10 SECONDS");
+      } else if (mode === "arcade") {
+        score += 10; 
+        updateScoreUI(); 
+        pulseScore();
+        bonusAnnounce("+10 SCORE");
+      }
+    } else if (bonus.type === 'x2') {
+      score = Math.floor(score * 2); 
+      updateScoreUI(); 
+      pulseScore();
+      bonusAnnounce("SCORE ×2");
     }
+
     createFragments(currentShape, bonus.x, bonus.y);
-    explosionSound.currentTime = 0; explosionSound.play();
+    explosionSound.currentTime = 0; 
+    explosionSound.play();
     success = true;
-
-    let label = '';
-if (bonus.type === 'points') {
-  label = '+10 points';
-} else if (bonus.type === 'seconds') {
-  if (mode === "challenge") {
-    label = '+10 seconds';
-  } else {
-    label = '+10 score'; // v Arcade / Survival místo času dostane body
-    score += 10;
-    updateScoreUI(); pulseScore();
-  }
-} else if (bonus.type === 'x2') {
-  label = 'Score ×2';
-}
-
-const fxY = Math.max(20, bonus.y - (bonus.curR + 24));
-if (label) addFloater(label, bonus.x, fxY, '#00ffff', 1700);
 
   } else {
     showWrong = true; effectTimer = 30;
@@ -1476,22 +1436,6 @@ function draw() {
   // BONUS: posun + kresba bonusové hvězdy
   bonusUpdateAndDraw(now, dtFrame);
 
-  shards.forEach(shard => {
-    ctx.save();
-    ctx.translate(shard.x, shard.y);
-    ctx.rotate(shard.rotation);
-    ctx.globalAlpha = shard.alpha;
-    ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
-    ctx.fillRect(-shard.size / 2, -shard.size / 2, shard.size, shard.size);
-    ctx.restore();
-
-    shard.x += shard.vx;
-    shard.y += shard.vy;
-    shard.rotation += shard.rotationSpeed;
-    shard.alpha -= 0.02;
-  });
-  shards = shards.filter(s => s.alpha > 0);
-
   if (showWrong) {
     ctx.fillStyle = "rgba(255, 0, 0, 0.3)";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -1501,24 +1445,6 @@ function draw() {
     ctx.fillText("✖", centerX, canvas.height * 0.25);
     effectTimer--;
     if (effectTimer <= 0) showWrong = false;
-  }
-
-  if (showExplosion) {
-    for (let i = 0; i < 30; i++) {
-      const angle = Math.random() * 2 * Math.PI;
-      const dist = Math.random() * 60;
-      const x = shapeX + Math.cos(angle) * dist;
-      const y = shapeY + Math.sin(angle) * dist;
-      ctx.beginPath();
-      ctx.arc(x, y, 4, 0, 2 * Math.PI);
-      ctx.fillStyle = `hsl(${hue}, 100%, ${Math.random() * 30 + 50}%)`;
-      ctx.fill();
-    }
-    effectTimer--;
-    if (effectTimer <= 0) {
-      showExplosion = false;
-      nextShape();
-    }
   }
 
   if (enableMove) {
@@ -1614,7 +1540,7 @@ if (!bonus.pauseMainScene) {
     frag.y += frag.vy;
     frag.rotation += frag.rotationSpeed;
     frag.size += 0.1;
-    frag.alpha -= 0.004;
+    frag.alpha -= 0.003;
   });
   fragments = fragments.filter(f => f.alpha > 0);
 
@@ -1691,7 +1617,6 @@ function handleRelease() {
 
       createFragments(currentShape, s.x, s.y);
       explosionSound.currentTime = 0; explosionSound.play();
-
       nextShape();
       spawnMultiStars(currentLevelSettings);
     } else {
@@ -1756,9 +1681,8 @@ function handleRelease() {
 
     addFloater(infoText, shapeX, Math.max(20, shapeY - (targetRadius + 18)), color, 1100);
     createFragments(currentShape, shapeX, shapeY);
-    showExplosion = true; effectTimer = 30;
-    createShards(shapeX, shapeY); flashAlpha = 0.6;
     explosionSound.currentTime = 0; explosionSound.play();
+    nextShape();
   } else {
     showWrong = true; effectTimer = 30;
     if (mode !== "arcade") {
@@ -1782,8 +1706,8 @@ window.startNewGame = function () {
   bonus.lastSpawnSec = performance.now()/1000;
   gameOverShown = false;
 
-  showWrong = false; showExplosion = false; effectTimer = 0;
-  floaters = []; shards = []; fragments = []; flashAlpha = 0;
+  showWrong = false; effectTimer = 0;
+  floaters = []; fragments = []; flashAlpha = 0;
 
   level = 1; firstStart = true; isGameOver = false; isHolding = false;
   score = 0; attempts = 0; successfulMatches = 0; sumAccuracy = 0;
@@ -1866,10 +1790,8 @@ function lockGame() {
 
   // Uklid všech efektů/floaterů v momentě Game Over
   showWrong = false;
-  showExplosion = false;
   effectTimer = 0;
   floaters = [];
-  shards = [];
   fragments = [];
   flashAlpha = 0;
 
