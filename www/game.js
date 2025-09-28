@@ -1899,8 +1899,8 @@ function startHold() {
     actualHoldGrowth = holdGrowth;
   } else {
     // level 2+ = základní rychlost s náhodným rozptylem
-    const minFactor = 1.1;   // 100 %
-    const maxFactor = 1.5;   // 140 %
+    const minFactor = 1.1;   // 110 %
+    const maxFactor = 1.5;   // 150 %
     const randomFactor = Math.random() * (maxFactor - minFactor) + minFactor;
     actualHoldGrowth = RANDOM_BASE_SPEED * randomFactor;
   }
