@@ -504,6 +504,10 @@ let fragments = [];
 let firstStart = true;
 let holdGrowth = 1;
 
+let actualHoldGrowth = 0; 
+const RANDOM_BASE_SPEED = 60; // px/s
+
+
 let timeBank = 0;
 
 let blinkActive = false;
@@ -1460,7 +1464,7 @@ function draw() {
 
   // Při bonusu roste "bonus.holdRadius" místo běžného radiusu
   if (bonus.captureHold && isHolding){
-  bonus.holdRadius += holdGrowth * dtFrame;
+  bonus.holdRadius += actualHoldGrowth * dtFrame;
 }
 
   // FIX: timer jen když neběží odpočet a hra není u konce
@@ -1555,8 +1559,7 @@ if (!bonus.pauseMainScene) {
   // menší hvězda → pomalejší růst, větší hvězda → o trochu rychlejší
   const sizeFactor = Math.max(0.65, Math.min(1.15, s.curR / 90));
   const speedScale = 0.80; // globální zpomalení multi-stars
-  s.growRadius += holdGrowth * speedScale * sizeFactor * dtFrame;
-
+  s.growRadius += actualHoldGrowth * speedScale * sizeFactor * dtFrame;
 }
 
   }
@@ -1572,7 +1575,7 @@ if (!bonus.pauseMainScene) {
   drawShape(currentShape, shapeX, shapeY, targetRadius, rotation, currentColorShift + hue, lineWidth);
   ctx.restore();
 
-  if (isHolding && radius < targetRadius + 1000) radius += holdGrowth * dtFrame;
+  if (isHolding && radius < targetRadius + 1000) radius += actualHoldGrowth * dtFrame;
 
   if (isHolding) {
   ctx.save();
@@ -1885,23 +1888,37 @@ function startHold() {
   isHolding = true; // držíme
 
   if (bonus.captureHold) {
-    bonus.holdRadius = 0;      // růst pro bonus
+    bonus.holdRadius = 0;      
   } else {
-    radius = 0;                // růst pro hlavní hru
+    radius = 0;                
   }
-  // Multi-star: při prvním HOLD zvol náhodnou hvězdu, která bude růst
-if (multiStarMode){
-  if (msActiveIndex == null && msStars.length > 0){
-    msActiveIndex = Math.floor(Math.random() * msStars.length);
-    msStars[msActiveIndex].growRadius = 0;
+
+  // 🌟 Nastavení rychlosti
+  if (level === 1) {
+    // první level = původní fixní rychlost z tabulky
+    actualHoldGrowth = holdGrowth;
+  } else {
+    // level 2+ = základní rychlost s náhodným rozptylem
+    const minFactor = 0.8;   // 80 %
+    const maxFactor = 1.3;   // 130 %
+    const randomFactor = Math.random() * (maxFactor - minFactor) + minFactor;
+    actualHoldGrowth = RANDOM_BASE_SPEED * randomFactor;
   }
-}
+
+  // Multi-star: při prvním HOLD zvol náhodnou hvězdu
+  if (multiStarMode){
+    if (msActiveIndex == null && msStars.length > 0){
+      msActiveIndex = Math.floor(Math.random() * msStars.length);
+      msStars[msActiveIndex].growRadius = 0;
+    }
+  }
 
   holdStartTime = performance.now();
   holdHue = Math.random() * 360;
   holdSound.currentTime = 0;
   holdSound.play();
 }
+
 
 function endHold() {
   const now = performance.now();
