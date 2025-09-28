@@ -572,24 +572,27 @@ function updateLevelDisplay() {
 }
 
 function createFragments(shape, x, y) {
-  const count = Math.floor(Math.random() * 60) + 80; // 80–140 kusů
+  const count = Math.floor(Math.random() * 40) + 50; // 50–90 částic
   for (let i = 0; i < count; i++) {
     const angle = Math.random() * 2 * Math.PI;
-    const speed = Math.random() * 3 + 1.5; // rychlejší odlet
-    const size = Math.random() * 15 + 10; // 
+    const speed = Math.random() * 3.5 + 1.5; // svižnější odlet
+    const size = Math.random() * 12 + 8;      // větší částice (8–20 px)
 
     fragments.push({
       shape, x, y,
       vx: Math.cos(angle) * speed,
       vy: Math.sin(angle) * speed,
       rotation: Math.random() * Math.PI * 2,
-      rotationSpeed: (Math.random() - 0.5) * 0.1,
+      rotationSpeed: (Math.random() - 0.5) * 0.07,
       size,
-      alpha: 1.0 // start o trochu jasnější
+      alpha: 1.0,
+      hue: holdHue + hue   // neon barva hvězdy
     });
   }
-  if (fragments.length > 500) fragments.splice(0, fragments.length - 500);
+
+  if (fragments.length > 600) fragments.splice(0, fragments.length - 600);
 }
+
 
 
 /* OSCILACE */
@@ -1520,29 +1523,40 @@ if (!bonus.pauseMainScene) {
 
   drawFloaters(now);
 
-  fragments.forEach(frag => {
-    ctx.save();
+for (let frag of fragments) {
+  ctx.save();
+  ctx.globalAlpha = frag.alpha;
+
+  if (frag.type === "shockwave") {
+    ctx.strokeStyle = `hsla(${frag.hue % 360}, 100%, 60%, ${frag.alpha})`;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(frag.x, frag.y, frag.size, 0, Math.PI * 2);
+    ctx.stroke();
+    frag.size += 2.2;
+    frag.alpha -= 0.03;
+  } else {
+    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, frag.size);
+    grad.addColorStop(0, `hsla(${frag.hue % 360}, 100%, 70%, 1)`);
+    grad.addColorStop(1, `hsla(${frag.hue % 360}, 100%, 70%, 0)`);
+
+    ctx.fillStyle = grad;
     ctx.translate(frag.x, frag.y);
     ctx.rotate(frag.rotation);
-    ctx.globalAlpha = frag.alpha;
-
-    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, frag.size);
-    gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, ${frag.alpha})`);
-    gradient.addColorStop(1, `hsla(${hue}, 100%, 70%, 0)`);
-
-    ctx.fillStyle = gradient;
     ctx.beginPath();
     ctx.arc(0, 0, frag.size, 0, Math.PI * 2);
     ctx.fill();
-    ctx.restore();
 
     frag.x += frag.vx;
     frag.y += frag.vy;
     frag.rotation += frag.rotationSpeed;
-    frag.size += 0.1;
-    frag.alpha -= 0.003;
-  });
-  fragments = fragments.filter(f => f.alpha > 0);
+    frag.size *= 1.01;
+    frag.alpha -= 0.008;
+  }
+  ctx.restore();
+}
+fragments = fragments.filter(f => f.alpha > 0);
+
 
    drawLevelAnnounce(now);
 
