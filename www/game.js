@@ -1218,7 +1218,7 @@ function bonusInitDOM() {
 
 function bonusAnnounce(txt) {
   const color = '#00ffff';
-  addFloater(txt, bonus.x, Math.max(20, bonus.y - (bonus.curR + 18)), color, 3000);
+  addFloater(txt, bonus.x, Math.max(20, bonus.y - (bonus.curR * 0.5 + 12)), color, 3000);
 }
 
 
