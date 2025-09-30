@@ -1217,9 +1217,10 @@ function bonusInitDOM() {
 }
 
 function bonusAnnounce(txt) {
-  const color = '#00ffff'; // jednotná barva hry
-  addFloater(txt, centerX, canvas.height - 24, color, 2000);
+  const color = '#00ffff';
+  addFloater(txt, bonus.x, Math.max(20, bonus.y - (bonus.curR + 18)), color, 3000);
 }
+
 
 function bonusPickType(){
   const r = Math.random();
