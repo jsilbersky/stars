@@ -320,14 +320,13 @@ bestScore = savedBest;
 
 
 statsEl.innerHTML = `
-  <li><strong>Score:</strong> ${score}</li>
-  <li><strong>High Score:</strong> ${bestScore}</li>
+  <li><strong>Score:</strong> <strong>${score}</strong></li>
+  <li><strong>High Score:</strong> <strong>${bestScore}</strong></li>
   <hr style="border:1px solid rgba(0,255,255,0.15); margin:6px 0;">
   <li><strong>Stars hit:</strong> ${successfulMatches}</li>
   <li><strong>Average accuracy:</strong> ${averageAccuracy()} %</li>
   <li><strong>Game time:</strong> ${gameTimeStr}</li>
 `;
-
 
   popup.classList.remove("hidden");
 }

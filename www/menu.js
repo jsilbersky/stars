@@ -58,51 +58,8 @@ function drawStars() {
 }
 drawStars();
 
-
-// === AdMob Banner logika ===
-let AdMob = null;
-if (typeof Capacitor !== "undefined" && Capacitor.Plugins && Capacitor.Plugins.AdMob) {
-  AdMob = Capacitor.Plugins.AdMob;
-
-  AdMob.initialize();
-
-  function showBanner() {
-    AdMob.showBanner({
-      adId: 'ca-app-pub-3940256099942544/6300978111', // testovací ID
-      adSize: 'SMART_BANNER',
-      position: 'BOTTOM_CENTER',
-    }).catch(err => console.error("Chyba banneru:", err));
-  }
-
-  // Ukázat při startu menu
-  setTimeout(showBanner, 2000);
-
-  // Obnovit při návratu z pozadí
-  document.addEventListener("resume", showBanner);
-
-  // Schovat při uspání
-  document.addEventListener("pause", () => {
-    AdMob.hideBanner().catch(() => {});
-  });
-}
-
-
 // === Přepnutí herního módu ===
 function chooseMode(mode) {
-  // Ulož mód
   localStorage.setItem("mode", mode);
-
-  // Reklama jen pokud běžíme na mobilu
-  if (AdMob) {
-    try {
-      AdMob.showInterstitial();
-    } catch (e) {
-      console.warn("AdMob error:", e);
-    }
-  } else {
-    console.log("Web test – reklama se nespustí.");
-  }
-
-  // Přechod do hry
   window.location.href = "game.html";
 }

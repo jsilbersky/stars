@@ -67,7 +67,6 @@ h1 {
   text-shadow: 0 0 3px #d78c1f; /* glow ve stejné barvě */
 }
 
-
 /* Tlačítka */
 .buttons {
   display: flex;
@@ -96,15 +95,4 @@ button:hover {
   background: rgba(0, 255, 255, 0.3);
   transform: scale(1.05);
   box-shadow: 0 0 18px rgba(0, 255, 255, 0.6);
-}
-
-#adBanner {
-  width: 100%;
-  min-height: 60px;     /* výška banneru */
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background: rgba(0, 0, 0, 0.5); /* tmavé pozadí pod reklamou */
-  margin-top: 12px;
-  border-top: 1px solid rgba(255,255,255,0.1);
 }
