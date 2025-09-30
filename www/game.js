@@ -320,12 +320,12 @@ bestScore = savedBest;
 
 
 statsEl.innerHTML = `
-  <li><strong>Score:</strong> <strong style="color:white;">${score}</strong></li>
-  <li><strong>High Score:</strong> <strong style="color:white;">${bestScore}</strong></li>
+  <li><strong>Score:</strong><span style="color:white; font-weight:bold;">${score}</span></li>
+  <li><strong>High Score:</strong><span style="color:white; font-weight:bold;">${bestScore}</span></li>
   <hr style="border:1px solid rgba(0,255,255,0.15); margin:6px 0;">
-  <li><strong>Stars hit:</strong> <strong style="color:white;">${successfulMatches}</strong></li>
-  <li><strong>Average accuracy:</strong> <strong style="color:white;">${averageAccuracy()} %</strong></li>
-  <li><strong>Game time:</strong> <strong style="color:white;">${gameTimeStr}</strong></li>
+  <li><strong>Stars hit:</strong><span style="color:white; font-weight:bold;">${successfulMatches}</span></li>
+  <li><strong>Average accuracy:</strong><span style="color:white; font-weight:bold;">${averageAccuracy()} %</span></li>
+  <li><strong>Game time:</strong><span style="color:white; font-weight:bold;">${gameTimeStr}</span></li>
 `;
 
   popup.classList.remove("hidden");
@@ -683,6 +683,7 @@ if (N >= 5) base = Math.floor(base * 1.25);
         scalePhase: Math.random() * Math.PI * 2,
         pulsing: isPulsing,
         growRadius: 0,
+        growthSpeed: 0,
         vx: (Math.random() - 0.5) * (settings.speed ?? 2.5) * 60,
         vy: (Math.random() - 0.5) * (settings.speed ?? 2.5) * 60
       });
@@ -756,7 +757,8 @@ const cellR = Math.max(24, Math.floor(Math.min(cellW, cellH) * cellScale));
       scaleSpeed: isPulsing ? (settings.scaleSpeed ?? 0) : 0,
       scalePhase: Math.random() * Math.PI * 2,
       pulsing: isPulsing,
-      growRadius: 0
+      growRadius: 0,
+      growthSpeed: 0
     });
   }
 
@@ -1488,7 +1490,8 @@ if (!bonus.pauseMainScene) {
   // menší hvězda → pomalejší růst, větší hvězda → o trochu rychlejší
   const sizeFactor = Math.max(0.65, Math.min(1.15, s.curR / 90));
   const speedScale = 0.80; // globální zpomalení multi-stars
-  s.growRadius += actualHoldGrowth * speedScale * sizeFactor * dtFrame;
+  const gSpeed = s.growthSpeed || actualHoldGrowth;
+  s.growRadius += gSpeed * speedScale * sizeFactor * dtFrame;
 }
 
   }
@@ -1829,17 +1832,17 @@ function startHold() {
     radius = 0;                
   }
 
-  // 🌟 Nastavení rychlosti
-  if (level === 1) {
-    // první level = původní fixní rychlost z tabulky
-    actualHoldGrowth = holdGrowth;
-  } else {
-    // level 2+ = základní rychlost s náhodným rozptylem
-    const minFactor = 1.1;   // 110 %
-    const maxFactor = 1.5;   // 150 %
-    const randomFactor = Math.random() * (maxFactor - minFactor) + minFactor;
-    actualHoldGrowth = RANDOM_BASE_SPEED * randomFactor;
-  }
+  // 🌟 Nastavení rychlosti rozpínání
+if (level === 1) {
+  actualHoldGrowth = holdGrowth; // vždy fixní
+} else if (multiStarMode && msActiveIndex != null) {
+  // multi-star: nastav náhodnou rychlost pro aktivní hvězdu
+  msStars[msActiveIndex].growthSpeed = RANDOM_BASE_SPEED * (1.1 + Math.random() * 0.4);
+} else {
+  // single-star: náhodná rychlost
+  actualHoldGrowth = RANDOM_BASE_SPEED * (1.1 + Math.random() * 0.4);
+}
+
 
   // Multi-star: při prvním HOLD zvol náhodnou hvězdu
   if (multiStarMode){
