@@ -2073,7 +2073,7 @@ drawInit();
   ctx.font = 'bold 13px Oxanium, system-ui, -apple-system, Segoe UI, Roboto, Arial';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('BOOST', 0, 0);
+  ctx.fillText('POWER', 0, 0);
 
   ctx.restore();
 }
