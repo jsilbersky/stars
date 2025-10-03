@@ -1,3 +1,5 @@
+import { initAds, loadInterstitial, showInterstitialThenGameOver } from './ads.js';
+
 // --- načtení módu z menu ---
 const mode = localStorage.getItem("mode") || "challenge"; 
 
@@ -328,7 +330,10 @@ statsEl.innerHTML = `
   <li><strong>Game time:</strong><span style="color:white; font-weight:bold;">${gameTimeStr}</span></li>
 `;
 
-  popup.classList.remove("hidden");
+    popup.classList.remove("hidden");
+
+  // 🆕 znovu načti reklamu pro další hru
+  loadInterstitial();
 }
 
 
@@ -1775,37 +1780,12 @@ const failSound = new Audio('sounds/fail.mp3'); failSound.preload = 'auto'; fail
 const bonusAppearSound = new Audio('sounds/bonus.mp3'); bonusAppearSound.preload = 'auto'; bonusAppearSound.volume = 0.9; 
 
 
-// (první definice – ponechána kvůli kompatibilitě; přepis bude níž)
-function startHold() {
-  if (isGameOver || isCountdown) return;  // ⬅ blok během countdownu
-  isHolding = true;
-  radius = 0;
-  holdStartTime = performance.now();
-  holdHue = Math.random() * 360;
-  holdSound.currentTime = 0;
-  holdSound.play();
-}
-function endHold() {
-  // Debounce: ignoruj rychle po sobě jdoucí duplicitní "release"
-  const now = performance.now();
-  if (now - lastReleaseTs < 150) return;
-  lastReleaseTs = now;
-
-  if (isGameOver || isCountdown) return;
-  isHolding = false;
-  holdSound.pause();
-  holdSound.currentTime = 0; // reset, aby příště začal od začátku
-
-  handleRelease();
-}
-
-
 function lockGame() {
   if (isGameOver) return;
   isGameOver = true;
   isHolding = false;
 
-  // Uklid všech efektů/floaterů v momentě Game Over
+  // Uklid efektů
   showWrong = false;
   effectTimer = 0;
   floaters = [];
@@ -1816,7 +1796,11 @@ function lockGame() {
     holdButton.disabled = true;
     holdButton.classList.remove('active');
   }
+
+  // 🆕 místo okamžitého popupu → nejdřív reklama
+  showInterstitialThenGameOver();
 }
+
 
 // Zabránění kontextovému menu
 holdButton.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -1962,7 +1946,15 @@ function drawInit() {
   startLevel(); // necháme běžet scénu v pozadí; čas se stejně neodečítá díky isCountdown
   draw();
 }
-drawInit();
+
+document.addEventListener("DOMContentLoaded", () => {
+  drawInit(); // 🎮 hned start hry
+
+  initAds()
+    .then(() => loadInterstitial())
+    .catch(err => console.warn("⚠️ AdMob init error:", err));
+});
+
 
 // === HELP POPUP + CANVAS DEMO (aligned to START, big 👆 from below) ===
 (function(){
