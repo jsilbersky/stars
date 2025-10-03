@@ -1832,16 +1832,24 @@ function startHold() {
     radius = 0;                
   }
 
-  // 🌟 Nastavení rychlosti rozpínání
+// 🌟 Nastavení rychlosti rozpínání
 if (level === 1) {
-  actualHoldGrowth = holdGrowth; // vždy fixní
-} else if (multiStarMode && msActiveIndex != null) {
-  // multi-star: nastav náhodnou rychlost pro aktivní hvězdu
-  msStars[msActiveIndex].growthSpeed = RANDOM_BASE_SPEED * (1.1 + Math.random() * 0.4);
+  // Level 1: vždy fixní rychlost
+  actualHoldGrowth = holdGrowth;
+} else if (multiStarMode) {
+  // Multi-star: při startu HOLD vyber aktivní hvězdu a nastav jí náhodnou rychlost
+  if (msActiveIndex == null && msStars.length > 0) {
+    msActiveIndex = Math.floor(Math.random() * msStars.length);
+    msStars[msActiveIndex].growRadius = 0;
+  }
+  if (msActiveIndex != null) {
+    msStars[msActiveIndex].growthSpeed = RANDOM_BASE_SPEED * (1.1 + Math.random() * 0.4);
+  }
 } else {
-  // single-star: náhodná rychlost
+  // Single-star: náhodná rychlost pro každý nový HOLD
   actualHoldGrowth = RANDOM_BASE_SPEED * (1.1 + Math.random() * 0.4);
 }
+
 
 
   // Multi-star: při prvním HOLD zvol náhodnou hvězdu
