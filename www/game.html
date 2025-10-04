@@ -41,14 +41,48 @@
     <button id="holdButton" type="button">POWER</button>
   </div>
 
-  <!-- Pop-up okno pro Game Over -->
-  <div id="gameOverPopup" class="hidden">
-    <div class="popup-content">
-      <h2>GAME OVER</h2>
+  <!-- Pop-up okno pro Game Over (připravené pro Rewarded) -->
+<div id="gameOverPopup" class="hidden">
+  <div class="popup-content" style="max-width:420px; text-align:center">
+    <!-- Režim + důvod -->
+    <h2 id="gameOverMode" style="margin:0 0 4px">GAME OVER</h2>
+    <div id="gameOverReason" style="opacity:.8; font-size:.9rem; margin-bottom:10px"></div>
+
+    <!-- Skóre / statistiky -->
+    <ul id="gameOverStats" style="text-align:left; margin:10px auto 12px; max-width:320px; line-height:1.35"></ul>
+
+    <!-- CTA copy -->
+    <div style="margin:10px 0 6px">
+      <div style="font-size:.95rem; letter-spacing:.2px; opacity:.9;">FREE BONUS! 🚀</div>
+      <div id="reviveSubtitle" style="font-size:.9rem; opacity:.75; margin-top:2px">
+        Watch short video for +TIME / +LIVES.
+      </div>
+    </div>
+
+    <!-- Velké tlačítko Rewarded -->
+    <button id="reviveButton"
+            class="action-button"
+            style="display:inline-block; margin-top:6px; padding:.7rem 1.1rem; font-weight:700; border-radius:10px;">
+      YES, GET BONUS! 🤩
+    </button>
+
+    <!-- Jemná alternativa (odmítnutí) -->
+    <div style="margin-top:8px">
+      <button id="skipReviveButton"
+              class="skip-button-small"
+              style="background:none; border:none; text-decoration:underline; opacity:.8; font-size:.92rem; cursor:pointer; padding:.3rem .5rem">
+        Show score (no bonus)
+      </button>
+    </div>
+
+    <!-- Primární akce po zobrazení skóre -->
+    <div style="display:flex; gap:8px; justify-content:center; margin-top:12px">
       <button id="newGameButton">PLAY AGAIN</button>
       <button id="menuButton">MENU</button>
     </div>
   </div>
+</div>
+
 
   <!-- Help / Tutorial Popup -->
   <div id="helpPopup" class="popup" style="display:flex">
