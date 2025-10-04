@@ -376,9 +376,16 @@ statsEl.innerHTML = `
     goSmall2.style.opacity = "0.85";
     reviveWrap.appendChild(goSmall2);
   }
-  goSmall2.textContent = (lastFailCause === 'time') ? "Vypršel čas" :
-                         (lastFailCause === 'lives') ? "Došly životy" :
-                         "Konec hry";
+  if (mode === "arcade") {
+  goSmall2.textContent = "Došel čas";
+} else if (mode === "survival") {
+  goSmall2.textContent = "Došly životy";
+} else if (mode === "challenge") {
+  if (lastFailCause === "time") goSmall2.textContent = "Došel čas";
+  else if (lastFailCause === "lives") goSmall2.textContent = "Došly životy";
+  else goSmall2.textContent = "Konec hry";
+}
+
 
   // Velký titulek + podtitulek
   let goBig = document.getElementById("goBig");
@@ -431,33 +438,35 @@ statsEl.innerHTML = `
   }
   rejectBtn.textContent = "Zobrazit skóre (bez bonusu)";
 
-  // ✍️ CTA text podle módu & příčiny
   const setReviveCopy = () => {
-    if (usedReviveThisRun || !isRewardedReady()) {
-      // není dostupné / už použito → schovat CTA, rovnou jen skóre
-      reviveWrap.style.display = "none";
-      return;
-    }
-    reviveWrap.style.display = "flex";
+  if (usedReviveThisRun || !isRewardedReady()) {
+    reviveWrap.style.display = "none";
+    return;
+  }
+  reviveWrap.style.display = "flex";
 
-    if (mode === "arcade") {
-      confirmBtn.textContent = "ANO, ZÍSKAT +20 s! 🤩";
-      return;
-    }
-    if (mode === "survival") {
-      confirmBtn.textContent = "ANO, ZÍSKAT +2 ŽIVOTY! ❤️";
-      return;
-    }
-    // challenge
-    if (lastFailCause === 'time') {
-      confirmBtn.textContent = "ANO, ZÍSKAT +15 s! 🤩";
-    } else if (lastFailCause === 'lives') {
-      confirmBtn.textContent = "POKRAČOVAT (+2 ŽIVOTY +10 s)";
-    } else {
-      // fallback – kdyby nešlo detekovat
-      confirmBtn.textContent = "POKRAČOVAT (BONUS)";
-    }
-  };
+  if (mode === "arcade") {
+    confirmBtn.textContent = "ANO, ZÍSKAT +15 s ⏱️";
+    goSubBig.textContent = "Watch short video for +15 SECONDS.";
+    return;
+  }
+  if (mode === "survival") {
+    confirmBtn.textContent = "ANO, ZÍSKAT +2 ŽIVOTY ❤️";
+    goSubBig.textContent = "Watch short video for +2 LIVES.";
+    return;
+  }
+  // Challenge
+  if (lastFailCause === "time") {
+    confirmBtn.textContent = "ANO, ZÍSKAT +15 s ⏱️";
+    goSubBig.textContent = "Watch short video for +15 SECONDS.";
+  } else if (lastFailCause === "lives") {
+    confirmBtn.textContent = "ANO, ZÍSKAT +2 ŽIVOTY ❤️ +10 s ⏱️";
+    goSubBig.textContent = "Watch short video for +2 LIVES +10 SECONDS.";
+  } else {
+    confirmBtn.textContent = "POKRAČOVAT (BONUS)";
+    goSubBig.textContent = "Watch short video for bonus.";
+  }
+};
   setReviveCopy();
 
   // Po kliknutí na „Zobrazit skóre (bez bonusu)“ jen necháme popup, nic neschováváme

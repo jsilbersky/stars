@@ -630,3 +630,61 @@ body { position: relative; }
   pointer-events: none;
   z-index: 29;
 }
+
+/* === GAME OVER POPUP: jemný fade-in a mobilní vyvážení === */
+#gameOverPopup {
+  opacity: 0;
+  transform: scale(1.05);
+  pointer-events: none;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  backdrop-filter: blur(6px) brightness(1.05);
+}
+
+#gameOverPopup:not(.hidden) {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+/* Obsah popupu — vycentrování, menší padding na mobilech */
+#gameOverPopup .popup-content {
+  max-width: 420px;
+  width: calc(100vw - 80px);
+  padding: 26px 20px 28px;
+  text-align: center;
+  backdrop-filter: blur(8px) saturate(130%);
+  background: radial-gradient(100% 100% at 50% 0%, rgba(14, 24, 32, 0.98) 0%, rgba(6, 10, 20, 0.96) 70%);
+  border: 2px solid rgba(0,255,255,0.35);
+  border-radius: 20px;
+  box-shadow:
+    0 0 30px rgba(0,255,255,0.25),
+    inset 0 0 12px rgba(0,255,255,0.08);
+}
+
+#gameOverPopup .popup-content h2 {
+  font-size: 1.9rem;
+  margin-bottom: 10px;
+}
+
+#gameOverPopup #gameOverReason {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 12px;
+}
+
+#gameOverPopup #reviveSubtitle {
+  margin-top: 4px;
+  font-size: .95rem;
+  color: rgba(200,255,255,0.8);
+}
+
+/* === Menší zařízení === */
+@media (max-width: 480px) {
+  #gameOverPopup .popup-content {
+    padding: 22px 18px 26px;
+    width: calc(100vw - 60px);
+  }
+  #gameOverPopup .popup-content h2 {
+    font-size: 1.7rem;
+  }
+}
