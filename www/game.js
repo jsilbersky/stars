@@ -280,7 +280,6 @@ if (menuBtn) {
   });
 }
 
-
 function triggerGameOver() {
   if (gameOverShown) return;
   gameOverShown = true;
@@ -290,26 +289,11 @@ function triggerGameOver() {
 
   const content = popup.querySelector(".popup-content");
   const btn = document.getElementById("newGameButton");
+  const menuBtn = document.getElementById("menuButton");
 
-  // 🆕 Přidáme nadpis s názvem módu
-  let modeTitle = document.getElementById("gameOverMode");
-  if (!modeTitle) {
-    modeTitle = document.createElement("h2");
-    modeTitle.id = "gameOverMode";
-    modeTitle.style.marginBottom = "8px";
-    modeTitle.style.fontSize = "20px";
-    modeTitle.style.color = "#00ffff";
-    modeTitle.style.textAlign = "center";
-    content.insertBefore(modeTitle, content.firstChild);
-  }
-
-  // Překlad názvu módu
-  const modeName = 
-    mode === "arcade" ? "Arcade" :
-    mode === "survival" ? "Survival" :
-    "Challenge";
-
-  modeTitle.textContent = `${modeName}`;
+  // Clear any previous content above stats
+  let oldRevive = document.getElementById("reviveWrap");
+  if (oldRevive) oldRevive.remove();
 
   let statsEl = document.getElementById("gameOverStats");
   if (!statsEl) {
@@ -318,217 +302,60 @@ function triggerGameOver() {
     content.insertBefore(statsEl, btn);
   }
 
-  // Výpočet délky hry
-const elapsedSec = Math.floor((performance.now() - gameStartTime) / 1000);
-const mins = Math.floor(elapsedSec / 60);
-const secs = elapsedSec % 60;
-const gameTimeStr = `${mins} m ${secs} s`;
+  // Compute game duration
+  const elapsedSec = Math.floor((performance.now() - gameStartTime) / 1000);
+  const mins = Math.floor(elapsedSec / 60);
+  const secs = elapsedSec % 60;
+  const gameTimeStr = `${mins}m ${secs}s`;
 
-// Aktualizace nejlepšího skóre pro aktuální mód
-const bestKey = getBestScoreKey();
-let savedBest = parseInt(localStorage.getItem(bestKey)) || 0;
-if (score > savedBest) {
-  savedBest = score;
-  localStorage.setItem(bestKey, savedBest);
-}
-bestScore = savedBest;
-
-
-statsEl.innerHTML = `
-  <li><strong>Score:</strong><span style="color:white; font-weight:bold;">${score}</span></li>
-  <li><strong>High Score:</strong><span style="color:white; font-weight:bold;">${bestScore}</span></li>
-  <hr style="border:1px solid rgba(0,255,255,0.15); margin:6px 0;">
-  <li><strong>Stars hit:</strong><span style="color:white; font-weight:bold;">${successfulMatches}</span></li>
-  <li><strong>Average accuracy:</strong><span style="color:white; font-weight:bold;">${averageAccuracy()} %</span></li>
-  <li><strong>Game time:</strong><span style="color:white; font-weight:bold;">${gameTimeStr}</span></li>
-`;
-
-  // === REVIVE CTA (Rewarded) ===================================================
-  // Vytvoř CTA wrapper nad statistikami, pokud ještě neexistuje
-  let reviveWrap = document.getElementById("reviveWrap");
-  if (!reviveWrap) {
-    reviveWrap = document.createElement("div");
-    reviveWrap.id = "reviveWrap";
-    reviveWrap.style.margin = "12px 0 10px 0";
-    reviveWrap.style.textAlign = "center";
-    reviveWrap.style.display = "flex";
-    reviveWrap.style.flexDirection = "column";
-    reviveWrap.style.gap = "6px";
-    content.insertBefore(reviveWrap, statsEl);
+  // Update high score
+  const bestKey = getBestScoreKey();
+  let savedBest = parseInt(localStorage.getItem(bestKey)) || 0;
+  if (score > savedBest) {
+    savedBest = score;
+    localStorage.setItem(bestKey, savedBest);
   }
+  bestScore = savedBest;
 
-  // Malé řádky „GAME OVER“ + příčina
-  let goSmall1 = document.getElementById("goSmall1");
-  let goSmall2 = document.getElementById("goSmall2");
-  if (!goSmall1) {
-    goSmall1 = document.createElement("div");
-    goSmall1.id = "goSmall1";
-    goSmall1.style.fontSize = "12px";
-    goSmall1.style.letterSpacing = "1px";
-    goSmall1.style.opacity = "0.85";
-    goSmall1.textContent = "GAME OVER";
-    reviveWrap.appendChild(goSmall1);
-  }
-  if (!goSmall2) {
-    goSmall2 = document.createElement("div");
-    goSmall2.id = "goSmall2";
-    goSmall2.style.fontSize = "13px";
-    goSmall2.style.opacity = "0.85";
-    reviveWrap.appendChild(goSmall2);
-  }
-  if (mode === "arcade") {
-  goSmall2.textContent = "Došel čas";
-} else if (mode === "survival") {
-  goSmall2.textContent = "Došly životy";
-} else if (mode === "challenge") {
-  if (lastFailCause === "time") goSmall2.textContent = "Došel čas";
-  else if (lastFailCause === "lives") goSmall2.textContent = "Došly životy";
-  else goSmall2.textContent = "Konec hry";
-}
-
-
-  // Velký titulek + podtitulek
-  let goBig = document.getElementById("goBig");
-  if (!goBig) {
-    goBig = document.createElement("div");
-    goBig.id = "goBig";
-    goBig.style.fontSize = "18px";
-    goBig.style.fontWeight = "800";
-    goBig.style.marginTop = "4px";
-    goBig.textContent = "FREE BONUS! 🚀";
-    reviveWrap.appendChild(goBig);
-  }
-
-  let goSubBig = document.getElementById("goSubBig");
-  if (!goSubBig) {
-    goSubBig = document.createElement("div");
-    goSubBig.id = "goSubBig";
-    goSubBig.style.fontSize = "13px";
-    goSubBig.style.opacity = "0.9";
-    reviveWrap.appendChild(goSubBig);
-  }
-  goSubBig.textContent = "Watch short video for +TIME / +LIVES.";
-
-  // Primární tlačítko (velké)
-  let confirmBtn = document.getElementById("confirmBonusButton");
-  if (!confirmBtn) {
-    confirmBtn = document.createElement("button");
-    confirmBtn.id = "confirmBonusButton";
-    confirmBtn.className = "action-button";
-    confirmBtn.style.padding = "12px 16px";
-    confirmBtn.style.fontSize = "15px";
-    confirmBtn.style.fontWeight = "800";
-    confirmBtn.style.marginTop = "4px";
-    reviveWrap.appendChild(confirmBtn);
-  }
-
-  // Sekundární volba (link-style)
-  let rejectBtn = document.getElementById("rejectBonusButton");
-  if (!rejectBtn) {
-    rejectBtn = document.createElement("button");
-    rejectBtn.id = "rejectBonusButton";
-    rejectBtn.className = "skip-button-small";
-    rejectBtn.style.background = "transparent";
-    rejectBtn.style.border = "none";
-    rejectBtn.style.color = "#aaa";
-    rejectBtn.style.textDecoration = "underline";
-    rejectBtn.style.marginTop = "2px";
-    rejectBtn.style.fontSize = "13px";
-    reviveWrap.appendChild(rejectBtn);
-  }
-  rejectBtn.textContent = "Zobrazit skóre (bez bonusu)";
-
-  const setReviveCopy = () => {
-  if (usedReviveThisRun || !isRewardedReady()) {
-    reviveWrap.style.display = "none";
-    return;
-  }
+  // --- Reward section (CTA) ---
+  const reviveWrap = document.createElement("div");
+  reviveWrap.id = "reviveWrap";
+  reviveWrap.style.margin = "12px 0 10px 0";
+  reviveWrap.style.textAlign = "center";
   reviveWrap.style.display = "flex";
+  reviveWrap.style.flexDirection = "column";
+  reviveWrap.style.gap = "8px";
+  content.insertBefore(reviveWrap, statsEl);
 
-  if (mode === "arcade") {
-    confirmBtn.textContent = "ANO, ZÍSKAT +15 s ⏱️";
-    goSubBig.textContent = "Watch short video for +15 SECONDS.";
-    return;
-  }
-  if (mode === "survival") {
-    confirmBtn.textContent = "ANO, ZÍSKAT +2 ŽIVOTY ❤️";
-    goSubBig.textContent = "Watch short video for +2 LIVES.";
-    return;
-  }
-  // Challenge
-  if (lastFailCause === "time") {
-    confirmBtn.textContent = "ANO, ZÍSKAT +15 s ⏱️";
-    goSubBig.textContent = "Watch short video for +15 SECONDS.";
-  } else if (lastFailCause === "lives") {
-    confirmBtn.textContent = "ANO, ZÍSKAT +2 ŽIVOTY ❤️ +10 s ⏱️";
-    goSubBig.textContent = "Watch short video for +2 LIVES +10 SECONDS.";
-  } else {
-    confirmBtn.textContent = "POKRAČOVAT (BONUS)";
-    goSubBig.textContent = "Watch short video for bonus.";
-  }
-};
-  setReviveCopy();
+  const goSmall = document.createElement("div");
+  goSmall.textContent = "Watch a short video to get a reward!";
+  goSmall.style.fontSize = "13px";
+  goSmall.style.opacity = "0.9";
+  reviveWrap.appendChild(goSmall);
 
-  // Po kliknutí na „Zobrazit skóre (bez bonusu)“ jen necháme popup, nic neschováváme
-  rejectBtn.onclick = () => {
-    reviveWrap.style.display = "none"; // schovej CTA
-    // statistiky už jsou vidět, jen odemkni tlačítka
-    btn.classList.remove("hidden");
-    menuBtn.classList.remove("hidden");
-  };
+  const confirmBtn = document.createElement("button");
+  confirmBtn.id = "confirmBonusButton";
+  confirmBtn.className = "action-button";
+  confirmBtn.style.padding = "12px 16px";
+  confirmBtn.style.fontSize = "15px";
+  confirmBtn.style.fontWeight = "800";
+  confirmBtn.textContent = "WATCH VIDEO";
+  reviveWrap.appendChild(confirmBtn);
 
-  // Po úspěšném shlédnutí: udělit odměnu a pokračovat (3-2-1-GO)
-  const applyRewardAndResume = () => {
-    usedReviveThisRun = true;
+  const rejectBtn = document.createElement("button");
+  rejectBtn.id = "rejectBonusButton";
+  rejectBtn.className = "skip-button-small";
+  rejectBtn.style.background = "transparent";
+  rejectBtn.style.border = "none";
+  rejectBtn.style.color = "#aaa";
+  rejectBtn.style.textDecoration = "underline";
+  rejectBtn.style.marginTop = "2px";
+  rejectBtn.style.fontSize = "13px";
+  rejectBtn.textContent = "Show score only";
+  reviveWrap.appendChild(rejectBtn);
 
-    if (mode === "arcade") {
-      const add = 20;
-      if (timeRemaining < TIMER_MAX) timeRemaining = Math.min(TIMER_MAX, timeRemaining + add);
-      else timeBank += add;
-      updateTimerUI(); blinkTimer();
-      addFloater(`+${add} SECONDS`, centerX, centerY, '#4dff00');
-    } else if (mode === "survival") {
-      const add = 2;
-      lives = Math.min(MAX_LIVES, lives + add);
-      updateLivesDisplay();
-      addFloater(`+${add} LIVES`, centerX, centerY, '#ff0000');
-    } else { 
-      // CHALLENGE
-      if (lastFailCause === 'time') {
-        const add = 15;
-        if (timeRemaining < TIMER_MAX) timeRemaining = Math.min(TIMER_MAX, timeRemaining + add);
-        else timeBank += add;
-        updateTimerUI(); blinkTimer();
-        addFloater(`+${add} SECONDS`, centerX, centerY, '#4dff00');
-      } else if (lastFailCause === 'lives') {
-        // +2 životy +10 s vždy
-        lives = Math.min(MAX_LIVES, lives + 2);
-        updateLivesDisplay();
-        addFloater(`+2 LIVES`, centerX, centerY - 20, '#ff0000');
-
-        const addT = 10;
-        if (timeRemaining < TIMER_MAX) timeRemaining = Math.min(TIMER_MAX, timeRemaining + addT);
-        else timeBank += addT;
-        updateTimerUI(); blinkTimer();
-        addFloater(`+${addT} SECONDS`, centerX, centerY + 10, '#4dff00');
-      }
-    }
-
-    // zavři popup a start přes odpočet
-    popup.classList.add("hidden");
-    isGameOver = false;
-    gameOverShown = false;
-    lastTick = performance.now(); 
-    if (holdButton) { holdButton.disabled = false; }
-    // reset příčiny, ať další konec hry správně vyhodnotí
-    lastFailCause = null;
-
-    runCountdown(startLevel);
-  };
-
-  // Klik na „ANO, …“ → showRewardedAd
+  // --- Reward button click ---
   confirmBtn.onclick = async () => {
-    // mírné odlehčení UI
     confirmBtn.disabled = true;
     confirmBtn.style.opacity = "0.7";
     try {
@@ -538,27 +365,73 @@ statsEl.innerHTML = `
         if (completed) {
           applyRewardAndResume();
         } else {
-          // nic – zůstáváme na skóre
           reviveWrap.style.display = "none";
-          btn.classList.remove("hidden");
-          menuBtn.classList.remove("hidden");
+          showFinalStats();
         }
       });
     } catch (e) {
       console.warn("Rewarded error:", e);
-      // fallback: zobraz jen skóre
       reviveWrap.style.display = "none";
-      btn.classList.remove("hidden");
-      menuBtn.classList.remove("hidden");
+      showFinalStats();
     }
   };
 
-  // defaultně (když CTA je vidět) skryj tlačítka pro novou hru/menu
-  btn.classList.add('hidden');
-  menuBtn.classList.add('hidden');
+  // --- Reject button ---
+  rejectBtn.onclick = () => {
+    reviveWrap.style.display = "none";
+    showFinalStats();
+  };
 
+  // --- Stats placeholder ---
+  function showFinalStats() {
+    statsEl.innerHTML = `
+      <li><strong>Score:</strong> <span>${score}</span></li>
+      <li><strong>High Score:</strong> <span>${bestScore}</span></li>
+      <hr style="border:1px solid rgba(0,255,255,0.15); margin:6px 0;">
+      <li><strong>Stars hit:</strong> <span>${successfulMatches}</span></li>
+      <li><strong>Average accuracy:</strong> <span>${averageAccuracy()}%</span></li>
+      <li><strong>Game time:</strong> <span>${gameTimeStr}</span></li>
+    `;
+    btn.classList.remove("hidden");
+    menuBtn.classList.remove("hidden");
+  }
 
-    popup.classList.remove("hidden");
+  // --- Default hidden buttons until reward choice ---
+  btn.classList.add("hidden");
+  menuBtn.classList.add("hidden");
+
+  popup.classList.remove("hidden");
+}
+
+function applyRewardAndResume() {
+  // Reset Game Over popup
+  const popup = document.getElementById("gameOverPopup");
+  if (popup) popup.classList.add("hidden");
+
+  // Give the player a reward
+  if (mode === "challenge" || mode === "arcade") {
+    const bonusTime = 15; // seconds of extra play time
+    timeRemaining = Math.min(TIMER_MAX, timeRemaining + bonusTime);
+    updateTimerUI();
+    blinkTimer();
+  }
+
+  // Optional small score bonus
+  score += 5;
+  updateScoreUI();
+  pulseScore();
+
+  // Prevent multiple rewards in one run
+  usedReviveThisRun = true;
+
+  // Resume game
+  isGameOver = false;
+  gameOverShown = false;
+
+  // Restart the draw loop if needed
+  if (!loopRunning) {
+    requestAnimationFrame(draw);
+  }
 }
 
 
