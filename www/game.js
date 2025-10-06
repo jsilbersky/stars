@@ -170,9 +170,11 @@ function blinkTimer() {
   setTimeout(() => timerWrap.classList.remove('timer-blink'), 320);
 }
 function updateTimerUI() {
-  const ratio = Math.max(0, Math.min(1, timeRemaining / TIMER_MAX));
+  const modeMax = (mode === "arcade") ? 30 : TIMER_MAX; // 30 jen pro arcade
+  const ratio = Math.max(0, Math.min(1, timeRemaining / modeMax));
   if (timerBar) timerBar.style.width = `${ratio * 100}%`;
 }
+
 
 function updateTimerPulseLast10s() {
   if (!timerWrap) return;
@@ -1861,7 +1863,7 @@ window.startNewGame = function () {
   // 🎮 Režimy
   if (mode === "arcade") {
     lives = MAX_LIVES;
-    timeRemaining = TIMER_MAX;
+    timeRemaining = 30;
     timeBank = 0;
   } else if (mode === "survival") {
     lives = MAX_LIVES;
