@@ -688,3 +688,14 @@ body { position: relative; }
     font-size: 1.7rem;
   }
 }
+
+/* === Rewarded status zpráva a disabled stav tlačítka === */
+#rewardedMsg { color: #bfefff; }
+#rewardedMsg.ok { color: #9cffd6; }
+#rewardedMsg.warn { color: #ffd37a; }
+#rewardedMsg.err { color: #ff9c9c; }
+
+button.btn-busy {
+  opacity: .7 !important;
+  pointer-events: none !important;
+}

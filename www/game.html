@@ -41,7 +41,7 @@
     <button id="holdButton" type="button">POWER</button>
   </div>
 
-<!-- Pop-up okno pro Game Over (připravené pro Rewarded) -->
+<!-- Pop-up okno pro Game Over (mobile Rewarded) -->
 <div id="gameOverPopup" class="hidden">
   <div class="popup-content" style="max-width:420px; text-align:center">
     <!-- Režim + důvod -->
@@ -57,6 +57,8 @@
       <div id="reviveSubtitle" style="font-size:.9rem; opacity:.75; margin-top:2px">
         Watch short video for +TIME / +LIVES.
       </div>
+      <!-- ⚠️ NOVÉ: status zpráva pro rewarded -->
+      <div id="rewardedMsg" style="margin-top:6px; min-height:20px; font-size:.92rem; opacity:.9;"></div>
     </div>
 
     <!-- Velké tlačítko Rewarded -->
@@ -75,13 +77,14 @@
       </button>
     </div>
 
-    <!-- Primární akce po zobrazení skóre -->
-    <div style="display:flex; gap:8px; justify-content:center; margin-top:12px">
+    <!-- Primární akce po zobrazení skóre (schované, dokud neukážeme skóre) -->
+    <div style="display:flex; gap:8px; justify-content:center; margin-top:12px" class="hidden" id="scoreActions">
       <button id="newGameButton">PLAY AGAIN</button>
       <button id="menuButton">MENU</button>
     </div>
   </div>
 </div>
+
 
   <!-- Help / Tutorial Popup -->
   <div id="helpPopup" class="popup" style="display:flex">

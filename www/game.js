@@ -194,14 +194,14 @@ function tickTimer(now) {
   lastTick = now;
 
   timeRemaining -= delta;
-    if (timeRemaining <= 0) {
+
+  if (timeRemaining <= 0) {
     timeRemaining = 0;
-    lastFailCause = 'time';
-    lockGame();
-    triggerGameOver();   // ukaž popup hned
+    updateTimerUI();
+    updateTimerPulseLast10s();
+    endGame('time');     // ✅ jednotná cesta
     return;
   }
-
 
   if (timeRemaining < TIMER_MAX && timeBank > 0) {
     const give = Math.min(TIMER_MAX - timeRemaining, timeBank);
@@ -213,6 +213,7 @@ function tickTimer(now) {
   updateTimerUI();
   updateTimerPulseLast10s();
 }
+
 
 /* === Hand cue (naváděcí ruka po GO) ==================================== */
 let showHandCueNextStart = false; // nastaví se při START z help okna
@@ -247,26 +248,25 @@ function showHandCueIfNeeded() {
 function beginNewGameFlow(fromHelp = false) {
   // schovej pop-upy
   const help = document.getElementById('helpPopup');
-  const over = document.getElementById('gameOverPopup');
+  const over  = document.getElementById('gameOverPopup');
 
   if (fromHelp && help) help.style.display = 'none';
   if (over) over.classList.add('hidden');
 
-  // 🔹 jemně přednačti další rewarded (pokud není připraven)
-  try {
-    if (!isRewardedReady()) {
-      loadRewardedAd();
-    }
-  } catch (e) {
-    // v browseru/bez pluginu jen ignoruj
-    console.warn('Rewarded preload skip:', e);
-  }
+  // při startu z help okna ukaž krátce naváděcí ruku po "GO"
+  if (fromHelp) showHandCueNextStart = true;
 
-  // spusť 3-2-1 a teprve POTOM reset + start
+  // bezpečně inicializuj AdMob (v browseru + mocku je to no-op)
+  (async () => {
+    try { await initAds?.(); } catch (e) { console.warn('Ad init skipped:', e); }
+  })();
+
+  // spusť 3-2-1 a teprve POTOM kompletní reset + start levelu
   runCountdown(() => {
-    startNewGame(); // reset + startLevel()
+    startNewGame(); // resetuje stav, vyvolá startLevel() a rozběhne draw loop
   });
 }
+
 
 
 // FIX: registraci NEW GAME uděláme JEDNOU mimo flow
@@ -281,79 +281,60 @@ if (menuBtn) {
   });
 }
 
+// 🟢 Pomocná proměnná – hlídá, zda už byla nabídnuta reklama
+let bonusOffered = false;
+
 function triggerGameOver() {
   if (gameOverShown) return;
   gameOverShown = true;
 
-  const popup = document.getElementById("gameOverPopup");
-  if (!popup) return;
-  const content = popup.querySelector(".popup-content");
-  const btn = document.getElementById("newGameButton");
-  const menuBtn = document.getElementById("menuButton");
+  const popup       = document.getElementById("gameOverPopup");
+  const reasonEl    = popup.querySelector("#gameOverReason");
+  const subtitleEl  = popup.querySelector("#reviveSubtitle");
+  const confirmBtn  = popup.querySelector("#reviveButton");
+  const skipBtn     = document.getElementById("skipReviveButton");
+  const newGameBtn  = document.getElementById("newGameButton");
+  const menuBtn     = document.getElementById("menuButton");
+  const statsList   = popup.querySelector("#gameOverStats");
+  const scoreActions = document.getElementById("scoreActions");
+  const msgEl       = document.getElementById("rewardedMsg");
 
-  // smazat starý revive blok
-  let oldRevive = document.getElementById("reviveWrap");
-  if (oldRevive) oldRevive.remove();
-
-  // vytvořit revive blok
-  const reviveWrap = document.createElement("div");
-  reviveWrap.id = "reviveWrap";
-  reviveWrap.style.margin = "12px 0";
-  reviveWrap.style.textAlign = "center";
-  content.insertBefore(reviveWrap, btn);
-
-  // nadpis
-  const title = document.createElement("h2");
-  title.textContent = "GAME OVER";
-  reviveWrap.appendChild(title);
-
-  // text
-  const small = document.createElement("div");
-  small.textContent = "Watch a short video to continue!";
-  small.style.marginBottom = "8px";
-  reviveWrap.appendChild(small);
-
-  // tlačítko – spuštění reklamy
-  const confirmBtn = document.createElement("button");
-  confirmBtn.textContent = "WATCH VIDEO";
-  confirmBtn.className = "action-button";
-  confirmBtn.onclick = async () => {
-    try {
-      const ok = await showRewardedAd();
-      if (ok) {
-        applyRewardAndResume();
-      } else {
-        showFinalStats();
-      }
-    } catch (err) {
-      console.warn("Ad error", err);
-      showFinalStats();
-    }
+  // helpery UI
+  const setLoading = (on) => {
+    if (!confirmBtn) return;
+    confirmBtn.classList.toggle('btn-busy', !!on);
+    confirmBtn.disabled = !!on;
+    confirmBtn.textContent = on ? "Loading video…" : "YES, GET BONUS! 🤩";
   };
-  reviveWrap.appendChild(confirmBtn);
+  const setMsg = (text, cls = '') => {
+    if (!msgEl) return;
+    msgEl.className = '';
+    if (cls) msgEl.classList.add(cls);
+    msgEl.textContent = text || '';
+  };
+  const clearMsg = () => setMsg('', '');
 
-  // možnost přeskočit
-  const reject = document.createElement("div");
-  reject.textContent = "Show score only";
-  reject.style.textDecoration = "underline";
-  reject.style.cursor = "pointer";
-  reject.onclick = () => showFinalStats();
-  reviveWrap.appendChild(reject);
+  // skryj akce PLAY AGAIN/MENU (ukáží se až po zobrazení výsledků)
+  newGameBtn?.classList.add("hidden");
+  menuBtn?.classList.add("hidden");
+  scoreActions?.classList.add("hidden");
+  clearMsg();
 
-  // funkce na zobrazení výsledků
-  function showFinalStats() {
-    reviveWrap.remove();
+  // důvod konce hry
+  reasonEl.textContent =
+    lastFailCause === "time"  ? "Time ran out." :
+    lastFailCause === "lives" ? "No lives left." : "";
 
-    const statsEl = document.createElement("ul");
-    statsEl.id = "gameOverStats";
+  popup.classList.remove("hidden");
 
-    // spočítat čas
+  // Připrav výpočet statistik, high score atd.
+  const showScore = () => {
+    // čas hry
     const elapsedSec = Math.floor((performance.now() - gameStartTime) / 1000);
     const mins = Math.floor(elapsedSec / 60);
     const secs = elapsedSec % 60;
-    const gameTimeStr = `${mins}m ${secs}s`;
 
-    // uložit high score
+    // high score per mode
     const bestKey = getBestScoreKey();
     let savedBest = parseInt(localStorage.getItem(bestKey)) || 0;
     if (score > savedBest) {
@@ -362,25 +343,106 @@ function triggerGameOver() {
     }
     bestScore = savedBest;
 
-    statsEl.innerHTML = `
-      <li><strong>Score:</strong> <span>${score}</span></li>
-      <li><strong>High Score:</strong> <span>${bestScore}</span></li>
+    // vyplň statistiky
+    statsList.innerHTML = `
+      <li><strong>Score:</strong><span style="color:white; font-weight:bold;">${score}</span></li>
+      <li><strong>High Score:</strong><span style="color:white; font-weight:bold;">${bestScore}</span></li>
       <hr style="border:1px solid rgba(0,255,255,0.15); margin:6px 0;">
-      <li><strong>Stars hit:</strong> <span>${successfulMatches}</span></li>
-      <li><strong>Average accuracy:</strong> <span>${averageAccuracy()}%</span></li>
-      <li><strong>Game time:</strong> <span>${gameTimeStr}</span></li>
+      <li><strong>Stars hit:</strong><span style="color:white; font-weight:bold;">${successfulMatches}</span></li>
+      <li><strong>Average accuracy:</strong><span style="color:white; font-weight:bold;">${averageAccuracy()}%</span></li>
+      <li><strong>Game time:</strong><span style="color:white; font-weight:bold;">${mins}m ${secs}s</span></li>
     `;
-    content.insertBefore(statsEl, btn);
 
-    btn.classList.remove("hidden");
-    menuBtn.classList.remove("hidden");
+    // přepni UI do „score“ režimu
+    confirmBtn?.classList.add("hidden");
+    skipBtn?.classList.add("hidden");
+    subtitleEl?.classList.add("hidden");
+    reasonEl?.classList.add("hidden");
+    clearMsg();
+
+    newGameBtn?.classList.remove("hidden");
+    menuBtn?.classList.remove("hidden");
+    scoreActions?.classList.remove("hidden");
+
+    popup.classList.remove("hidden");
+  };
+
+  // Pokud už byl revive použit, rovnou skóre
+  if (usedReviveThisRun) { showScore(); return; }
+
+  // „Watch video“ → Rewarded
+  confirmBtn.onclick = async () => {
+    setLoading(true);
+    clearMsg();
+    try {
+      // Zavoláme mobilní rewarded – vrací 'rewarded' | 'closed' | 'error' | 'unavailable'
+      const status = await showRewardedAd();
+
+      if (status === 'rewarded') {
+        usedReviveThisRun = true;
+        popup.classList.add("hidden");
+        applyRewardAndResume();              // +15s / +1 life a pokračuj (3-2-1)
+        return;
+      }
+
+      if (status === 'closed') {
+        // Uživatel video zavřel → ukaž skóre
+        showScore();
+        return;
+      }
+
+      if (status === 'unavailable') {
+        setMsg("Bonus video is available only in the mobile app build.", "warn");
+        // Zůstaň v popupu, ať může hráč dát „Show score“
+        return;
+      }
+
+      if (status === 'error') {
+        setMsg("Couldn’t load the video. Try again.", "err");
+        return;
+      }
+
+      // fallback – chovej se jako closed
+      showScore();
+    } catch (err) {
+      console.warn("⚠️ Ad error:", err);
+      setMsg("Couldn’t load the video. Try again.", "err");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // „Show score (no bonus)“
+  if (skipBtn) skipBtn.onclick = showScore;
+}
+
+
+// === REVIVE PO REKLAMĚ (pokračování ve hře) ===
+function applyRewardAndResume() {
+  const popup = document.getElementById("gameOverPopup");
+  if (!popup) return;
+
+  // 🧹 schovej revive popup
+  popup.classList.add("hidden");
+
+  // 🎁 přidej bonus podle důvodu prohry
+  if (lastFailCause === 'lives') {
+    lives = Math.min(lives + 1, MAX_LIVES); // +1 život
+    updateLivesDisplay();
+  } else if (lastFailCause === 'time') {
+    timeRemaining = Math.min(timeRemaining + 15, TIMER_MAX); // +15 sekund
+    updateTimerUI();
   }
 
-  // defaultně schovej tlačítka
-  btn.classList.add("hidden");
-  menuBtn.classList.add("hidden");
+  // 🔄 resetuj stav hry, aby mohla pokračovat
+  isGameOver = false;
+  gameOverShown = false;
 
-  popup.classList.remove("hidden");
+  // 🔢 krátký countdown a pokračování hry
+  runCountdown(() => {
+    lastTick = performance.now();
+    if (!loopRunning) requestAnimationFrame(draw);
+  });
 }
 
 
@@ -402,10 +464,14 @@ document.getElementById('startGameBtn')?.addEventListener('click', () => {
 });
 
 
-// <<< Pomocná obálka pro konec na čas >>>
-function endGame() {
-  triggerGameOver();
+// Jednotný konec hry s příčinou ('time' | 'lives')
+function endGame(cause) {
+  if (isGameOver) return;
+  lastFailCause = cause; // 'time' | 'lives'
+  lockGame();            // zastaví smyčku a vstupy
+  triggerGameOver();     // otevře popup (jednou)
 }
+
 
 // ===== Plovoucí text =====
 let floaters = [];
@@ -1326,12 +1392,12 @@ bonusAppearSound.play();
 
   bonus.active = true;
   bonus.lastSpawnSec = nowSec;
-  return true;
 
   bonus.prevX = bonus.x;
   bonus.prevY = bonus.y;
   bonus.sparkles.length = 0;
   bonus.emitAccumulator = 0;
+  return true;
 
 }
 function bonusUpdateAndDraw(now, dt){
@@ -1571,7 +1637,6 @@ if (!bonus.pauseMainScene) {
   ctx.translate(shapeX, shapeY);
   ctx.rotate(rotation);
   drawStarShape(currentShape, radius);
-  ctx.fill();
   ctx.restore();
 
   drawShape(currentShape, shapeX, shapeY, radius, rotation, holdHue + hue, 5);
@@ -1700,7 +1765,7 @@ function handleRelease() {
         updateLivesDisplay();
       }
       failSound.currentTime = 0; failSound.play();
-      if (lives <= 0) { lastFailCause = 'lives'; lockGame(); triggerGameOver(); return; }
+      if (lives <= 0) { endGame('lives'); return; }
       msActiveIndex = null;
     }
 
@@ -1764,7 +1829,7 @@ function handleRelease() {
       updateLivesDisplay();
     }
     failSound.currentTime = 0; failSound.play();
-    if (lives <= 0) { lastFailCause = 'lives'; lockGame(); triggerGameOver(); return; }
+    if (lives <= 0) { endGame('lives'); return; }
   }
   bonusMaybeSpawnAfterRelease();
 }
@@ -1837,10 +1902,7 @@ const bonusAppearSound = new Audio('sounds/bonus.mp3'); bonusAppearSound.preload
 
 function lockGame() {
   if (isGameOver) return;
-  isGameOver = true;
   isHolding = false;
-
-  // Uklid efektů
   showWrong = false;
   effectTimer = 0;
   floaters = [];
@@ -1852,9 +1914,11 @@ function lockGame() {
     holdButton.classList.remove('active');
   }
 
-  // 🔹 rovnou zobraz Game Over popup (revive nabídka přes rewarded)
-  triggerGameOver();
+  // Zastav smyčku a označ konec hry
+  isGameOver = true;
+  loopRunning = false;
 }
+
 
 
 // Zabránění kontextovému menu
@@ -2002,13 +2066,18 @@ function drawInit() {
   draw();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   drawInit(); // 🎮 hned start hry
 
-  initAds()
-    .then(() => loadRewardedAd())
-    .catch(err => console.warn("⚠️ AdMob init error:", err));
+  try {
+    console.log("🟢 Inicializuji AdMob...");
+    await initAds();             // inicializace pluginu
+    console.log("🟢 AdMob připraven");
+  } catch (err) {
+    console.warn("⚠️ AdMob init error:", err);
+  }
 });
+
 
 
 // === HELP POPUP + CANVAS DEMO (aligned to START, big 👆 from below) ===
