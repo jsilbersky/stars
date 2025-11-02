@@ -1,30 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Star Game Menu</title>
-  <link rel="stylesheet" href="menu.css">
-  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>GALAXIKO — Stellar Flight Deck</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- Canvas na pozadí -->
-  <canvas id="starCanvas"></canvas>
+  <!-- Pulsing cosmic layers -->
+  <div class="cosmos-layer cosmos-1" aria-hidden="true"></div>
+  <div class="cosmos-layer cosmos-2" aria-hidden="true"></div>
 
-  <div class="menu">
-    <div class="brand">
-      <img src="images/main_page.webp" alt="Logo" class="main-logo">
-      <p class="slogan">One Button. <span class="highlight">Big Bang!</span></p>
-      <h1>GALAXIKO</h1>
+  <!-- Warp background -->
+  <canvas id="space" aria-hidden="true"></canvas>
+  <!-- Gameplay -->
+  <canvas id="gameplay" aria-hidden="true"></canvas>
+
+  <!-- READY / GO -->
+  <div id="readyGo" class="toast" aria-live="polite"></div>
+
+  <!-- MENU -->
+  <section id="menu" class="screen active" role="region" aria-label="Main menu">
+    <div class="menu-box glass">
+      <img src="main_page.webp" class="logo" alt="GALAXIKO logo" />
+      <h1 class="title">GALAXIKO</h1>
+      <p class="slogan">One Button. Big Bang!</p>
+
+      <div class="howto">
+        <p>Press & hold to grow the star outline. Release exactly when it matches the outline to explode it.</p>
+        <p>Arcade: 30s for score. Survival: <strong>3 lives</strong> — last as long as possible.</p>
+      </div>
+
+      <div class="menu-actions">
+        <button class="btn primary" data-mode="arcade">Arcade</button>
+        <button class="btn" data-mode="survival">Survival</button>
+      </div>
     </div>
+  </section>
 
-    <div class="buttons">
-      <button onclick="chooseMode('arcade')">⏳ Arcade - 30 sec</button>
-      <button onclick="chooseMode('survival')">❤️ Survival - 5 lives</button>
-      <button onclick="chooseMode('challenge')">🔥 Challenge - 60 sec + 5 lives</button>
+  <!-- GAME -->
+  <section id="game" class="screen" role="region" aria-label="Game">
+    <div class="cockpit holo glass">
+      <div class="wing wing-left" aria-hidden="true"></div>
+      <div class="wing wing-right" aria-hidden="true"></div>
+
+      <!-- Left -->
+      <div class="cluster stack left">
+        <div class="gauge gauge-score">
+          <div class="gauge-title">Score</div>
+          <div id="score" class="gauge-value">0</div>
+          <div class="gauge-strip"></div>
+        </div>
+        <div class="gauge gauge-level">
+          <div class="gauge-title">Level</div>
+          <div id="level" class="gauge-value">1</div>
+          <div class="gauge-ticks"></div>
+        </div>
+      </div>
+
+      <!-- Center -->
+      <div class="cluster center">
+        <div id="timer" class="timer touchpad">
+          <div class="bezel">
+            <div class="bezel-glow"></div>
+            <div class="bezel-screws"></div>
+          </div>
+          <svg class="ring" viewBox="0 0 120 120" aria-hidden="true">
+            <defs>
+              <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#70a3ff"/>
+                <stop offset="100%" stop-color="#54e0ff"/>
+              </linearGradient>
+            </defs>
+            <circle class="bg" cx="60" cy="60" r="56" />
+            <circle class="fg" cx="60" cy="60" r="56" />
+            <circle class="ticks" cx="60" cy="60" r="56" />
+          </svg>
+          <button id="thrustBtn" class="thrust" aria-label="Hold to charge">HOLD</button>
+        </div>
+      </div>
+
+      <!-- Right -->
+      <div class="cluster stack right">
+        <div class="gauge gauge-lives">
+          <div class="gauge-title">Lives</div>
+          <div id="lives" class="gauge-value lives">♥♥♥</div>
+          <div class="gauge-strip"></div>
+        </div>
+        <div class="gauge gauge-mode">
+          <div class="gauge-title">Mode</div>
+          <div id="modeTag" class="gauge-value small">ARCADE</div>
+          <div class="gauge-strip"></div>
+        </div>
+      </div>
+
+      <!-- overlays -->
+      <div class="cockpit-grid"></div>
+      <div class="cockpit-scan"></div>
+      <div class="cockpit-lights"></div>
+    </div>
+  </section>
+
+  <!-- GAME OVER -->
+  <section id="gameover" class="screen" role="region" aria-label="Game over">
+    <div class="gameover-box glass">
+      <h2>Game Over</h2>
+      <div class="summary">
+        <div><span class="label">Score</span><span id="finalScore" class="value">0</span></div>
+        <div><span class="label">Best</span><span id="finalBest" class="value">0</span></div>
+      </div>
+      <div class="actions">
+        <!-- Bonus (rewarded) -->
+        <button id="bonusBtn" class="btn primary">Play Again + Bonus</button>
+        <!-- No bonus (less prominent) -->
+        <button id="againNoBonusBtn" class="btn ghost weak">Play Again — No Bonus</button>
+        <!-- Back to menu -->
+        <button id="menuBtn" class="btn">Menu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- REWARDED AD OVERLAY (fallback / stub-safe) -->
+  <div id="adOverlay" class="ad-overlay" hidden>
+    <div class="ad-box glass">
+      <div class="ad-title">Sponsored</div>
+      <div class="ad-body">
+        <div class="spinner" aria-hidden="true"></div>
+        <div class="ad-status" id="adStatus">Loading…</div>
+      </div>
+      <button id="adClose" class="btn" disabled>Play</button>
     </div>
   </div>
 
-  <script src="menu.js"></script>
+  <!-- AUDIO -->
+  <audio id="sfxExplosion" src="explosion.mp3" preload="auto"></audio>
+  <audio id="sfxFail" src="fail.mp3" preload="auto"></audio>
+  <audio id="sfxHold" src="hold.mp3" preload="auto" loop></audio>
+  <audio id="bgAmbient" src="after_start.mp3" preload="auto" loop></audio>
+
+  <script src="game.js"></script>
 </body>
 </html>

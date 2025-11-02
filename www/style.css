@@ -1,0 +1,157 @@
+/* Always hide [hidden] */
+[hidden]{ display:none !important; }
+
+:root{
+  --bg-0:#070a12; --bg-1:#0e1422;
+  --glass:rgba(255,255,255,.06); --stroke:rgba(255,255,255,.14);
+  --cyan:#54e0ff; --azure:#70a3ff; --green:#3af59b; --red:#ff4b6e;
+  --white:#e8f1ff; --muted:#9fb3d4; --panel-deep:rgba(9,13,25,.88);
+}
+
+/* base */
+*{box-sizing:border-box}
+html,body{
+  margin:0;padding:0;min-height:100%;
+  font-family:'Oxanium',ui-rounded,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  color:var(--white);
+  background:radial-gradient(1100px 700px at 50% -30%,#1a2341 0%,var(--bg-1) 45%,var(--bg-0) 100%);
+  overflow:hidden;
+}
+
+/* animated cosmic fog */
+.cosmos-layer{position:fixed;inset:-20vmax;z-index:0;pointer-events:none;filter:blur(26px) saturate(120%);opacity:.45;mix-blend-mode:screen}
+.cosmos-1{
+  background:
+    radial-gradient(30vmax 30vmax at 20% 10%, rgba(112,163,255,.10), transparent 60%),
+    radial-gradient(28vmax 28vmax at 80% 0%, rgba(84,224,255,.08), transparent 65%),
+    radial-gradient(34vmax 28vmax at 70% 60%, rgba(93,77,255,.08), transparent 70%);
+  animation:cosmos1 26s linear infinite
+}
+.cosmos-2{
+  background:
+    radial-gradient(26vmax 26vmax at 10% 70%, rgba(255,109,159,.06), transparent 65%),
+    radial-gradient(30vmax 30vmax at 90% 80%, rgba(64,221,255,.06), transparent 70%);
+  animation:cosmos2 32s linear infinite reverse
+}
+@keyframes cosmos1{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(2%,-2%,0)}100%{transform:translate3d(0,0,0)}}
+@keyframes cosmos2{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(-2%,2%,0)}100%{transform:translate3d(0,0,0)}}
+
+#space,#gameplay{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:1}
+
+/* screens */
+.screen{position:fixed;inset:0;display:none;z-index:2;padding:env(safe-area-inset-top) 12px calc(122px + env(safe-area-inset-bottom)) 12px}
+.screen.active{display:block}
+#menu{place-items:center;padding-bottom:calc(140px + env(safe-area-inset-bottom))}
+#menu.screen.active{display:grid}
+#gameover.screen.active{display:grid;place-items:center}
+
+/* Glass util */
+.glass{
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+  border:1px solid var(--stroke);
+  backdrop-filter:blur(10px) saturate(135%);
+  border-radius:18px;box-shadow:0 10px 40px rgba(0,0,0,.35)
+}
+
+/* menu */
+.menu-box{width:min(680px,92vw);padding:26px 22px 22px;text-align:center}
+.logo{width:88px;height:88px;object-fit:contain;filter:drop-shadow(0 6px 16px rgba(84,224,255,.4))}
+.title{font-size:clamp(26px,7vw,40px);letter-spacing:.16em;margin:8px 0 2px;font-weight:700;text-transform:uppercase;background:linear-gradient(90deg,#54e0ff,#70a3ff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.slogan{margin:0 0 12px;color:var(--muted);letter-spacing:.06em}
+.howto{margin:10px 8px 18px;color:#cfe4ff;opacity:.9;font-size:.95rem}
+.menu-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{appearance:none;border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));color:var(--white);font-weight:700;padding:12px 14px;border-radius:12px;letter-spacing:.08em;text-transform:uppercase;transition:transform .06s,box-shadow .2s,border-color .2s;box-shadow:0 8px 26px rgba(0,0,0,.25);cursor:pointer}
+.btn.primary{border-color:rgba(84,224,255,.6);box-shadow:0 10px 30px rgba(84,224,255,.2)}
+.btn.ghost{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));border-color:rgba(255,255,255,.08)}
+.btn.weak{opacity:.7}
+.btn:active{transform:translateY(1px) scale(.98)}
+
+/* ========== COCKPIT (smaller for mobile) ========== */
+#game{padding:0}
+.cockpit{
+  position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));
+  min-height:132px;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:14px 16px;
+  z-index:3;border-radius:18px;overflow:hidden;
+  background:radial-gradient(140% 140% at 50% 10%, rgba(111,161,255,.12), rgba(0,0,0,0) 70%), var(--panel-deep);
+  border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 0 0 1px rgba(84,224,255,.08) inset, 0 8px 30px rgba(0,0,0,.45);
+  clip-path:polygon(8px 0, calc(100% - 8px) 0, 100% 16px, 100% calc(100% - 16px), calc(100% - 16px) 100%, 16px 100%, 0 calc(100% - 16px), 0 16px);
+}
+.cockpit::after{content:"";position:absolute;inset:2px;border-radius:16px;border:1px solid rgba(112,163,255,.2);box-shadow:inset 0 0 24px rgba(84,224,255,.15);pointer-events:none}
+.wing{position:absolute;top:8px;bottom:8px;width:34px;border-radius:12px;pointer-events:none}
+.wing-left{left:-14px;background:linear-gradient(90deg, rgba(84,224,255,.18), rgba(84,224,255,0));clip-path:polygon(0 0,100% 10%,100% 90%,0% 100%)}
+.wing-right{right:-14px;background:linear-gradient(270deg, rgba(112,163,255,.18), rgba(112,163,255,0));clip-path:polygon(0 10%,100% 0,100% 100%,0% 90%)}
+.cockpit-grid,.cockpit-scan,.cockpit-lights{position:absolute;inset:0;border-radius:16px;pointer-events:none}
+.cockpit-grid{background:linear-gradient(transparent 95%, rgba(84,224,255,.12) 95%),linear-gradient(90deg, transparent 95%, rgba(84,224,255,.12) 95%);background-size:18px 18px;opacity:.25;mix-blend-mode:screen;mask-image:radial-gradient(120% 110% at 50% 120%, #000 60%, transparent 100%)}
+.cockpit-scan{background:repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 2px, transparent 2px 6px);animation:scan 4s linear infinite;opacity:.2}
+@keyframes scan{0%{transform:translateY(18%)}100%{transform:translateY(-18%)}}
+.cockpit-lights{background:radial-gradient(24vmax 24vmax at -10% 120%, rgba(84,224,255,.18), transparent 60%), radial-gradient(18vmax 18vmax at 110% 120%, rgba(112,163,255,.16), transparent 60%);filter:blur(16px);opacity:.55;mix-blend-mode:screen}
+
+.cluster{display:flex;align-items:center;justify-content:center}
+.stack{flex-direction:column;gap:8px;min-width:92px}
+.stack.right{align-items:flex-end}
+.stack.left{align-items:flex-start}
+
+/* gauges — smaller typography to fit SURVIVAL */
+.gauge{width:100%;padding:6px 8px;border-radius:10px;position:relative;background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.02)), rgba(255,255,255,.02);border:1px solid rgba(112,163,255,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04), 0 8px 20px rgba(0,0,0,.25)}
+.gauge-title{font-size:8px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+.gauge-value{font-size:18px;font-weight:800;line-height:1.1}
+.gauge-value.small{font-size:14px;letter-spacing:.10em}
+.gauge .gauge-strip{position:absolute;left:6px;right:6px;bottom:5px;height:5px;border-radius:5px;background:linear-gradient(90deg, rgba(84,224,255,.25), rgba(112,163,255,.25)), repeating-linear-gradient(90deg, rgba(255,255,255,.20) 0 8px, rgba(255,255,255,.05) 8px 16px);box-shadow:0 0 16px rgba(84,224,255,.25)}
+.gauge-level .gauge-ticks{position:absolute;inset:auto 6px 5px 6px;height:7px;background:radial-gradient(circle at 0% 50%, rgba(84,224,255,.25) 1px, transparent 1px) 0/10% 100%, radial-gradient(circle at 20% 50%, rgba(84,224,255,.25) 1px, transparent 1px) 0/10% 100%, radial-gradient(circle at 40% 50%, rgba(84,224,255,.25) 1px, transparent 1px) 0/10% 100%, radial-gradient(circle at 60% 50%, rgba(84,224,255,.25) 1px, transparent 1px) 0/10% 100%, radial-gradient(circle at 80% 50%, rgba(84,224,255,.25) 1px, transparent 1px) 0/10% 100%;opacity:.6}
+.gauge-lives .lives{letter-spacing:.12em}
+
+/* timer/button */
+.timer{position:relative;width:122px;height:122px;display:grid;place-items:center}
+.touchpad{touch-action:none}
+.bezel{position:absolute;inset:-6px;border-radius:999px;background:conic-gradient(from 0deg, rgba(84,224,255,.2), rgba(255,255,255,0) 40%), radial-gradient(80% 80% at 50% 45%, rgba(255,255,255,.06), rgba(255,255,255,0) 60%);border:1px solid rgba(112,163,255,.25);box-shadow:inset 0 0 0 2px rgba(255,255,255,.04),0 0 32px rgba(84,224,255,.15)}
+.bezel-glow{position:absolute;inset:0;border-radius:999px;box-shadow:inset 0 0 24px rgba(84,224,255,.25)}
+.bezel-screws{position:absolute;inset:0;border-radius:999px;background:radial-gradient(6px 6px at 50% 6%, rgba(255,255,255,.25), transparent 60%), radial-gradient(6px 6px at 6% 50%, rgba(255,255,255,.25), transparent 60%), radial-gradient(6px 6px at 94% 50%, rgba(255,255,255,.25), transparent 60%), radial-gradient(6px 6px at 50% 94%, rgba(255,255,255,.25), transparent 60%);mask-image:radial-gradient(60% 60% at 50% 50%, #000 60%, transparent 66%)}
+.timer .ring{position:absolute;inset:0;transform:rotate(-90deg);filter:drop-shadow(0 0 20px rgba(112,163,255,.35));pointer-events:none}
+.timer .ring .bg{fill:none;stroke:rgba(255,255,255,.08);stroke-width:8}
+.timer .ring .fg{fill:none;stroke:url(#ringGrad);stroke-width:8;stroke-linecap:round;stroke-dasharray:351.86;stroke-dashoffset:0;transition:stroke .18s,filter .18s}
+.timer .ring .ticks{fill:none;stroke:rgba(255,255,255,.12);stroke-width:1.5;stroke-dasharray:2 11;opacity:.55}
+.timer.ok .ring .fg{stroke:var(--green);filter:drop-shadow(0 0 20px rgba(58,245,155,.6))}
+.timer.bad .ring .fg{stroke:var(--red);filter:drop-shadow(0 0 20px rgba(255,75,110,.6))}
+.thrust{width:80px;height:80px;border-radius:999px;z-index:2;border:1px solid var(--stroke);background:radial-gradient(60% 60% at 50% 30%, rgba(255,255,255,.18), rgba(255,255,255,.02) 70%), linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.02));color:var(--white);font-weight:800;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 10px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(255,255,255,.06);transition:transform .06s, background .2s, box-shadow .2s}
+.thrust:active,.thrust.holding{transform:translateY(1px) scale(.985);box-shadow:0 10px 30px rgba(0,0,0,.4), 0 0 50px rgba(112,163,255,.4) inset, 0 0 70px rgba(84,224,255,.15)}
+
+/* Toast */
+.toast{position:fixed;inset:0;display:grid;place-items:center;z-index:4;pointer-events:none;font-weight:800;font-size:clamp(22px,8vw,44px);letter-spacing:.12em;text-transform:uppercase;color:var(--white);opacity:0;transform:translateY(8px);transition:opacity .18s,transform .25s;text-shadow:0 8px 40px rgba(0,0,0,.4)}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* Game over */
+.gameover-box{width:min(560px,90vw);padding:22px 18px;text-align:center}
+.gameover-box h2{margin:0 0 10px;font-size:clamp(20px,6vw,28px)}
+.summary{display:grid;gap:8px;margin-bottom:14px}
+.summary .label{color:var(--muted);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+.summary .value{font-size:22px;font-weight:800}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions #menuBtn{grid-column:1/-1}
+
+/* shake + random rumble */
+@keyframes shake{0%{transform:translate(0,0)}20%{transform:translate(-2px,1px)}40%{transform:translate(2px,-1px)}60%{transform:translate(-1px,2px)}80%{transform:translate(1px,-2px)}100%{transform:translate(0,0)}}
+.shake{animation:shake 140ms ease-in-out}
+@keyframes rumble{0%,100%{transform:translate3d(0,0,0)}50%{transform:translate3d(.5px,-.5px,0)}}
+.rumble{animation:rumble 1200ms ease-in-out infinite;}
+
+/* Rewarded Ad overlay */
+.ad-overlay{position:fixed;inset:0;z-index:5;display:grid;place-items:center;background:rgba(5,8,14,.75);backdrop-filter:blur(2px)}
+.ad-box{width:min(520px,90vw);padding:18px;display:grid;gap:12px;text-align:center}
+.ad-title{letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-size:12px}
+.ad-body{display:grid;place-items:center;gap:10px;padding:10px 0 2px}
+.spinner{width:42px;height:42px;border-radius:999px;border:4px solid rgba(255,255,255,.15);border-top-color:var(--cyan);animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#adClose[disabled]{opacity:.6;pointer-events:none}
+
+/* focus */
+:focus-visible{outline:2px dashed var(--cyan);outline-offset:2px}
+
+/* very small phones */
+@media (max-width:360px){
+  .timer{width:114px;height:114px}
+  .thrust{width:76px;height:76px;font-size:12px}
+  .stack{min-width:86px}
+  .gauge-value{font-size:16px}
+  .gauge-value.small{font-size:13px}
+}
