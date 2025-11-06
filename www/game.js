@@ -1,138 +1,151 @@
 (() => {
   'use strict';
 
-  // ===== Ads (safe stub with real test ID placeholder) =====
+  // ===== Rewarded Ads (stub – jen bonus do další hry) =====
   const REWARDED = {
     enabled: true,
     provider: 'stub',
-    testAdUnitId: 'ca-app-pub-3940256099942544/5224354917',
-    minShowMs: 2000
+    minShowMs: 1200,
   };
 
-  // ===== Config =====
+  // ===== Konfigurace =====
   const CONFIG = {
+    // režimy
     arcadeDuration: 30_000,
     survivalLives: 3,
 
-    // matching tolerance (scale only)
-    targetToleranceScaleStart: 0.10,
-    minToleranceScale: 0.035,
-    tighten: 0.965,              // jemnější zpřesňování
+    // LOCK mechanika
+    lockMsBase: 800,            // kolik ms čisté "Green" trvá 100% LOCK
+    lockMsStep: 50,             // delší lock po každých pár trefách (lehké škálování)
+    lockMsMax: 1200,
 
-    // growth
-    growthPerSecond: 0.62,       // jemněji
+    tolGreenStart: 0.10,        // ±10 % na začátku
+    tolGreenMin: 0.03,          // min ±3 %
+    tolGoldRatio: 0.5,          // Gold = polovina Green
+    tolPerfRatio: 0.33,         // Perfect = třetina Green
 
-    // visual spin (same for all outlines)
-    spinDegPerSecond: 40,
+    tightenEvery: 3,            // po kolika trefách se přitáhne tolerance + prodlouží lock
+    tightenFactor: 0.96,        // násobení tolerance
 
-    // warp/background
-    starsCountNear: 300,
-    starsCountFar: 240,
-    warpBase: 0.014,
-    warpPerLevel: 0.0012,
+    // růst a zmenšování hráčovy hvězdy
+    growPerSec: 0.60,
+    shrinkPerSec: 0.42,
 
-    // „komety“ = jasné streaky letící ze středu k hráči
-    streakChancePerSec: 0.22,   // jak často startují (≈/s)
-    streakLifeMs: 1800,         // život streaku v ms
+    // progress mimo pásmo pomalu klesá
+    lockDrainFactor: 0.35,      // poměr vůči base lock rate
 
-    // targets motion
-    targetBaseSpeed: 0.06,       // px/ms (scaled by DPR)
-    targetSpeedPerLevel: 0.004,
-
-    // random background life
-    flashEveryMinMs: 4200,
-    flashEveryMaxMs: 7600,
-    cometChancePerSec: 0.38,
+    // body a bonusy při dokončení locku
+    pointsGreen: 1,
+    pointsGold: 2,
+    pointsPerf: 3,
 
     // combo
     comboEvery: 5,
-    comboPoints: 10,
-    comboTimeBonusMs: 5000,      // +5s (Arcade only)
+    comboTimeBonusMs: 5000,     // +5s v Arcade
 
-    // rewarded one-time bonuses for next run
-    bonusArcadeMs: 15_000,
-    bonusSurvivalLives: 2,
+    // další-run rewarded bonusy
+    bonusArcadeMs: 15_000,      // Play Again +15s
+    bonusSurvivalLives: 2,      // Play Again +2 lives
 
-    // target scale range
+    // cíle (měřítko)
     minScale: 0.55,
     maxScale: 1.15,
 
-    // outline visuals
-    outlineWidth: 6
+    // pohyb cílů
+    targetBaseSpeed: 0.05,      // px/ms (škálované DPR)
+    targetSpeedPerLevel: 0.003,
+
+    // pozadí (starfield)
+    starsNear: 200,
+    starsFar: 150,
+    warpBase: 0.009,
+    warpPerLevel: 0.0008,
+    streakChancePerSec: 0.10,
+    streakLifeMs: 1500,
+
+    // „vesmírná“ životnost
+    flashEveryMinMs: 8200,
+    flashEveryMaxMs: 9600,
+
+    // grafika outline
+    outlineWidth: 5,
   };
 
-  // ===== State =====
+  // ===== Stav =====
   const S = {
     mode: 'arcade',
     running: false,
+
     level: 1,
     score: 0,
     bestArcade: Number(localStorage.getItem('bestArcade') || 0),
     bestSurvival: Number(localStorage.getItem('bestSurvival') || 0),
     lives: CONFIG.survivalLives,
+
+    // combo a progrese
     combo: 0,
+    successes: 0,              // kolik tref za run
+    decoyCount: 1,             // 1..5 (roste po 3 trefách)
 
-    successes: 0,               // zásahy pro zvyšování počtu hvězd
-    decoyCount: 1,              // 1..5
-
+    // časování Arcade
     startTime: 0,
     remaining: CONFIG.arcadeDuration,
     runDurationArcade: CONFIG.arcadeDuration,
 
+    // zóna/target
     baseAngle: 0,
     targetScale: 1,
 
-    // Player growth
+    // hráčova hvězda
     playerScale: 0,
     playerVisible: false,
+    holding: false,
 
-    // active star index & its pos
+    // LOCK
+    lockProgress: 0,           // 0..1
+    lockMsCurrent: CONFIG.lockMsBase,
+    tolGreen: CONFIG.tolGreenStart,
+
+    // aktivní cíl a pozice
     activeIndex: 0,
+    center: { x: 0, y: 0 },    // fokus pozadí
 
-    // for warp & comets
-    center: { x: 0, y: 0 },
-
-    // tolerance
-    tolScale: CONFIG.targetToleranceScaleStart,
-
-    // one-time next-run bonuses
+    // jednorázové bonusy do další hry
     nextRunBonusTimeMs: 0,
     nextRunBonusLives: 0,
   };
 
-  // ===== Elements =====
+  // ===== DOM prvky =====
   const $ = s => document.querySelector(s);
   const menuEl = $('#menu'), gameEl = $('#game'), overEl = $('#gameover');
   const space = $('#space'), play = $('#gameplay');
   const ctxSpace = space.getContext('2d'), ctxPlay = play.getContext('2d');
+
   const scoreEl = $('#score'), levelEl = $('#level'), livesEl = $('#lives');
   const timerEl = $('#timer'), ringFg = document.querySelector('.ring .fg');
   const thrustBtn = $('#thrustBtn'), toastEl = $('#readyGo'), modeTagEl = $('#modeTag');
   const finalScoreEl = $('#finalScore'), finalBestEl = $('#finalBest');
-  const lerp = (a,b,t)=> a + (b-a)*t;
 
-
+  // Game over & ads
   const bonusBtn = $('#bonusBtn');
   const againNoBonusBtn = $('#againNoBonusBtn');
   const menuBtn = $('#menuBtn');
 
-  // Ad overlay
   const adOverlay = $('#adOverlay');
   const adStatus  = $('#adStatus');
   const adClose   = $('#adClose');
   if (adOverlay) adOverlay.hidden = true;
-  if (adClose) adClose.disabled = true;
+  if (adClose) { adClose.disabled = true; adClose.textContent = 'Play'; } // jistota „Play“
 
   // audio
   const sfxExplosion = $('#sfxExplosion'), sfxFail = $('#sfxFail'), sfxHold = $('#sfxHold'), bgAmbient = $('#bgAmbient');
   sfxHold.loop = true; sfxHold.volume = 0.45; bgAmbient.volume = 0.28;
 
-  // ===== Canvas sizing =====
-  const DPR = Math.max(1, Math.min(2.5, window.devicePixelRatio || 1));
+  // ===== Canvas / rozměry =====
+  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
   const bounds = { w: 0, h: 0, top: 0, bottom: 0, left: 0, right: 0, panelTop: 0 };
 
   const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
-
 
   function resize(){
     const w = Math.floor(innerWidth * DPR);
@@ -145,51 +158,46 @@
     });
 
     bounds.w = w; bounds.h = h;
-    const marginTop = 10 * DPR;           // už skoro až k horní hraně telefonu
-    const cockpitH = 150 * DPR;           // horní hrana kokpitu, do které se odrážíme
+    const marginTop = 10 * DPR;
+    const cockpitH  = 150 * DPR;
     bounds.top = marginTop;
     bounds.bottom = h - cockpitH;
     bounds.left = 20 * DPR;
     bounds.right = w - 20 * DPR;
-    bounds.panelTop = bounds.bottom;      // pro odraz
+    bounds.panelTop = bounds.bottom;
 
-    // přibližně střed obrazovky
     S.center.x = w/2;
     S.center.y = h/2 - 90*DPR;
   }
   resize();
   window.addEventListener('resize', resize);
 
-  // ===== Warp & background life =====
-let starsNear = [], starsFar = [];
-const makeStar = (speedMul=1) => {
-  const a = Math.random()*Math.PI*2, r = Math.random()*1;
-  const speed = (CONFIG.warpBase + (S.level-1)*CONFIG.warpPerLevel) * speedMul;
-  return { x: Math.cos(a)*(0.2+r), y: Math.sin(a)*(0.2+r), z: Math.random()*1+0.1, px:0, py:0, speed };
-};
-function initStarfield(){
-  starsNear = Array.from({length: CONFIG.starsCountNear}, () => makeStar(1.2));
-  starsFar  = Array.from({length: CONFIG.starsCountFar }, () => makeStar(0.6));
-}
+  // ===== Starfield (plynulejší) =====
+  let starsNear = [], starsFar = [];
+  const makeStar = (speedMul=1) => {
+    const a = Math.random()*Math.PI*2, r = Math.random()*1;
+    const speed = (CONFIG.warpBase + (S.level-1)*CONFIG.warpPerLevel) * speedMul;
+    return { x: Math.cos(a)*(0.2+r), y: Math.sin(a)*(0.2+r), z: Math.random()*1+0.1, px:0, py:0, speed };
+  };
+  function initStarfield(){
+    starsNear = Array.from({length: CONFIG.starsNear}, () => makeStar(1.2));
+    starsFar  = Array.from({length: CONFIG.starsFar }, () => makeStar(0.6));
+  }
 
-// === NOVÉ „STREAKY“ (jasné komety ze středu ven) ===
-const streaks = [];
-function spawnStreak(){
-  const angle = Math.random()*Math.PI*2;
-  const z0 = 0.9; // začíná „hlouběji“, ať má dlouhou stopu
-  const zVel = (CONFIG.warpBase + (S.level-1)*CONFIG.warpPerLevel) * 1.8; // rychlejší než běžné hvězdy
-  streaks.push({ a: angle, z: z0, zv: zVel, px:0, py:0, age:0, life: CONFIG.streakLifeMs });
-}
+  const streaks = [];
+  function spawnStreak(){
+    const angle = Math.random()*Math.PI*2;
+    const z0 = 0.9, zVel = (CONFIG.warpBase + (S.level-1)*CONFIG.warpPerLevel) * 1.8;
+    streaks.push({ a: angle, z: z0, zv: zVel, px:0, py:0, age:0, life: CONFIG.streakLifeMs });
+  }
 
-// decentní „twinkle“ záblesky v dálce
-const twinkles = [];
-function spawnTwinkle(){
-  const x = Math.random()*bounds.w;
-  const y = bounds.top + Math.random()*(bounds.bottom - bounds.top);
-  const life = 900 + Math.random()*1200;
-  twinkles.push({ x, y, age: 0, life });
-}
-
+  const twinkles = [];
+  function spawnTwinkle(){
+    const x = Math.random()*bounds.w;
+    const y = bounds.top + Math.random()*(bounds.bottom - bounds.top);
+    const life = 900 + Math.random()*1200;
+    twinkles.push({ x, y, age: 0, life });
+  }
 
   let nextFlashAt = 0;
   function scheduleFlash(now){
@@ -198,95 +206,96 @@ function spawnTwinkle(){
   }
   scheduleFlash(performance.now());
 
-function drawWarpAndLife(dt, now){
-  const w = space.width, h = space.height;
-  ctxSpace.clearRect(0,0,w,h);
+  function drawWarpAndLife(dt, now){
+    const w = space.width, h = space.height;
+    ctxSpace.clearRect(0,0,w,h);
 
-  // hlubší mlhovina (větší poloměr + výraznější parallax)
-  const t = now * 0.00006;
-  const g = ctxSpace.createRadialGradient(
-    w*.5 + Math.cos(t)*120*DPR, h*.28 + Math.sin(t*1.35)*90*DPR, 160*DPR,
-    w*.5, h*.5, Math.max(w,h)*0.9
-  );
-  g.addColorStop(0,'rgba(112,163,255,.06)');
-  g.addColorStop(.5,'rgba(84,224,255,.05)');
-  g.addColorStop(1,'rgba(0,0,0,0)');
-  ctxSpace.fillStyle = g; ctxSpace.fillRect(0,0,w,h);
+    // jemná mlhovina
+    const t = now * 0.00006;
+    const g = ctxSpace.createRadialGradient(
+      w*.5 + Math.cos(t)*120*DPR, h*.28 + Math.sin(t*1.35)*90*DPR, 160*DPR,
+      w*.5, h*.5, Math.max(w,h)*0.9
+    );
+    g.addColorStop(0,'rgba(112,163,255,.06)');
+    g.addColorStop(.5,'rgba(84,224,255,.05)');
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctxSpace.fillStyle = g; ctxSpace.fillRect(0,0,w,h);
 
-  // hvězdné vrstvy (far + near) – warp čáry ze středu
-  ctxSpace.save(); ctxSpace.translate(S.center.x, S.center.y);
-  const drawLayer = (arr, thickness=1.3) => {
-    for(let s of arr){
-      s.z -= s.speed * (dt/16.67);
-      if(s.z <= 0.05){ Object.assign(s, makeStar(s.speed>1 ? 1.2 : 0.6)); continue; }
-      const f = 1/s.z, x = s.x*f*h*.42, y = s.y*f*h*.42;
+    // hvězdy – dvě vrstvy
+    ctxSpace.save(); ctxSpace.translate(S.center.x, S.center.y);
+
+    const drawLayer = (arr, thickness=1.3, isNear=false) => {
+      for (let star of arr){
+        star.z -= star.speed * (dt/16.67);
+        if (star.z <= 0.05){
+          Object.assign(star, makeStar(isNear ? 1.2 : 0.6));
+          continue;
+        }
+        const f = 1/star.z;
+        const x = star.x * f * h * .38;
+        const y = star.y * f * h * .38;
+
+        ctxSpace.beginPath();
+        ctxSpace.strokeStyle = `hsla(${190+(1-star.z)*80},100%,70%,${0.26+(1-star.z)*0.48})`;
+        ctxSpace.lineWidth = Math.min(2.2*DPR, (thickness + (1 - star.z)*1.2) * DPR);
+        ctxSpace.moveTo(star.px || x, star.py || y);
+        ctxSpace.lineTo(x,y);
+        ctxSpace.stroke();
+
+        star.px = x; star.py = y;
+      }
+    };
+    drawLayer(starsFar, 1.0, false);
+    drawLayer(starsNear, 1.6, true);
+
+    // jemné „streaky“
+    if (Math.random() < CONFIG.streakChancePerSec * (dt/1000) && streaks.length < 3) spawnStreak();
+    for (let i = streaks.length - 1; i >= 0; i--){
+      const s = streaks[i];
+      s.age += dt; s.z -= s.zv * (dt/16.67);
+      if (s.z <= 0.05 || s.age > s.life){ streaks.splice(i,1); continue; }
+
+      const f = 1/s.z, x = Math.cos(s.a) * f * h * .38, y = Math.sin(s.a) * f * h * .38;
+
       ctxSpace.beginPath();
-      ctxSpace.strokeStyle = `hsla(${190+(1-s.z)*80},100%,70%,${0.28+(1-s.z)*0.50})`;
-      ctxSpace.lineWidth = Math.min(3*DPR,(thickness+(1-s.z)*1.6)*DPR);
-      ctxSpace.moveTo(s.px||x, s.py||y); ctxSpace.lineTo(x,y); ctxSpace.stroke();
-      s.px=x; s.py=y;
+      ctxSpace.strokeStyle = 'rgba(160,205,255,0.85)';
+      ctxSpace.lineCap = 'round';
+      ctxSpace.lineWidth = 2.6 * DPR;
+      ctxSpace.moveTo(s.px || x, s.py || y);
+      ctxSpace.lineTo(x,y);
+      ctxSpace.stroke();
+
+      const head = ctxSpace.createRadialGradient(x,y,0,x,y,7*DPR);
+      head.addColorStop(0,'rgba(255,255,255,.95)');
+      head.addColorStop(1,'rgba(84,224,255,0)');
+      ctxSpace.fillStyle = head;
+      ctxSpace.beginPath(); ctxSpace.arc(x,y,7*DPR,0,Math.PI*2); ctxSpace.fill();
+
+      s.px = x; s.py = y;
     }
-  };
-  drawLayer(starsFar, 1.0);
-  drawLayer(starsNear, 1.6);
+    ctxSpace.restore();
 
-  // === JASNÉ STREAKY (komety) – ze středu ven, stejné směrování jako hvězdy ===
-  if (Math.random() < CONFIG.streakChancePerSec * (dt/1000)) spawnStreak();
+    // twinkles
+    if (Math.random() < 0.08 * (dt/1000)) spawnTwinkle();
+    for (let i=twinkles.length-1; i>=0; i--){
+      const tw = twinkles[i];
+      tw.age += dt;
+      const p = tw.age / tw.life;
+      if (p >= 1){ twinkles.splice(i,1); continue; }
+      const pulse = 1 - Math.abs(2*p - 1);
+      const r = (3 + 6*pulse) * DPR;
+      const alpha = 0.25 + 0.45*pulse;
+      const g2 = ctxSpace.createRadialGradient(tw.x,tw.y,0,tw.x,tw.y,r);
+      g2.addColorStop(0,`rgba(160,205,255,${alpha})`);
+      g2.addColorStop(1,'rgba(160,205,255,0)');
+      ctxSpace.fillStyle = g2;
+      ctxSpace.beginPath(); ctxSpace.arc(tw.x, tw.y, r, 0, Math.PI*2); ctxSpace.fill();
+    }
 
-  for (let i = streaks.length-1; i>=0; i--){
-    const s = streaks[i];
-    s.age += dt;
-    s.z -= s.zv * (dt/16.67);
-    if (s.z <= 0.05 || s.age > s.life){ streaks.splice(i,1); continue; }
-
-    const f = 1/s.z;
-    const x = Math.cos(s.a)*f*h*.42;
-    const y = Math.sin(s.a)*f*h*.42;
-
-    // trail
-    ctxSpace.beginPath();
-    ctxSpace.strokeStyle = `rgba(160,205,255,0.85)`;
-    ctxSpace.lineCap = 'round';
-    ctxSpace.lineWidth = 3.2*DPR;
-    ctxSpace.moveTo(s.px||x, s.py||y);
-    ctxSpace.lineTo(x,y);
-    ctxSpace.stroke();
-
-    // head glow
-    const hx = x, hy = y;
-    const head = ctxSpace.createRadialGradient(hx,hy,0,hx,hy,8*DPR);
-    head.addColorStop(0,'rgba(255,255,255,.95)');
-    head.addColorStop(1,'rgba(84,224,255,0)');
-    ctxSpace.fillStyle = head;
-    ctxSpace.beginPath(); ctxSpace.arc(hx,hy,7*DPR,0,Math.PI*2); ctxSpace.fill();
-
-    s.px = x; s.py = y;
-  }
-  ctxSpace.restore();
-
-  // jemné twinkles (živější prostor, ne jen černo)
-  if (Math.random() < 0.12 * (dt/1000)) spawnTwinkle();
-  for (let i=twinkles.length-1; i>=0; i--){
-    const tnk = twinkles[i];
-    tnk.age += dt;
-    const p = tnk.age/tnk.life;
-    if (p >= 1){ twinkles.splice(i,1); continue; }
-    const pulse = 1 - Math.abs(2*p - 1); // nahoru-dolů
-    const r = (3 + 6*pulse) * DPR;
-    const alpha = 0.25 + 0.45*pulse;
-    const g2 = ctxSpace.createRadialGradient(tnk.x,tnk.y,0,tnk.x,tnk.y,r);
-    g2.addColorStop(0,`rgba(160,205,255,${alpha})`);
-    g2.addColorStop(1,'rgba(160,205,255,0)');
-    ctxSpace.fillStyle = g2;
-    ctxSpace.beginPath(); ctxSpace.arc(tnk.x, tnk.y, r, 0, Math.PI*2); ctxSpace.fill();
+    if (now >= nextFlashAt){ screenFlash(0.14); shake(); scheduleFlash(now); }
   }
 
-  // občasný jemný „screen flash“ jako dřív
-  if (now >= nextFlashAt){ screenFlash(0.18); shake(); scheduleFlash(now); }
-}
-
-
-  // ===== Star geometry (sharp with rounded joins) =====
+  // ===== Geometrie hvězdy =====
   function buildStarPath(ctx, points = 5, outerR, innerR, rotationRad = -Math.PI/2) {
     const step = Math.PI / points;
     ctx.beginPath();
@@ -300,8 +309,13 @@ function drawWarpAndLife(dt, now){
     ctx.closePath();
   }
 
-  // ===== Targets (decoy stars) =====
+  // ===== Targets (decoys) =====
   const targets = []; // {x,y,vx,vy}
+  function currentTargetRadius(){
+    const wh = Math.min(play.width, play.height);
+    return wh*0.13*S.targetScale;
+  }
+
   function placeTargets(count){
     targets.length = 0;
     const r = currentTargetRadius();
@@ -323,15 +337,9 @@ function drawWarpAndLife(dt, now){
       targets.push({ x, y, vx: Math.cos(a)*sp*DPR, vy: Math.sin(a)*sp*DPR });
     }
 
-    // choose active
     S.activeIndex = Math.floor(Math.random()*targets.length);
     S.center.x = targets[S.activeIndex].x;
     S.center.y = targets[S.activeIndex].y;
-  }
-
-  function currentTargetRadius(){
-    const wh = Math.min(play.width, play.height);
-    return wh*0.13*S.targetScale;
   }
 
   function newTarget(){
@@ -339,7 +347,7 @@ function drawWarpAndLife(dt, now){
     S.targetScale = CONFIG.minScale + Math.random()*(CONFIG.maxScale-CONFIG.minScale);
     S.playerVisible = false;
     S.playerScale = 0;
-
+    S.lockProgress = 0;
     placeTargets(S.decoyCount);
   }
 
@@ -352,22 +360,17 @@ function drawWarpAndLife(dt, now){
     timerEl.classList.add(ok?'ok':'bad'); setTimeout(()=>timerEl.classList.remove(ok?'ok':'bad'),180);
   }
 
-  // ===== Physics (walls + collisions) =====
+  // ===== Fyzika cílů =====
   function physicsTargets(dt){
     const r = currentTargetRadius();
-
-    // move
     for(const t of targets){
       t.x += t.vx*dt; t.y += t.vy*dt;
-
-      // walls — include top-of-phone and top edge of cockpit (panelTop)
       if (t.x < bounds.left + r){ t.x = bounds.left + r; t.vx = Math.abs(t.vx); }
       if (t.x > bounds.right - r){ t.x = bounds.right - r; t.vx = -Math.abs(t.vx); }
       if (t.y < bounds.top + r){ t.y = bounds.top + r; t.vy = Math.abs(t.vy); }
       if (t.y > bounds.bottom - r){ t.y = bounds.bottom - r; t.vy = -Math.abs(t.vy); }
     }
-
-    // collisions (simple elastic)
+    // kolize (jednoduchá separace + výměna normálové složky)
     for(let i=0;i<targets.length;i++){
       for(let j=i+1;j<targets.length;j++){
         const a = targets[i], b = targets[j];
@@ -375,12 +378,10 @@ function drawWarpAndLife(dt, now){
         const dist = Math.hypot(dx,dy);
         const minD = 2*r;
         if (dist > 0 && dist < minD){
-          // separate
           const overlap = (minD - dist)/2;
           const nx = dx/dist, ny = dy/dist;
           a.x -= nx*overlap; a.y -= ny*overlap;
           b.x += nx*overlap; b.y += ny*overlap;
-          // swap velocity along normal
           const avn = a.vx*nx + a.vy*ny;
           const bvn = b.vx*nx + b.vy*ny;
           const diff = bvn - avn;
@@ -390,18 +391,82 @@ function drawWarpAndLife(dt, now){
       }
     }
 
-    // update warp focus smoothly toward active
     const act = targets[S.activeIndex];
     if (act){
-      S.center.x += (act.x - S.center.x)*0.08;
-      S.center.y += (act.y - S.center.y)*0.08;
+      S.center.x += (act.x - S.center.x) * 0.05;
+      S.center.y += (act.y - S.center.y) * 0.05;
     }
   }
 
-  // ===== Loop =====
-  let lastT = performance.now(), rafId = 0;
+  // ===== LOCK logika =====
+  function zoneAndDelta(){
+    // relativní odchylka měřítka
+    const delta = (S.playerScale - S.targetScale) / S.targetScale;  // např. +0.04 = +4 %
+    const ad = Math.abs(delta);
+
+    const tolG = S.tolGreen;
+    const tolGold = tolG * CONFIG.tolGoldRatio;
+    const tolPerf = tolG * CONFIG.tolPerfRatio;
+
+    if (ad <= tolPerf) return { zone:'perfect', delta };
+    if (ad <= tolGold) return { zone:'gold', delta };
+    if (ad <= tolG)    return { zone:'green', delta };
+    return { zone:'out', delta };
+  }
+
+  function lockTick(dt){
+    const { zone } = zoneAndDelta();
+    const rateBase = 1 / S.lockMsCurrent; // za ms v "green" přidat 1/lockMs
+
+    if (zone === 'perfect')      S.lockProgress += dt * rateBase * 3; // 3× rychleji
+    else if (zone === 'gold')    S.lockProgress += dt * rateBase * 2;
+    else if (zone === 'green')   S.lockProgress += dt * rateBase * 1;
+    else                         S.lockProgress -= dt * rateBase * CONFIG.lockDrainFactor;
+
+    S.lockProgress = clamp(S.lockProgress, 0, 1);
+
+    if (S.lockProgress >= 1){
+      // dokončeno — vyhodnoť zónu pro odměnu
+      const { zone: finZone } = zoneAndDelta();
+      const mult = (finZone==='perfect') ? CONFIG.pointsPerf
+                 : (finZone==='gold')    ? CONFIG.pointsGold
+                 : CONFIG.pointsGreen;
+
+      addScore(mult);
+      if (S.mode==='arcade'){
+        S.combo++;
+        if (S.combo && S.combo % CONFIG.comboEvery === 0){
+          S.runDurationArcade += CONFIG.comboTimeBonusMs;
+          toast('+5s Combo');
+        }
+      }
+
+      // zrychlení obtížnosti (pozvolna)
+      S.successes++;
+      if (S.successes % CONFIG.tightenEvery === 0){
+        S.tolGreen = clamp(S.tolGreen * CONFIG.tightenFactor, CONFIG.tolGreenMin, CONFIG.tolGreenStart);
+        S.lockMsCurrent = Math.min(CONFIG.lockMsMax, S.lockMsCurrent + CONFIG.lockMsStep);
+      }
+
+      // přidávej decoy hvězdy
+      const wanted = Math.min(5, 1 + Math.floor(S.successes/3));
+      if (wanted !== S.decoyCount) S.decoyCount = wanted;
+
+      flash(true); safePlay(sfxExplosion); explode();
+      S.level++; levelEl.textContent = String(S.level);
+
+      // nový cíl
+      newTarget();
+    }
+  }
+
+  // ===== Hlavní smyčka =====
+  let lastT = performance.now(), rafId = 0, smoothedDt = 16.67;
+
   function loop(now){
-    const dt = Math.min(40, now-lastT); lastT = now;
+    let raw = Math.min(50, now - lastT); lastT = now;
+    smoothedDt += (raw - smoothedDt) * 0.25; // vyhlazení dt
+    const dt = smoothedDt;
 
     physicsTargets(dt);
     drawWarpAndLife(dt, now);
@@ -413,15 +478,29 @@ function drawWarpAndLife(dt, now){
       if(S.remaining<=0){ endGame(); return; }
     }
 
-    if(S.holding){ S.playerScale += CONFIG.growthPerSecond*(dt/1000); thrustBtn.classList.add('holding'); safePlay(sfxHold); }
-    else{ thrustBtn.classList.remove('holding'); sfxHold.pause(); sfxHold.currentTime=0; }
+    // růst/zmenšování hráče
+    if (S.holding){
+      S.playerVisible = true;
+      S.playerScale += CONFIG.growPerSec * (dt/1000);
+      thrustBtn.classList.add('holding');
+      safePlay(sfxHold);
+    } else {
+      S.playerScale = Math.max(0, S.playerScale - CONFIG.shrinkPerSec * (dt/1000));
+      thrustBtn.classList.remove('holding');
+      sfxHold.pause(); sfxHold.currentTime = 0;
+    }
 
-    S.baseAngle = (S.baseAngle + CONFIG.spinDegPerSecond*(dt/1000))%360;
+    // LOCK
+    if (S.playerVisible) lockTick(dt);
+
+    // mírná rotace
+    S.baseAngle = (S.baseAngle + 40*(dt/1000)) % 360;
 
     render();
     rafId = requestAnimationFrame(loop);
   }
 
+  // ===== Render =====
   function render(){
     const w = play.width, h = play.height; ctxPlay.clearRect(0,0,w,h);
     const lw = CONFIG.outlineWidth * DPR;
@@ -430,7 +509,7 @@ function drawWarpAndLife(dt, now){
     const rOuter = currentTargetRadius();
     const rInner = rOuter*0.48;
 
-    // draw all targets (identical)
+    // všechny cíle (stejné, jen jedna je aktivní)
     for(const t of targets){
       ctxPlay.save();
       ctxPlay.translate(t.x, t.y);
@@ -442,11 +521,49 @@ function drawWarpAndLife(dt, now){
       ctxPlay.restore();
     }
 
-    // player overlay (only when holding)
-    if (S.playerVisible && targets[S.activeIndex]){
-      const p = targets[S.activeIndex];
+    // aktivní target: lock ring + delta
+    const act = targets[S.activeIndex];
+    if (act){
+      // ring progress kolem cíle
+      const ringR = rOuter + 14*DPR;
       ctxPlay.save();
-      ctxPlay.translate(p.x, p.y);
+      ctxPlay.translate(act.x, act.y);
+      ctxPlay.beginPath();
+      ctxPlay.lineWidth = 3*DPR;
+      ctxPlay.strokeStyle = 'rgba(112,163,255,0.45)';
+      ctxPlay.arc(0,0, ringR, 0, Math.PI*2);
+      ctxPlay.stroke();
+
+      // vyplnění podle S.lockProgress
+      ctxPlay.beginPath();
+      ctxPlay.strokeStyle = 'rgba(112,163,255,0.95)';
+      ctxPlay.lineWidth = 4*DPR;
+      ctxPlay.arc(0,0, ringR, -Math.PI/2, -Math.PI/2 + S.lockProgress*2*Math.PI);
+      ctxPlay.stroke();
+
+      // text „LOCK xx%“ nad hvězdou
+      ctxPlay.font = `${12*DPR}px Oxanium, sans-serif`;
+      ctxPlay.textAlign = 'center';
+      ctxPlay.textBaseline = 'bottom';
+      ctxPlay.fillStyle = 'rgba(232,241,255,0.92)';
+      ctxPlay.fillText(`LOCK ${Math.round(S.lockProgress*100)}%`, 0, -(ringR + 8*DPR));
+
+      // delta pod hvězdou
+      const { delta, zone } = zoneAndDelta();
+      const dAbs = Math.abs(delta)*100;
+      const zTxt = zone==='perfect'?'PERFECT':zone==='gold'?'GOLD':zone==='green'?'GREEN':'OUT';
+      ctxPlay.textBaseline = 'top';
+      ctxPlay.fillStyle = zone==='out' ? 'rgba(255,75,110,0.95)'
+                          : zone==='perfect' ? 'rgba(58,245,155,0.95)'
+                          : 'rgba(200,220,255,0.92)';
+      ctxPlay.fillText(`${zTxt}  Δ ${delta>=0?'+':'-'}${dAbs.toFixed(1)}%`, 0, (ringR + 8*DPR));
+      ctxPlay.restore();
+    }
+
+    // hráčova hvězda (jen na aktivním cíli a jen při viditelnosti)
+    if (S.playerVisible && act){
+      ctxPlay.save();
+      ctxPlay.translate(act.x, act.y);
       ctxPlay.rotate(S.baseAngle*Math.PI/180);
       const rPlayerOuter = Math.min(w,h)*0.13*S.playerScale;
       const rPlayerInner = rPlayerOuter*0.48;
@@ -458,13 +575,12 @@ function drawWarpAndLife(dt, now){
     }
   }
 
-  // ===== Interactions =====
+  // ===== Interakce =====
   function onDown(e){
     e.preventDefault();
     if(!S.running) return;
     S.holding = true;
     S.playerVisible = true;
-    S.playerScale = 0;
     safePlay(bgAmbient);
   }
 
@@ -473,50 +589,22 @@ function drawWarpAndLife(dt, now){
     if(!S.running || !S.holding) return;
     S.holding = false;
 
-    const ok = Math.abs(S.playerScale - S.targetScale) <= S.tolScale;
-
-    if(ok){
-      flash(true); safePlay(sfxExplosion); explode(); addScore(1);
-      S.combo++; S.successes++;
-
-      if(S.combo && S.combo%CONFIG.comboEvery===0){
-        addScore(CONFIG.comboPoints);
-        if (S.mode==='arcade'){
-          S.runDurationArcade += CONFIG.comboTimeBonusMs;
-          toast(`Combo +5 seconds`);
-        } else {
-          toast(`+${CONFIG.comboPoints} Combo`);
-        }
-      }
-
-      // co 3 zásahy přidej decoy (max 5)
-      const wanted = Math.min(5, 1 + Math.floor(S.successes/3));
-      if (wanted !== S.decoyCount){ S.decoyCount = wanted; }
-
-      S.level++;
-      S.tolScale = Math.max(CONFIG.minToleranceScale, S.tolScale*CONFIG.tighten);
-      levelEl.textContent = String(S.level);
-
-      newTarget();
-      updateBest(); shake(.5);
-    }else{
-      flash(false); safePlay(sfxFail); S.combo=0; shake(1);
-      if(S.mode==='survival'){
+    const { zone } = zoneAndDelta();
+    if (zone === 'out'){
+      flash(false); safePlay(sfxFail); S.combo = 0; shake(1);
+      if (S.mode==='survival'){
         S.lives = Math.max(0, S.lives-1); updateLives();
-        if(S.lives===0){ endGame(); return; }
+        if (S.lives===0){ endGame(); return; }
       }
+      // po chybě: hráčova hvězda schovat
       S.playerVisible = false;
       S.playerScale = 0;
     }
+    // pokud byl v pásmu, nic neresetujeme – pokračuje k 100% locku
   }
 
   function addScore(n){ S.score += n; scoreEl.textContent = String(S.score); }
   function updateLives(){ livesEl.textContent = '♥'.repeat(S.lives); }
-  function updateBest(){
-    const best = (S.mode==='arcade'?S.bestArcade:S.bestSurvival);
-    // (volitelné: zobrazit někde)
-    return best;
-  }
   function toast(t){ toastEl.textContent=t; toastEl.classList.add('show'); setTimeout(()=>toastEl.classList.remove('show'),520); }
 
   function readyGo(cb){
@@ -536,7 +624,7 @@ function drawWarpAndLife(dt, now){
     }
     finalScoreEl.textContent=String(S.score);
 
-    // CTA text by mode
+    // CTA text dle módu (bonus JEN pro příští run)
     if (bonusBtn) bonusBtn.textContent = (S.mode==='arcade') ? 'Play Again + 15 Seconds' : 'Play Again + 2 Lives';
 
     show('gameover');
@@ -548,7 +636,6 @@ function drawWarpAndLife(dt, now){
     if(name==='game') gameEl.classList.add('active');
     if(name==='gameover') overEl.classList.add('active');
 
-    // hide ad overlay
     if (adOverlay) adOverlay.hidden = true;
     if (adClose) adClose.disabled = true;
   }
@@ -557,10 +644,14 @@ function drawWarpAndLife(dt, now){
     S.mode = mode; modeTagEl.textContent = mode.toUpperCase();
     S.level=1; S.score=0; S.combo=0; S.successes=0;
     S.decoyCount = 1;
-    S.tolScale=CONFIG.targetToleranceScaleStart;
     S.holding=false; S.playerVisible=false; S.playerScale=0;
 
-    // bonuses
+    // LOCK reset
+    S.tolGreen = CONFIG.tolGreenStart;
+    S.lockMsCurrent = CONFIG.lockMsBase;
+    S.lockProgress = 0;
+
+    // one-run bonusy
     let extraTime = 0, extraLives = 0;
     if (opts.applyNextRunBonus){
       extraTime = S.nextRunBonusTimeMs || 0;
@@ -588,7 +679,7 @@ function drawWarpAndLife(dt, now){
     lastT=performance.now(); readyGo(()=>{ S.running=true; rafId=requestAnimationFrame(loop); });
   }
 
-  // ===== FX (explosion) =====
+  // ===== FX =====
   function explode(){
     const w=play.width,h=play.height;
     const act = targets[S.activeIndex] || {x:w/2,y:h/2};
@@ -608,16 +699,15 @@ function drawWarpAndLife(dt, now){
     }
     requestAnimationFrame(ring);
 
-    screenFlash(0.35);
+    screenFlash(0.30);
 
-    const parts=[]; const N=64;
+    const parts=[]; const N=60;
     for(let i=0;i<N;i++){
       parts.push({
         x:cx,y:cy,
         vx:Math.cos(i/N*Math.PI*2)*(1.6+Math.random()*2.2)*DPR,
         vy:Math.sin(i/N*Math.PI*2)*(1.6+Math.random()*2.2)*DPR,
-        life:480+Math.random()*320, age:0,
-        len: 4 + Math.random()*14
+        life:480+Math.random()*320, age:0, len: 4 + Math.random()*14
       });
     }
     function fx(t){
@@ -639,7 +729,7 @@ function drawWarpAndLife(dt, now){
     requestAnimationFrame(fx);
   }
 
-  function screenFlash(power=0.25){
+  function screenFlash(power=0.22){
     const w=space.width, h=space.height;
     ctxSpace.save(); ctxSpace.globalCompositeOperation='screen';
     const g = ctxSpace.createRadialGradient(S.center.x,S.center.y,0,S.center.x,S.center.y,Math.max(w,h)*0.7);
@@ -657,32 +747,30 @@ function drawWarpAndLife(dt, now){
 
   const safePlay = a => { if(!a) return; const p=a.play(); if(p && p.catch) p.catch(()=>{}); };
 
-  // ===== Rewarded Ads logic =====
+  // ===== Rewarded Ads – jen bonus do příští hry =====
   const adDomReady = () => !!(adOverlay && adStatus && adClose);
-
   async function showRewardedAd(){
     if (!adDomReady()) return true;
-
     adStatus.textContent = 'Loading…';
     adClose.disabled = true;
     adOverlay.hidden = false;
 
     setTimeout(()=>{
-      adStatus.textContent = 'Reward Unlocked — Tap Play';
+      adStatus.textContent = 'Bonus unlocked — Tap Play';
       adClose.disabled = false;
     }, Math.max(900, REWARDED.minShowMs));
 
     return new Promise(resolve=>{
-      function closeOk(){
-        adClose.removeEventListener('click', closeOk);
+      function ok(){
+        adClose.removeEventListener('click', ok);
         adOverlay.hidden = true;
         resolve(true);
       }
-      adClose.addEventListener('click', closeOk, { once: true });
+      adClose.addEventListener('click', ok, { once: true });
     });
   }
 
-  // ===== Events =====
+  // ===== Události =====
   document.querySelector('[data-mode="arcade"]').addEventListener('click', ()=>start('arcade'));
   document.querySelector('[data-mode="survival"]').addEventListener('click', ()=>start('survival'));
 
@@ -710,7 +798,7 @@ function drawWarpAndLife(dt, now){
     bgAmbient.pause(); bgAmbient.currentTime=0; show('menu');
   });
 
-  // HOLD — větší hit-zóna
+  // HOLD – větší hit-zóna
   ['touchstart','mousedown'].forEach(e=>{
     thrustBtn.addEventListener(e,onDown,{passive:false});
     timerEl.addEventListener(e,onDown,{passive:false});
